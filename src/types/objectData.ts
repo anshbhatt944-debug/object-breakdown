@@ -182,7 +182,13 @@ export interface ObjectBreakdownData {
   engineersChoice: { title: string; rationale: string }[];
   redesignInsights: {
     simplify: { title: string; partReduction: string; description: string; tradeoffs: string };
-    makeItBetter: { title: string; upgrade: string; performanceGain: string; description: string };
+    makeItBetter: {
+      title: string;
+      upgrade: string;
+      performanceGain: string;
+      description: string;
+      tradeoffs?: string;
+    };
     cheaperVersion: { title: string; costReduction: string; changes: string; tradeoffs: string };
   };
   aiSuggestedQuestions: string[];
