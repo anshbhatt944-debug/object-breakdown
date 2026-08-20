@@ -1,0 +1,371 @@
+import { ObjectBreakdownData } from '../../types/objectData';
+
+export const carEngineData: ObjectBreakdownData = {
+  id: 'car-engine',
+  name: 'Turbocharged Car Engine',
+  category: 'Thermodynamic / Mechanical',
+  subtitle: '2.0L Inline-4 DOHC Direct-Injection Turbocharged ICE',
+  heroTagline: 'High-pressure cylinder combustion, forced-induction boost, and reciprocating mechanical dynamics.',
+  thumbnail: 'engine',
+  complexityScore: {
+    overall: 9.6,
+    mechanical: 9.9,
+    electrical: 8.2,
+    material: 9.5,
+    manufacturing: 9.8,
+    assembly: 9.7,
+  },
+  stats: {
+    componentCount: 185,
+    materialCount: 12,
+    manufacturingStages: 22,
+    movingParts: 74,
+    approxCostUsd: '$3,200 - $6,500',
+    productionVolume: '15M+ units/year',
+  },
+  summary:
+    'A modern high-performance turbocharged internal combustion engine converts chemical fuel energy into rotational mechanical horsepower through the four-stroke Otto thermodynamic cycle. Operating at combustion pressures exceeding 140 bar (2,000 PSI) and temperatures above 2,200°C, it balances reciprocating piston dynamics, variable valve timing (VVT), dual-scroll turbocharging, and 350-bar gasoline direct injection.',
+  engineeringDisciplines: [
+    'Thermodynamics & Four-Stroke Otto Cycle Dynamics',
+    'High-Temperature Metallurgy & Single-Crystal Alloys',
+    'Fluid Mechanics & Forced-Induction Gas Dynamics',
+    'Tribology & Hydrodynamic Journal Bearing Lubrication',
+  ],
+  rootComponents: [
+    {
+      id: 'cylinder-block-assembly',
+      name: 'Engine Block & Crankcase Assembly',
+      cadId: 'SUB-ENG-01',
+      category: 'Structural Engine Block',
+      meshKey: 'engine-block',
+      explodeVector: [0, 0, 0],
+      defaultColor: '#475569',
+      material: {
+        name: 'Cast Aluminum A319 with Spun Cast-Iron Cylinder Liners',
+        grade: 'A319-T6 Aluminum / Grey Cast Iron (GG25)',
+        type: 'Metal',
+        density: '2.79 g/cm³ (Al) / 7.2 g/cm³ (Iron)',
+        tensileStrength: '280 MPa (Al)',
+      },
+      function: 'Provides the rigid foundation housing cylinders, coolant passages, oil galleries, and crankshaft main journal bearings.',
+      manufacturing: {
+        process: 'High-Pressure Die Casting (HPDC) with Semi-Permanent Sand Cores followed by CNC Multi-Spindle Line Boring and Plateau Cylinder Honing',
+        machinery: 'Nagel Cylinder Honing Machine + Makino 5-Axis Engine Machining Center',
+        tolerance: 'Cylinder bore cylindricity: ±0.003 mm',
+        defectRisks: ['Porosity in coolant water jacket', 'Main bore misalignment'],
+      },
+      dimensions: {
+        length: '485 mm × 390 mm × 410 mm (Weight: 38 kg bare block)',
+        formatted: '485 × 390 × 410 mm (Bore 82.5 mm × Stroke 92.8 mm)',
+      },
+      mechanicalRole: {
+        forces: 'Peak combustion pressure load: 140 bar (75,000 N per cylinder firing)',
+        motion: 'Static foundation',
+      },
+      connectedTo: ['piston-rod-assembly', 'crankshaft-assembly', 'cylinder-head'],
+      failureModes: [
+        {
+          mode: 'Cylinder bore scuffing / Ring micro-welding',
+          cause: 'Oil film breakdown under localized thermal hot spots.',
+          mitigation: 'Cross-hatch plateau honing to retain hydrodynamic oil pockets.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'Cast aluminum reduces total engine mass by 28 kg compared to iron blocks, while iron cylinder liners provide wear resistance against piston ring friction.',
+      dataConfidence: 'Verified',
+    },
+    {
+      id: 'piston-rod-assembly',
+      name: 'Forged Piston & Connecting Rod Subassembly',
+      cadId: 'SUB-ENG-02',
+      category: 'Reciprocating Powertrain',
+      meshKey: 'engine-piston',
+      explodeVector: [0, 3.2, 0],
+      defaultColor: '#94a3b8',
+      material: {
+        name: 'Forged 4032 High-Silicon Aluminum (Piston) & 4340 Chromoly Steel (Rod)',
+        grade: 'Al 4032-T6 / AISI 4340 Quenched & Tempered',
+        type: 'Metal',
+        density: '2.68 g/cm³ (Piston) / 7.85 g/cm³ (Rod)',
+        tensileStrength: '1100 MPa (Rod)',
+      },
+      function: 'Captures expanding combustion gas pressure and transmits linear thrust to the rotating crankshaft.',
+      manufacturing: {
+        process: 'Closed-Die Drop Forging, CNC Skirt Machining, DLC (Diamond-Like Carbon) Pin Coating, and Fracture-Split Rod Cap Separation',
+        machinery: 'Hydraulic 2500-ton Forging Press + Laser-Cracked Rod Splitting Cell',
+        tolerance: 'Piston-to-bore clearance: 0.035 ± 0.005 mm',
+        defectRisks: ['Piston crown thermal fatigue micro-cracking', 'Gudgeon pin galling'],
+      },
+      dimensions: { formatted: 'Piston Ø 82.5 mm (320 g) / Rod Center-to-Center 144.0 mm (485 g)' },
+      mechanicalRole: {
+        forces: 'Peak acceleration: 2,500 G at 7,000 RPM (Reciprocating inertia force: ~14,000 N)',
+        motion: 'Reciprocating linear motion: 92.8 mm stroke',
+      },
+      connectedTo: ['cylinder-block-assembly', 'crankshaft-assembly'],
+      failureModes: [{ mode: 'Connecting rod buckling / throwing a rod', cause: 'Severe pre-ignition / detonation (engine knock) or hydro-locking', mitigation: 'H-Beam forged geometry and forged chromoly rod bolts', severity: 'Critical' }],
+      engineeringReason: 'Laser-fractured cracked rod caps create microscopic interlocking surface peaks, ensuring perfect bearing roundness when torqued.',
+      dataConfidence: 'Verified',
+    },
+    {
+      id: 'crankshaft-assembly',
+      name: 'Forged Steel Cross-Plane Crankshaft',
+      cadId: 'SUB-ENG-03',
+      category: 'Kinematics & Rotordynamics',
+      meshKey: 'engine-crankshaft',
+      explodeVector: [0, -2.8, 0],
+      defaultColor: '#64748b',
+      material: {
+        name: 'Forged Micro-Alloyed Carbon Steel (42CrMo4)',
+        grade: 'AISI 4140 / 42CrMo4 Induction Hardened',
+        type: 'Metal',
+        density: '7.85 g/cm³',
+        hardness: 'Journals: 58-62 HRC',
+      },
+      function: 'Converts reciprocating piston motion into continuous rotary torque (380 N·m) to propel the vehicle drivetrain.',
+      manufacturing: {
+        process: 'Hot Die Forging, Multi-Axis CNC Turning, Deep Fillet Rolling, Micro-Drilling Angled Oil Passages, and Induction Journal Hardening',
+        machinery: 'Hegenscheidt Fillet Rolling Machine + Dynamic Balancing Bench',
+        tolerance: 'Journal runout < 0.003 mm; Dynamic unbalance < 10 g·mm',
+        defectRisks: ['Fillet micro-cracks under torsional vibration'],
+      },
+      dimensions: { formatted: 'L 510 mm × Ø 54 mm Main Journals (Weight: 14.5 kg)' },
+      mechanicalRole: {
+        forces: 'Torsional vibration harmonics: ±1.8° peak angular displacement at 4th engine order',
+        motion: 'Pure rotation: 800 to 7,200 RPM',
+      },
+      connectedTo: ['piston-rod-assembly', 'cylinder-block-assembly'],
+      failureModes: [{ mode: 'Fatigue fracture at crankpin radius fillet', cause: 'Torsional vibration from faulty harmonic damper', mitigation: 'Deep fillet cold-rolling to induce compressive residual surface stress', severity: 'Critical' }],
+      engineeringReason: 'Deep fillet cold-rolling creates compressive residual stress layers in critical high-stress radius pockets, increasing fatigue life by over 300%.',
+      dataConfidence: 'Verified',
+    },
+    {
+      id: 'turbocharger-assembly',
+      name: 'Twin-Scroll Exhaust Gas Turbocharger',
+      cadId: 'SUB-ENG-04',
+      category: 'Forced Induction & Fluid Dynamics',
+      meshKey: 'engine-turbo',
+      explodeVector: [3.2, 1.5, 0],
+      defaultColor: '#f59e0b',
+      material: {
+        name: 'Inconel 713C (Turbine Wheel) & Billet Forged Titanium (Compressor Wheel)',
+        grade: 'Inconel 713C Nickel Superalloy / Ti-6Al-4V',
+        type: 'Metal',
+        density: '8.0 g/cm³ (Inconel) / 4.43 g/cm³ (Titanium)',
+      },
+      function: 'Harnesses waste thermal/kinetic energy from 950°C exhaust gas to compress ambient air to 1.8 bar boost pressure.',
+      manufacturing: {
+        process: 'Vacuum Investment Casting (Inconel Turbine) + 5-Axis CNC High-Speed Milling from Billet (Titanium Compressor) + VSR (Vibration Sorting Rig) Balancing',
+        machinery: 'Schenck High-Speed Turbo Core Balancer (250,000 RPM)',
+        tolerance: 'Residual dynamic unbalance < 0.005 mg·mm',
+        defectRisks: ['Compressor surge wheel burst at 200k RPM'],
+      },
+      dimensions: { formatted: 'Turbine Ø 48 mm / Compressor Ø 52 mm (Max Speed: 220,000 RPM)' },
+      mechanicalRole: { forces: 'Centrifugal blade tip stress: ~620 MPa; Tip speed exceeds Mach 1.4' },
+      connectedTo: ['cylinder-head'],
+      failureModes: [{ mode: 'Journal bearing oil coking / shaft seizure', cause: 'Hot engine shut-down without cooling idle period', mitigation: 'Water-cooled center bearing housing (CHRA) with electric auxiliary run-on pump', severity: 'Critical' }],
+      engineeringReason: 'Twin-scroll split turbine housing separates exhaust pulses from alternating cylinders (1-4 vs 2-3), eliminating backflow interference and virtually banishing turbo lag.',
+      dataConfidence: 'Verified',
+    },
+  ],
+  materials: [
+    {
+      name: 'A319-T6 Cast Aluminum Alloy',
+      percentage: 45,
+      color: '#94a3b8',
+      category: 'Cast Aluminum-Silicon Alloy',
+      usedIn: ['Cylinder Block', 'Cylinder Head'],
+      properties: [
+        { key: 'Tensile Strength', value: '280 MPa' },
+        { key: 'Thermal Conductivity', value: '140 W/(m·K)' },
+        { key: 'Density', value: '2.79 g/cm³' },
+      ],
+      advantages: ['High thermal dissipation', 'Lightweight mass reduction', 'Good castability for complex sand cores'],
+      disadvantages: ['Lower modulus than iron (71 GPa vs 170 GPa) requires structural reinforcement ribs'],
+      alternatives: ['Compacted Graphite Iron (CGI - stronger but 2x heavier)'],
+      selectionRationale: 'Optimizes vehicle front-axle weight distribution for agile handling while delivering rapid engine warmup.',
+    },
+    {
+      name: 'Inconel 713C (Nickel-Chromium Superalloy)',
+      percentage: 12,
+      color: '#f59e0b',
+      category: 'Precipitation-Hardened Superalloy',
+      usedIn: ['Turbocharger Turbine Wheel', 'Exhaust Valves'],
+      properties: [
+        { key: 'Max Service Temp', value: '1,050 °C (1,922 °F)' },
+        { key: 'Tensile Strength @ 900°C', value: '620 MPa' },
+        { key: 'Creep Rupture Resistance', value: 'Extreme' },
+      ],
+      advantages: ['Maintains structural strength inside glowing 1,000°C exhaust gas streams without oxidation'],
+      disadvantages: ['Extremely difficult to machine; must be cast under vacuum'],
+      alternatives: ['Titanium-Aluminide (TiAl - lighter but brittle)'],
+      selectionRationale: 'Withstands extreme centrifugal forces at 220,000 RPM while bathed in incandescent combustion exhaust.',
+    },
+  ],
+  howItWorks: [
+    {
+      step: 1,
+      title: 'Intake Stroke (0° to 180° Crank Angle)',
+      description: 'Intake valves open. Piston descends, drawing in pressurized boost air (1.8 bar) from the intercooler while direct injectors spray gasoline at 350 bar into the cylinder.',
+      activeComponentIds: ['piston-rod-assembly', 'cylinder-block-assembly'],
+      forcesDescription: 'Manifold pressure: P_boost = 180 kPa absolute; Air-fuel mass ratio: λ = 1.0 (14.7:1 stoichiometric).',
+    },
+    {
+      step: 2,
+      title: 'Compression Stroke (180° to 360° Crank Angle)',
+      description: 'All valves close. Piston rises, compressing the air-fuel mixture by 10.5:1 ratio, raising mixture pressure to 35 bar and temperature to 480°C.',
+      activeComponentIds: ['piston-rod-assembly', 'cylinder-block-assembly'],
+      forcesDescription: 'Polytropic compression work: W = (P2·V2 - P1·V1) / (1 - γ) ≈ 420 Joules.',
+    },
+    {
+      step: 3,
+      title: 'Combustion & Power Stroke (360° to 540° Crank Angle)',
+      description: 'Spark plug fires 12° before Top Dead Center. Flame front propagates at 45 m/s. Pressure spikes to 140 bar, driving the piston downward with 75,000 N of thrust.',
+      activeComponentIds: ['piston-rod-assembly', 'crankshaft-assembly'],
+      forcesDescription: 'Peak combustion force: F = P · A = 14×10^6 Pa · (π/4 · 0.0825^2 m²) = 74,800 N (7.6 metric tons instantaneous force!).',
+    },
+    {
+      step: 4,
+      title: 'Exhaust & Turbo Spooling (540° to 720° Crank Angle)',
+      description: 'Exhaust valves open. Sonic blowdown gas pulses rush through the dual-scroll manifold, spinning the Inconel turbine wheel up to 200,000 RPM.',
+      activeComponentIds: ['turbocharger-assembly', 'crankshaft-assembly'],
+      forcesDescription: 'Exhaust gas temperature: 950°C; Turbocharger power extraction: ~25 kW to drive compressor.',
+    },
+  ],
+  engineeringEquations: [
+    {
+      id: 'eq-otto-efficiency',
+      title: 'Thermal Efficiency of Air-Standard Otto Cycle',
+      discipline: 'Thermal',
+      latex: '\\eta_{thermal} = 1 - \\frac{1}{r_c^{\\gamma - 1}}',
+      explanation: 'Calculates the ideal thermodynamic efficiency limit of the internal combustion engine based on compression ratio (r_c) and heat capacity ratio of air (γ = 1.4).',
+      variables: [
+        { symbol: 'η', name: 'Thermal Efficiency', unit: '%', objectValue: '38.2% (Brake Thermal Efficiency)' },
+        { symbol: 'r_c', name: 'Static Compression Ratio', unit: '-', objectValue: '10.5 : 1' },
+        { symbol: 'γ', name: 'Specific Heat Ratio (Air)', unit: '-', objectValue: '1.40' },
+      ],
+      interactiveCalculator: {
+        calculate: (inputs) => {
+          const { compressionRatio, boostBar } = inputs;
+          const gamma = 1.4;
+          const idealEff = (1 - 1 / Math.pow(compressionRatio, gamma - 1)) * 100;
+          const brakeEff = idealEff * 0.62; // Real-world mechanical & heat losses
+          const powerHp = (140 * (1 + boostBar) * (compressionRatio / 10.0)).toFixed(0);
+          return {
+            result: brakeEff,
+            unit: '%',
+            formatted: `Brake Efficiency: ${brakeEff.toFixed(1)}% (${powerHp} HP Output)`,
+            interpretation: compressionRatio > 12 && boostBar > 1.2 ? 'Critical Knock Risk: Severe pre-ignition detonation unless running 100+ Octane race fuel!' : 'Safe high-efficiency forced-induction calibration.',
+          };
+        },
+        inputs: [
+          { key: 'compressionRatio', label: 'Compression Ratio (r_c)', min: 8.5, max: 13.5, step: 0.5, default: 10.5, unit: ':1' },
+          { key: 'boostBar', label: 'Turbo Boost Gauge Pressure', min: 0.2, max: 2.5, step: 0.1, default: 1.2, unit: 'bar' },
+        ],
+      },
+    },
+    {
+      id: 'eq-piston-acceleration',
+      title: 'Kinematic Piston Acceleration & Inertia Force',
+      discipline: 'Mechanical',
+      latex: 'a(\\theta) = r \\cdot \\omega^2 \\left( \\cos \\theta + \\frac{r}{L} \\cos 2\\theta \\right)',
+      explanation: 'Calculates the extreme reciprocating G-forces experienced by the piston crown at engine redline (7,000 RPM) at Top Dead Center.',
+      variables: [
+        { symbol: 'a_max', name: 'Peak Piston Acceleration', unit: 'm/s²', objectValue: '24,500 m/s² (2,500 Gs)' },
+        { symbol: 'ω', name: 'Crank Angular Velocity', unit: 'rad/s', objectValue: '733 rad/s (7,000 RPM)' },
+        { symbol: 'r', name: 'Crank Throw Radius', unit: 'mm', objectValue: '46.4 mm' },
+        { symbol: 'L', name: 'Connecting Rod Length', unit: 'mm', objectValue: '144.0 mm' },
+      ],
+    },
+  ],
+  manufacturingTimeline: [
+    {
+      stepNumber: 1,
+      stageName: 'Block Casting & Thermal Ageing',
+      description: 'Molten A319 aluminum alloy injected under 800-ton locking pressure into steel molds with grey iron liner inserts preheated to 200°C.',
+      machinery: 'Bühler 800-ton Die Casting Cell',
+      tolerance: '±0.15 mm on rough casting',
+      materialReq: 'A319 Aluminum Ingot + Iron Liners',
+      qualityChecks: ['X-Ray computed tomography (CT) scan for sand void porosity'],
+      commonDefects: ['Cold shuts along oil passages'],
+    },
+    {
+      stepNumber: 2,
+      stageName: 'Plateau Honing of Cylinder Liners',
+      description: 'Diamond honing stones rotate and stroke in synchronized helical pattern to produce 45° cross-hatch micro-grooves that hold engine oil films.',
+      machinery: 'Nagel Automated CNC Plateau Honing Machine',
+      tolerance: 'Cylindricity: 0.003 mm; Roughness: Rpk 0.2 μm / Rvk 1.2 μm',
+      materialReq: 'Grey Cast Iron Liners',
+      qualityChecks: ['Air-gage multi-plane diameter laser profilometer'],
+      commonDefects: ['Hone angle asymmetry causing excessive oil consumption'],
+    },
+  ],
+  relationships: [
+    { sourceId: 'piston-rod-assembly', targetId: 'crankshaft-assembly', interactionType: 'pushes', description: 'Transfers downward combustion gas force into rotating crankshaft torque.' },
+    { sourceId: 'crankshaft-assembly', targetId: 'cylinder-block-assembly', interactionType: 'supports', description: 'Rides on hydrodynamic pressurized oil film inside main journal bearings.' },
+    { sourceId: 'cylinder-head', targetId: 'turbocharger-assembly', interactionType: 'transfers', description: 'Channels 950°C exhaust gas pulses directly into the turbine housing.' },
+  ],
+  whatIfParameters: [
+    {
+      id: 'param-boost-pressure',
+      label: 'Turbocharger Boost Gauge Pressure',
+      component: 'Turbocharger',
+      min: 0.4,
+      max: 2.6,
+      defaultValue: 1.2,
+      unit: 'bar',
+      impactMetrics: [
+        {
+          name: 'Peak Engine Horsepower',
+          calculate: (val) => {
+            const pct = Math.round(((val - 1.2) / 1.2) * 55);
+            return {
+              changePercent: pct,
+              valueStr: `${(280 + (val - 1.2) * 110).toFixed(0)} BHP`,
+              status: val > 2.0 ? 'warning' : 'optimal',
+              explanation: val > 2.0 ? 'Extreme cylinder pressure (>170 bar) requires forged pistons and high-octane fuel.' : 'Safe factory boost calibration.',
+            };
+          },
+        },
+      ],
+    },
+  ],
+  didYouKnow: [
+    'At 7,000 RPM, each piston changes direction 233 times per second, experiencing peak accelerations of 2,500 Gs—meaning a 320-gram piston momentarily pulls the equivalent of 800 kilograms of inertia force!',
+    'The turbine wheel inside the turbocharger spins at over 220,000 RPM, with the blade tips traveling faster than the speed of sound while glowing cherry-red at 950°C.',
+    'Engine oil is forced through journal bearings under 4 bar of pressure, creating a hydrodynamic liquid wedge just 0.003 mm thick that prevents metal-to-metal contact even under 7 metric tons of piston thrust.',
+  ],
+  engineersChoice: [
+    {
+      title: 'Why Cross-Hatch Plateau Honing on Cylinder Walls?',
+      rationale: 'Mirror-smooth cylinders would cause piston rings to wipe away all oil, leading to catastrophic metal-on-metal seizure in minutes. Plateau honing cuts microscopic valleys that store a reservoir of oil while leaving flat "plateaus" to support ring pressure.',
+    },
+  ],
+  redesignInsights: {
+    simplify: {
+      title: 'Electric Turbo-Supercharger (e-Turbo)',
+      partReduction: 'Replaces complex twin-scroll mechanical wastegates with a 48V 100,000 RPM electric motor on the turbo shaft.',
+      description: 'Eliminates turbo lag entirely by instantly spooling the compressor in 0.2 seconds before exhaust gases build pressure.',
+      tradeoffs: 'Requires 48V mild-hybrid lithium battery pack and high-current power inverter.',
+    },
+    makeItBetter: {
+      title: 'Dry-Sump Lubrication + Single-Crystal Titanium Rods',
+      upgrade: 'Replaces wet oil pan with external multi-stage scavenge pump and Ti-6Al-4V connecting rods.',
+      performanceGain: 'Allows lowering engine center-of-gravity by 85 mm and raises safe engine redline to 9,000 RPM.',
+      description: 'Eliminates oil starvation during high-G lateral cornering on race tracks.',
+    },
+    cheaperVersion: {
+      title: 'Cast-Iron Block Naturally Aspirated (Port Injected)',
+      costReduction: 'Estimated -45% total engine cost',
+      changes: 'Eliminate turbocharger, intercooler, high-pressure 350-bar fuel pumps, and forged internals.',
+      tradeoffs: 'Produces 40% less torque and 30% worse fuel efficiency.',
+    },
+  },
+  aiSuggestedQuestions: [
+    'How does a turbocharger generate horsepower from waste exhaust gas?',
+    'What keeps the engine bearings from grinding to dust under 7 tons of piston force?',
+    'Why do piston rings need cross-hatch hone marks on the cylinder wall?',
+    'What is engine knock (detonation) and how do modern ECUs prevent it?',
+    'How does Variable Valve Timing (VVT) alter cam profiles on the fly?',
+  ],
+};
