@@ -8,6 +8,8 @@ export interface ModelMeshMapping {
   explodeStart?: number;
   explodeEnd?: number;
   color?: string;
+  /** Optional aliases for one logical component mapped to several render meshes. */
+  sourceMeshNames?: string[];
 }
 
 export interface ModelAssetConfig {
@@ -26,6 +28,8 @@ export interface ModelAssetConfig {
   initialRotation?: [number, number, number];
   initialOffset?: [number, number, number];
   defaultCameraDistance?: number;
+  /** Optional peak time for a native explode animation before its authored reassembly segment. */
+  nativeExplodePeakTime?: number;
   meshMappings?: Record<string, ModelMeshMapping>;
   // Fallback / procedural component nodes if GLB not loaded or for procedural models
   rootComponents?: ComponentNode[];
@@ -237,4 +241,41 @@ export const MODEL_ASSETS: Record<string, ModelAssetConfig> = {
     targetMaxDimension: 6.0,
     defaultCameraDistance: 9.5,
   },
+
+  // ==========================================
+  // 8. QUADCOPTER DRONE (Animated GLB)
+  // ==========================================
+  'drone': {
+    objectId: 'drone',
+    displayName: 'Quadcopter Drone',
+    type: 'gltf',
+    modelPath: '/models/drone/animated_drone.glb',
+    // The supplied asset is skinned. Its native assembled geometry is roughly
+    // 25.3 units wide, so normalize it to a presentation-sized 7.8-unit model.
+    targetMaxDimension: 13.0,
+    initialRotation: [0, 0, 0],
+    initialOffset: [0, 0, 0],
+    defaultCameraDistance: 10.2,
+    nativeExplodePeakTime: 2.0,
+    // Every render mesh is intentionally assigned to a meaningful assembly.
+    // Raw Object_### names never reach the UI.
+    meshMappings: {
+      'top-structure': { componentId:'drone-top-structure', displayName:'Top Electronics Cover & Plates', category:'Structural / Avionics', explodeVector:[0,2.5,0.3], explodeStart:0.02, explodeEnd:0.42, sourceMeshNames:['Object_96','Object_99','Object_102'] },
+      'top-board': { componentId:'drone-top-board', displayName:'Top Control Board', category:'Electronics', explodeVector:[0,3.2,0.9], explodeStart:0.08, explodeEnd:0.48, sourceMeshNames:['Object_105','Object_108','Object_111','Object_114','Object_117'] },
+      'flight-electronics': { componentId:'drone-flight-electronics', displayName:'Flight Electronics Stack', category:'Avionics', explodeVector:[0,1.1,3.1], explodeStart:0.12, explodeEnd:0.52, sourceMeshNames:['Object_120'] },
+      'receiver': { componentId:'drone-receiver', displayName:'Receiver & Input Module', category:'Communications', explodeVector:[-3.0,1.0,2.0], explodeStart:0.16, explodeEnd:0.58, sourceMeshNames:['Object_123','Object_126'] },
+      'battery': { componentId:'drone-battery', displayName:'Rechargeable Battery Pack & Connector', category:'Power System', explodeVector:[0,-3.8,0.6], explodeStart:0.18, explodeEnd:0.62, sourceMeshNames:['Object_129','Object_132'] },
+      'bottom-frame': { componentId:'drone-bottom-frame', displayName:'Central Bottom Frame & Standoffs', category:'Structural Chassis', explodeVector:[0,-0.8,-3.4], explodeStart:0.22, explodeEnd:0.66, sourceMeshNames:['Object_135','Object_138','Object_141','Object_144','Object_147','Object_150','Object_153','Object_156'] },
+      'lower-body': { componentId:'drone-lower-body', displayName:'Lower Body Shell & Ventilation', category:'Structural Enclosure', explodeVector:[0,-2.6,-0.4], explodeStart:0.26, explodeEnd:0.68, sourceMeshNames:['Object_159','Object_162'] },
+      'upper-body': { componentId:'drone-upper-body', displayName:'Upper Body Shell', category:'Structural Enclosure', explodeVector:[0,3.4,-0.3], explodeStart:0.30, explodeEnd:0.72, sourceMeshNames:['Object_165'] },
+      'camera-base': { componentId:'drone-camera-base', displayName:'Camera Mount & Base', category:'Payload Mount', explodeVector:[0,-2.3,2.8], explodeStart:0.34, explodeEnd:0.76, sourceMeshNames:['Object_168','Object_171','Object_174','Object_177','Object_180'] },
+      'camera': { componentId:'drone-camera', displayName:'Camera Assembly & Retaining Screws', category:'Imaging Payload', explodeVector:[0,-4.0,3.8], explodeStart:0.38, explodeEnd:0.80, sourceMeshNames:['Object_183','Object_186','Object_189','Object_192'] },
+      'landing-gear': { componentId:'drone-landing-gear', displayName:'Landing Gear Set', category:'Landing Structure', explodeVector:[0,-4.3,-1.8], explodeStart:0.42, explodeEnd:0.84, sourceMeshNames:['Object_195','Object_198','Object_201','Object_204'] },
+      'propellers': { componentId:'drone-propeller-group', displayName:'Propeller Set (4 Rotors)', category:'Propulsion', explodeVector:[0,4.5,0], explodeStart:0.46, explodeEnd:0.86, sourceMeshNames:['Object_207','Object_216','Object_225','Object_234'] },
+      'motors': { componentId:'drone-motor-group', displayName:'Brushless Motor Assemblies (4)', category:'Propulsion', explodeVector:[0,2.7,0], explodeStart:0.50, explodeEnd:0.90, sourceMeshNames:['Object_213','Object_222','Object_231','Object_240'] },
+      'prop-fasteners': { componentId:'drone-prop-fasteners', displayName:'Propeller Bolts, Nuts & Caps', category:'Mechanical Fastening', explodeVector:[0,5.8,0], explodeStart:0.54, explodeEnd:0.94, sourceMeshNames:['Object_210','Object_219','Object_228','Object_237','Object_243','Object_246','Object_249','Object_252','Object_255','Object_258','Object_261','Object_264'] },
+      'motor-mounts': { componentId:'drone-motor-mounts', displayName:'Motor Mounts & Fasteners', category:'Structural Interface', explodeVector:[0,1.3,-2.9], explodeStart:0.58, explodeEnd:0.98, sourceMeshNames:['Object_267','Object_270','Object_273','Object_276','Object_279','Object_282','Object_285','Object_288','Object_291','Object_294','Object_297','Object_300','Object_303','Object_306','Object_309','Object_312','Object_315','Object_318','Object_321','Object_324'] },
+    },
+  },
+
 };

@@ -3,6 +3,7 @@ import { ObjectBreakdownData, DepthLevel, ViewMode3D, ComponentNode } from '../.
 import { WorkspaceHeader } from './WorkspaceHeader';
 import { ComponentTree } from './ComponentTree';
 import { ThreeCanvas } from './viewer3d/ThreeCanvas';
+import { DroneCanvas } from './viewer3d/DroneCanvas';
 import { ViewportToolbar } from './viewer3d/ViewportToolbar';
 import { CalipersTool } from './viewer3d/CalipersTool';
 import { InspectorTabs, InspectorTabType } from './inspector/InspectorTabs';
@@ -179,19 +180,35 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
         {/* CENTER PANEL: Interactive 3D WebGL Workbench */}
         <div className="workspace-viewport flex-1 h-full relative bg-[#06080d] cad-grid overflow-hidden">
-          <ThreeCanvas
-            objectData={currentObject}
-            selectedComponentId={selectedComponentId}
-            onSelectComponent={handleSelectComponent}
-            hoveredComponentId={hoveredComponentId}
-            onHoverComponent={setHoveredComponentId}
-            explodeAmount={explodeAmount}
-            viewMode={viewMode}
-            isPlayingMechanism={isPlayingMechanism}
-            isolatedComponentId={isolatedComponentId}
-            hiddenComponentIds={hiddenComponentIds}
-            showLeaderLines={showLeaderLines}
-          />
+          {currentObject.id === 'drone' ? (
+            <DroneCanvas
+              objectData={currentObject}
+              selectedComponentId={selectedComponentId}
+              onSelectComponent={handleSelectComponent}
+              hoveredComponentId={hoveredComponentId}
+              onHoverComponent={setHoveredComponentId}
+              explodeAmount={explodeAmount}
+              viewMode={viewMode}
+              isPlayingMechanism={isPlayingMechanism}
+              isolatedComponentId={isolatedComponentId}
+              hiddenComponentIds={hiddenComponentIds}
+              showLeaderLines={showLeaderLines}
+            />
+          ) : (
+            <ThreeCanvas
+              objectData={currentObject}
+              selectedComponentId={selectedComponentId}
+              onSelectComponent={handleSelectComponent}
+              hoveredComponentId={hoveredComponentId}
+              onHoverComponent={setHoveredComponentId}
+              explodeAmount={explodeAmount}
+              viewMode={viewMode}
+              isPlayingMechanism={isPlayingMechanism}
+              isolatedComponentId={isolatedComponentId}
+              hiddenComponentIds={hiddenComponentIds}
+              showLeaderLines={showLeaderLines}
+            />
+          )}
 
           {/* Calipers Overlay Tool */}
           {showCalipers && (

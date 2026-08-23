@@ -1,111 +1,40 @@
-# OBJECT//BREAKDOWN
+# React + TypeScript + Vite
 
-> **Explore what’s inside. Understand how it works.**
+This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
-An interactive 3D engineering platform that lets users explore the internal components, materials, mechanisms, and design principles behind everyday objects.
+Currently, two official plugins are available:
 
-Instead of just showing an object from the outside, **OBJECT//BREAKDOWN** allows users to inspect it through interactive 3D models, exploded views, component annotations, and detailed engineering information.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
----
+## React Compiler
 
-## 🚀 Overview
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-OBJECT//BREAKDOWN is designed to make engineering and product design more visual and interactive.
+## Expanding the Oxlint configuration
 
-Users can explore objects such as:
+If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
 
-- 📱 Smartphone
-- ⌚ Mechanical Watch
-- 🖊️ Ballpoint Pen
-- ⌨️ Keyboard Components
+```json
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "oxc"],
+  "options": {
+    "typeAware": true
+  },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+  }
+}
+```
 
-Each object can be explored through an interactive 3D environment where users can understand:
+See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
 
-- What components an object contains
-- How those components fit together
-- What each component does
-- Materials used in the design
-- How mechanisms operate
-- Manufacturing and engineering considerations
 
----
+## V6 polish fixes
 
-## ✨ Features
-
-### Interactive 3D Models
-Rotate, zoom, and inspect objects directly in the browser.
-
-### Exploded Views
-Separate components to reveal the internal structure and assembly of an object.
-
-### Component Annotations
-Interactive technical labels identify individual components and connect them to their corresponding parts.
-
-### Detailed Component Information
-Click on a component to explore information such as:
-
-- Role and function
-- How it works
-- Materials
-- Manufacturing
-- Engineering principles
-- Specifications
-- Failure considerations
-
-### Multiple Learning Depths
-
-Choose how deeply you want to explore an object:
-
-| Mode | Description |
-|---|---|
-| **Quick** | A fast overview of the object and its major components |
-| **Detailed** | Explore components, materials, and mechanisms |
-| **Engineering** | Deeper analysis of materials, manufacturing, and performance |
-| **Expert** | Advanced engineering concepts, analysis, and design trade-offs |
-
-### Interactive Exploration
-
-The application includes tools for:
-
-- Exploding and reassembling objects
-- Selecting components
-- Isolating parts
-- Focusing the camera
-- Inspecting assemblies
-- Exploring component hierarchies
-
-### Light & Dark Mode
-A complete light and dark interface designed for comfortable exploration in different environments.
-
----
-
-## 🛠️ Tech Stack
-
-- **React**
-- **TypeScript**
-- **Vite**
-- **Three.js**
-- **React Three Fiber**
-- **React Three Drei**
-- **Tailwind CSS**
-- **Lucide Icons**
-
----
-
-## 📂 Project Structure
-
-```text
-object-breakdown/
-│
-├── public/                 # Static assets and 3D models
-├── src/
-│   ├── components/         # UI and application components
-│   ├── data/               # Object and component information
-│   ├── hooks/              # Custom React hooks
-│   ├── types/              # TypeScript type definitions
-│   ├── utils/              # Utility functions
-│   └── ...
-│
-├── package.json
-├── vite.config.ts
-└── README.md
+- Replaced frame-to-frame exploded-pose interpolation with deterministic pose updates to stop the wristwatch parts from wobbling, drifting, or visually tearing during explode scrubbing. Mechanism animation is now layered on top of the stable exploded pose.
+- Increased initial presentation camera distance and widened the zoom range so objects no longer open overly zoomed-in.
+- Component trees now recursively open on object selection. The Ballpoint Pen now exposes its cartridge, return spring, click cam, writing tip, and tungsten-carbide ball directly in the component hierarchy, so these options do not need to be manually discovered.
+- Added explicit CSS for the landing object icons and forced the layer-card icon container to use true geometric centering.

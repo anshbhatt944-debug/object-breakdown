@@ -6,6 +6,7 @@ import { mechanicalKeyboardData } from './objects/mechanicalKeyboard';
 import { smartphoneData } from './objects/smartphone';
 import { carEngineData } from './objects/carEngine';
 import { jetTurbineData } from './objects/jetTurbine';
+import { droneData } from './objects/drone';
 import { generateCustomObjectBreakdown } from './aiObjectGenerator';
 
 export const ALL_OBJECTS: ObjectBreakdownData[] = [
@@ -16,6 +17,7 @@ export const ALL_OBJECTS: ObjectBreakdownData[] = [
   electricMotorData,
   carEngineData,
   jetTurbineData,
+  droneData,
 ];
 
 export const POPULAR_OBJECT_IDS = [
