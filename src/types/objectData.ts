@@ -1,13 +1,32 @@
 export type DepthLevel = 'quick' | 'detailed' | 'engineering' | 'expert';
 
-export type ViewMode3D = 'solid' | 'xray' | 'section' | 'wireframe' | 'stress' | 'thermal';
+export type ViewMode3D =
+  | 'solid'
+  | 'xray'
+  | 'section'
+  | 'wireframe'
+  | 'stress'
+  | 'thermal';
 
-export type ConfidenceLevel = 'Verified' | 'Typical' | 'Estimated' | 'Model-dependent' | 'Unknown';
+export type ConfidenceLevel =
+  | 'Verified'
+  | 'Typical'
+  | 'Estimated'
+  | 'Model-dependent'
+  | 'Unknown';
 
 export interface ComponentMaterial {
   name: string;
   grade: string;
-  type: 'Metal' | 'Polymer' | 'Ceramic' | 'Composite' | 'Semiconductor' | 'Fluid' | 'Elastomer' | 'Glass';
+  type:
+    | 'Metal'
+    | 'Polymer'
+    | 'Ceramic'
+    | 'Composite'
+    | 'Semiconductor'
+    | 'Fluid'
+    | 'Elastomer'
+    | 'Glass';
   density: string;
   tensileStrength?: string;
   elasticModulus?: string;
@@ -55,27 +74,34 @@ export interface ComponentNode {
   category: string;
   parentId?: string;
   children?: ComponentNode[];
+
   meshKey: string;
-  explodeVector: [number, number, number]; // [x, y, z] direction and scale
+  explodeVector: [number, number, number];
+
   defaultColor: string;
   roughness?: number;
   metalness?: number;
   opacity?: number;
   transparent?: boolean;
+
   material: ComponentMaterial;
   function: string;
   manufacturing: ComponentManufacturing;
   dimensions: ComponentDimensions;
   mechanicalRole: MechanicalRole;
-  connectedTo: string[]; // List of component IDs
+
+  connectedTo: string[];
   failureModes: FailureMode[];
+
   engineeringReason: string;
   dataConfidence: ConfidenceLevel;
+
   sourceMeshName?: string;
   technicalNotes?: string[];
   inspectionPoints?: string[];
   interfaces?: string[];
   designPrinciples?: string[];
+
   evidence?: string;
   confidenceReason?: string;
 }
@@ -86,7 +112,12 @@ export interface MaterialItem {
   color: string;
   category: string;
   usedIn: string[];
-  properties: { key: string; value: string }[];
+
+  properties: {
+    key: string;
+    value: string;
+  }[];
+
   advantages: string[];
   disadvantages: string[];
   alternatives: string[];
@@ -104,13 +135,43 @@ export interface KinematicStep {
 export interface EngineeringEquation {
   id: string;
   title: string;
-  discipline: 'Mechanical' | 'Electrical' | 'Thermal' | 'Fluid Mechanics' | 'Materials';
+
+  discipline:
+    | 'Mechanical'
+    | 'Electrical'
+    | 'Thermal'
+    | 'Fluid Mechanics'
+    | 'Materials';
+
   latex: string;
   explanation: string;
-  variables: { symbol: string; name: string; unit: string; objectValue?: string }[];
+
+  variables: {
+    symbol: string;
+    name: string;
+    unit: string;
+    objectValue?: string;
+  }[];
+
   interactiveCalculator?: {
-    calculate: (inputs: Record<string, number>) => { result: number; unit: string; formatted: string; interpretation: string };
-    inputs: { key: string; label: string; min: number; max: number; step: number; default: number; unit: string }[];
+    calculate: (
+      inputs: Record<string, number>
+    ) => {
+      result: number;
+      unit: string;
+      formatted: string;
+      interpretation: string;
+    };
+
+    inputs: {
+      key: string;
+      label: string;
+      min: number;
+      max: number;
+      step: number;
+      default: number;
+      unit: string;
+    }[];
   };
 }
 
@@ -128,7 +189,18 @@ export interface ManufacturingStage {
 export interface RelationshipLink {
   sourceId: string;
   targetId: string;
-  interactionType: 'pushes' | 'rotates' | 'seals' | 'conducts' | 'locks' | 'dampens' | 'supports' | 'transfers' | 'couples';
+
+  interactionType:
+    | 'pushes'
+    | 'rotates'
+    | 'seals'
+    | 'conducts'
+    | 'locks'
+    | 'dampens'
+    | 'supports'
+    | 'transfers'
+    | 'couples';
+
   description: string;
 }
 
@@ -136,13 +208,23 @@ export interface WhatIfParameter {
   id: string;
   label: string;
   component: string;
+
   min: number;
   max: number;
   defaultValue: number;
   unit: string;
+
   impactMetrics: {
     name: string;
-    calculate: (val: number) => { changePercent: number; valueStr: string; status: 'optimal' | 'warning' | 'critical'; explanation: string };
+
+    calculate: (
+      val: number
+    ) => {
+      changePercent: number;
+      valueStr: string;
+      status: 'optimal' | 'warning' | 'critical';
+      explanation: string;
+    };
   }[];
 }
 
@@ -153,6 +235,7 @@ export interface ObjectBreakdownData {
   subtitle: string;
   heroTagline: string;
   thumbnail: string;
+
   complexityScore: {
     overall: number;
     mechanical: number;
@@ -161,6 +244,7 @@ export interface ObjectBreakdownData {
     manufacturing: number;
     assembly: number;
   };
+
   stats: {
     componentCount: number;
     materialCount: number;
@@ -169,8 +253,10 @@ export interface ObjectBreakdownData {
     approxCostUsd: string;
     productionVolume: string;
   };
+
   summary: string;
   engineeringDisciplines: string[];
+
   rootComponents: ComponentNode[];
   materials: MaterialItem[];
   howItWorks: KinematicStep[];
@@ -178,12 +264,37 @@ export interface ObjectBreakdownData {
   manufacturingTimeline: ManufacturingStage[];
   relationships: RelationshipLink[];
   whatIfParameters: WhatIfParameter[];
+
   didYouKnow: string[];
-  engineersChoice: { title: string; rationale: string }[];
+
+  engineersChoice: {
+    title: string;
+    rationale: string;
+  }[];
+
   redesignInsights: {
-    simplify: { title: string; partReduction: string; description: string; tradeoffs: string };
-    makeItBetter: { title: string; upgrade: string; performanceGain: string; description: string };
-    cheaperVersion: { title: string; costReduction: string; changes: string; tradeoffs: string };
+    simplify: {
+      title: string;
+      partReduction: string;
+      description: string;
+      tradeoffs: string;
+    };
+
+    makeItBetter: {
+      title: string;
+      upgrade: string;
+      performanceGain: string;
+      description: string;
+      tradeoffs?: string;
+    };
+
+    cheaperVersion: {
+      title: string;
+      costReduction: string;
+      changes: string;
+      tradeoffs: string;
+    };
   };
+
   aiSuggestedQuestions: string[];
 }
