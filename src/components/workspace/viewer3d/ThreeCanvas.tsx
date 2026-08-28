@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { ObjectBreakdownData, ViewMode3D } from '../../../types/objectData';
-import { load3DModelForObject, applyViewModeToModel, LoadedComponentMeshInfo } from './ModelLoader';
+import { load3DModelForObject, loadUploaded3DModel, applyViewModeToModel, LoadedComponentMeshInfo } from './ModelLoader';
 import { Box, Sparkles } from 'lucide-react';
 import { iphone14ProReferenceAnnotations } from '../../../data/smartphoneReference';
 
@@ -17,6 +17,7 @@ interface ThreeCanvasProps {
   isolatedComponentId: string | null;
   hiddenComponentIds: Set<string>;
   showLeaderLines: boolean;
+  uploadedModel?: { url: string; fileName: string } | null;
 }
 
 interface LeaderLineAnnotation {
@@ -35,6 +36,333 @@ interface LeaderLineAnnotation {
   side?: 'front' | 'back' | 'edge';
 }
 
+
+/**
+ * Geometry-driven exploded layout for uploaded assemblies.
+ *
+ * This deliberately does NOT depend on names such as "lens", "camera" or
+ * "battery". AI labels are useful for the UI, but explode geometry must work
+ * for arbitrary uploaded GLB/GLTF assets. The largest assembly becomes the
+ * visual reference; the dominant separation axis is inferred from the real
+ * component centres; every other assembly is then spread along that axis with
+ * a small geometry-derived perpendicular offset.
+ */
+interface ProgressiveSubpartInfo {
+  id: string;
+  parentId: string;
+  mesh: THREE.Mesh;
+  basePosition: THREE.Vector3;
+  baseRotation: THREE.Euler;
+  baseScale: THREE.Vector3;
+  explodeVector: THREE.Vector3;
+  explodeStart: number;
+  explodeEnd: number;
+}
+
+type MeasuredAssembly = {
+  id: string;
+  info: LoadedComponentMeshInfo;
+  box: THREE.Box3;
+  center: THREE.Vector3;
+  size: THREE.Vector3;
+  volume: number;
+};
+
+function farthestAxis(points: THREE.Vector3[], fallback: THREE.Vector3) {
+  let bestA: THREE.Vector3 | null = null;
+  let bestB: THREE.Vector3 | null = null;
+  let bestDistance = 0;
+
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const distance = points[i].distanceToSquared(points[j]);
+      if (distance > bestDistance) {
+        bestDistance = distance;
+        bestA = points[i];
+        bestB = points[j];
+      }
+    }
+  }
+
+  const axis = bestA && bestB
+    ? bestB.clone().sub(bestA)
+    : fallback.clone();
+
+  if (axis.lengthSq() < 1e-8) axis.copy(fallback);
+  if (axis.lengthSq() < 1e-8) axis.set(1, 0, 0);
+  return axis.normalize();
+}
+
+function longestBoxAxis(size: THREE.Vector3) {
+  if (size.x >= size.y && size.x >= size.z) return new THREE.Vector3(1, 0, 0);
+  if (size.y >= size.x && size.y >= size.z) return new THREE.Vector3(0, 1, 0);
+  return new THREE.Vector3(0, 0, 1);
+}
+
+function worldVectorToParentLocal(mesh: THREE.Object3D, vector: THREE.Vector3) {
+  const parent = mesh.parent;
+  if (!parent) return vector.clone();
+
+  const local = vector.clone();
+  const parentQuaternion = parent.getWorldQuaternion(new THREE.Quaternion()).invert();
+  const parentScale = parent.getWorldScale(new THREE.Vector3(1, 1, 1));
+  local.applyQuaternion(parentQuaternion);
+  local.set(
+    local.x / Math.max(Math.abs(parentScale.x), 1e-6),
+    local.y / Math.max(Math.abs(parentScale.y), 1e-6),
+    local.z / Math.max(Math.abs(parentScale.z), 1e-6)
+  );
+  return local;
+}
+
+function applyUploadedExplodeLayout(
+  componentMap: Map<string, LoadedComponentMeshInfo>,
+  root: THREE.Object3D
+) {
+  const entries = Array.from(componentMap.entries())
+    .filter(([, info]) => !info.mesh.userData?.supplemental);
+  if (entries.length < 2) return;
+
+  root.updateWorldMatrix(true, true);
+
+  const measured: MeasuredAssembly[] = entries.flatMap(([id, info]) => {
+    const box = new THREE.Box3().setFromObject(info.mesh);
+    if (box.isEmpty()) return [];
+    const size = box.getSize(new THREE.Vector3());
+    return [{
+      id,
+      info,
+      box,
+      size,
+      center: box.getCenter(new THREE.Vector3()),
+      volume: Math.max(size.x * size.y * size.z, 1e-8),
+    }];
+  });
+  if (measured.length < 2) return;
+
+  const rootBox = new THREE.Box3().setFromObject(root);
+  const rootSize = rootBox.getSize(new THREE.Vector3());
+  const rootDiagonal = Math.max(rootSize.length(), 1);
+  const rootCenter = rootBox.getCenter(new THREE.Vector3());
+
+  // Pick a stable visual reference: a large assembly close to the overall centre.
+  const sortedByVolume = measured.slice().sort((a, b) => b.volume - a.volume);
+  const largestVolume = sortedByVolume[0].volume;
+  const anchor = measured
+    .filter((item) => item.volume >= largestVolume * 0.55)
+    .sort((a, b) => a.center.distanceToSquared(rootCenter) - b.center.distanceToSquared(rootCenter))[0]
+    || sortedByVolume[0];
+
+  // The axis is only used to create a small amount of ordered clearance. The main
+  // motion follows each assembly's REAL spatial relationship to the reference,
+  // which keeps arbitrary models readable instead of scattering them randomly.
+  const axis = farthestAxis(
+    measured.filter((item) => item !== anchor).map((item) => item.center),
+    longestBoxAxis(rootSize)
+  );
+
+  const ordered = measured
+    .filter((item) => item !== anchor)
+    .map((item) => ({ item, projection: item.center.clone().sub(anchor.center).dot(axis) }))
+    .sort((a, b) => a.projection - b.projection);
+
+  const rankById = new Map<string, number>();
+  ordered.forEach((entry, index) => rankById.set(entry.item.id, index));
+
+  measured.forEach((item) => {
+    const worldVector = new THREE.Vector3();
+
+    if (item !== anchor) {
+      const relative = item.center.clone().sub(anchor.center);
+      const relativeDistance = relative.length();
+      const localScale = Math.max(item.size.length(), rootDiagonal * 0.05);
+      const rank = rankById.get(item.id) ?? 0;
+      const normalizedRank = ordered.length <= 1 ? 0.5 : rank / (ordered.length - 1);
+
+      // Primary motion: expand away from the reference while preserving the
+      // uploaded assembly's original layout. Large assemblies receive more room;
+      // tiny assemblies stay close instead of flying across the scene.
+      if (relativeDistance > rootDiagonal * 0.012) {
+        const radial = relative.multiplyScalar(1 / relativeDistance);
+        const radialDistance = Math.min(
+          relativeDistance * 0.42 + localScale * 0.38 + rootDiagonal * 0.055,
+          rootDiagonal * 0.52
+        );
+        worldVector.addScaledVector(radial, radialDistance);
+      } else {
+        // Coincident centres are rare, but can happen in CAD exports. Use the
+        // measured dominant axis with a deterministic rank-based sign, never a
+        // random direction.
+        const sign = rank % 2 === 0 ? -1 : 1;
+        worldVector.addScaledVector(axis, sign * Math.min(localScale * 0.42, rootDiagonal * 0.18));
+      }
+
+      // Secondary clearance along the measured construction axis. This is modest
+      // on purpose: it opens gaps between neighbouring systems without destroying
+      // the object's original silhouette.
+      const projection = item.center.clone().sub(anchor.center).dot(axis);
+      const sign = projection >= 0 ? 1 : -1;
+      const orderedGap = rootDiagonal * (0.045 + normalizedRank * 0.035);
+      worldVector.addScaledVector(axis, sign * orderedGap);
+
+      // Never let a small component outrun a large one purely because it happened
+      // to start far from the anchor.
+      const maxTravel = Math.min(rootDiagonal * 0.68, localScale * 2.2 + rootDiagonal * 0.12);
+      if (worldVector.length() > maxTravel) worldVector.setLength(maxTravel);
+    }
+
+    item.info.explodeVector.copy(worldVectorToParentLocal(item.info.mesh, worldVector));
+    item.info.explodeStart = 0;
+    item.info.explodeEnd = 0.64;
+    item.info.explodedRotation.copy(item.info.baseRotation);
+  });
+}
+
+/**
+ * Stage 2 splits REAL render meshes inside each semantic assembly. The motion is
+ * hierarchical: the parent assembly first reaches its exploded position, then the
+ * child meshes open around that parent. No semantic names or object-specific rules
+ * are used, so the same logic works for cameras, engines, electronics, appliances,
+ * tools and other uploaded GLB/GLTF assemblies.
+ */
+function buildProgressiveSubparts(
+  componentMap: Map<string, LoadedComponentMeshInfo>
+): Map<string, ProgressiveSubpartInfo> {
+  const result = new Map<string, ProgressiveSubpartInfo>();
+
+  componentMap.forEach((info, parentId) => {
+    if (info.mesh.userData?.supplemental) return;
+
+    info.mesh.updateWorldMatrix(true, true);
+    const componentBox = new THREE.Box3().setFromObject(info.mesh);
+    if (componentBox.isEmpty()) return;
+
+    const componentCenter = componentBox.getCenter(new THREE.Vector3());
+    const componentSize = componentBox.getSize(new THREE.Vector3());
+    const componentDiagonal = Math.max(componentSize.length(), 0.25);
+
+    const candidates: Array<{
+      mesh: THREE.Mesh;
+      center: THREE.Vector3;
+      size: THREE.Vector3;
+      volume: number;
+      diagonal: number;
+    }> = [];
+
+    info.mesh.traverse((child) => {
+      if (!(child as THREE.Mesh).isMesh) return;
+      const mesh = child as THREE.Mesh;
+      if (!mesh.geometry || mesh.userData?.supplemental) return;
+
+      // Never animate both a render mesh and one of its render-mesh descendants;
+      // that would apply two nested offsets and is a major source of wild scatter.
+      let hasMeshDescendant = false;
+      for (const nested of mesh.children) {
+        nested.traverse((node) => {
+          if (node !== mesh && (node as THREE.Mesh).isMesh) hasMeshDescendant = true;
+        });
+      }
+      if (hasMeshDescendant) return;
+
+      const box = new THREE.Box3().setFromObject(mesh);
+      if (box.isEmpty()) return;
+      const size = box.getSize(new THREE.Vector3());
+      const volume = Math.max(size.x * size.y * size.z, 1e-10);
+      candidates.push({
+        mesh,
+        center: box.getCenter(new THREE.Vector3()),
+        size,
+        volume,
+        diagonal: Math.max(size.length(), 1e-6),
+      });
+    });
+
+    if (candidates.length < 2) return;
+
+    const maxVolume = Math.max(...candidates.map((item) => item.volume));
+    const chosen = candidates
+      .filter((item) => (
+        item.volume >= maxVolume * 0.0005 ||
+        item.diagonal >= componentDiagonal * 0.055
+      ))
+      .sort((a, b) => b.volume - a.volume)
+      .slice(0, 12);
+
+    if (chosen.length < 2) return;
+
+    const axis = farthestAxis(
+      chosen.map((item) => item.center),
+      longestBoxAxis(componentSize)
+    );
+    const referenceMesh = chosen[0];
+
+    const ordered = chosen
+      .map((item) => ({ item, projection: item.center.clone().sub(componentCenter).dot(axis) }))
+      .sort((a, b) => a.projection - b.projection);
+
+    chosen.forEach((candidate) => {
+      const worldVector = new THREE.Vector3();
+
+      if (candidate !== referenceMesh) {
+        const relative = candidate.center.clone().sub(componentCenter);
+        const distance = relative.length();
+        const sizeRatio = THREE.MathUtils.clamp(candidate.diagonal / componentDiagonal, 0.03, 1);
+
+        // Expand locally around the semantic assembly's own centre. Because this
+        // mesh remains parented to the moving assembly, the final pose is always
+        // parent explode + bounded local detail explode.
+        if (distance > componentDiagonal * 0.01) {
+          const radial = relative.multiplyScalar(1 / distance);
+          const localDistance = Math.min(
+            distance * 0.30 + candidate.diagonal * 0.42 + componentDiagonal * 0.035,
+            componentDiagonal * (0.12 + sizeRatio * 0.22)
+          );
+          worldVector.addScaledVector(radial, localDistance);
+        }
+
+        // Add a small measured-axis clearance. This separates concentric stacks
+        // such as barrels, rings, housings and layered mechanisms without sending
+        // the pieces into unrelated directions.
+        const projection = relative.dot(axis);
+        const sign = projection >= 0 ? 1 : -1;
+        const rank = ordered.findIndex((entry) => entry.item === candidate);
+        const normalizedRank = ordered.length <= 1 ? 0.5 : rank / (ordered.length - 1);
+        worldVector.addScaledVector(
+          axis,
+          sign * componentDiagonal * (0.045 + normalizedRank * 0.055)
+        );
+
+        // Coincident centres still need a deterministic split.
+        if (worldVector.lengthSq() < 1e-8) {
+          const signFromRank = rank % 2 === 0 ? -1 : 1;
+          worldVector.addScaledVector(axis, signFromRank * componentDiagonal * (0.08 + sizeRatio * 0.08));
+        }
+
+        const maxLocalTravel = componentDiagonal * (0.14 + sizeRatio * 0.28);
+        if (worldVector.length() > maxLocalTravel) worldVector.setLength(maxLocalTravel);
+      }
+
+      const id = `${parentId}::detail-${result.size + 1}`;
+      result.set(id, {
+        id,
+        parentId,
+        mesh: candidate.mesh,
+        basePosition: candidate.mesh.position.clone(),
+        baseRotation: candidate.mesh.rotation.clone(),
+        baseScale: candidate.mesh.scale.clone(),
+        explodeVector: worldVectorToParentLocal(candidate.mesh, worldVector),
+        // Parent systems establish the readable global exploded layout first.
+        // Internal detail separation then becomes increasingly visible near the
+        // upper half of the slider, reaching full disassembly at 100%.
+        explodeStart: 0.34,
+        explodeEnd: 1,
+      });
+    });
+  });
+
+  return result;
+}
+
 export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   objectData,
   selectedComponentId,
@@ -47,6 +375,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   isolatedComponentId,
   hiddenComponentIds,
   showLeaderLines,
+  uploadedModel = null,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -57,6 +386,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
 
   const activeRootGroupRef = useRef<THREE.Group | null>(null);
   const componentMapRef = useRef<Map<string, LoadedComponentMeshInfo>>(new Map());
+  const progressiveSubpartsRef = useRef<Map<string, ProgressiveSubpartInfo>>(new Map());
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [annotations, setAnnotations] = useState<LeaderLineAnnotation[]>([]);
@@ -184,13 +514,19 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
       activeRootGroupRef.current = null;
     }
     componentMapRef.current.clear();
+    progressiveSubpartsRef.current.clear();
     activeHoverIdRef.current = null;
 
-    load3DModelForObject(objectData, viewMode).then((result) => {
+    const loadPromise = uploadedModel ? loadUploaded3DModel(uploadedModel.url, objectData, viewMode) : load3DModelForObject(objectData, viewMode);
+    loadPromise.then((result) => {
       if (!isMounted) return;
 
       activeRootGroupRef.current = result.rootGroup;
       componentMapRef.current = result.componentMap;
+      if (uploadedModel) {
+        applyUploadedExplodeLayout(result.componentMap, result.rootGroup);
+        progressiveSubpartsRef.current = buildProgressiveSubparts(result.componentMap);
+      }
       isWatchRef.current = objectData.id === 'wristwatch';
 
       // The watch has a high triangle count and dozens of independently moving
@@ -237,7 +573,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [objectData.id, updateCameraPosition]);
+  }, [objectData.id, uploadedModel?.url, updateCameraPosition]);
 
   // Apply ViewMode changes to model (without reloading)
   useEffect(() => {
@@ -365,6 +701,27 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
             );
           }
         }
+      });
+
+      // Stage 2: split substantial real meshes inside semantic groups. This is
+      // geometry-driven and therefore works for arbitrary uploaded assemblies.
+      progressiveSubpartsRef.current.forEach((subpart) => {
+        const parent = componentMapRef.current.get(subpart.parentId);
+        const parentVisible = Boolean(parent?.mesh.visible);
+        const range = Math.max(0.001, subpart.explodeEnd - subpart.explodeStart);
+        const localProgress = Math.max(
+          0,
+          Math.min(1, (explodeAmount - subpart.explodeStart) / range)
+        );
+        const easedProgress = smoothStep(localProgress);
+
+        subpart.mesh.position.copy(subpart.basePosition).addScaledVector(
+          subpart.explodeVector,
+          easedProgress
+        );
+        subpart.mesh.rotation.copy(subpart.baseRotation);
+        subpart.mesh.scale.copy(subpart.baseScale);
+        subpart.mesh.visible = parentVisible;
       });
 
       // DOM annotations are expensive to update at 60 FPS and can cause the cursor

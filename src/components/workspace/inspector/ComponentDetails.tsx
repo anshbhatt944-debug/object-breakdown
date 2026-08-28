@@ -1,20 +1,19 @@
 import React from 'react';
 import { ComponentNode, DepthLevel } from '../../../types/objectData';
 import {
-  FileText,
-  ShieldCheck,
   Cpu,
+  Eye,
   Factory,
-  Compass,
-  AlertTriangle,
+  FileText,
   Lightbulb,
   Link,
-  ChevronRight,
-  Info,
-  Eye,
-  ListChecks,
+  Ruler,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  Compass,
   Network,
-  BookOpen,
+  Box
 } from 'lucide-react';
 
 interface ComponentDetailsProps {
@@ -23,37 +22,72 @@ interface ComponentDetailsProps {
   onSelectComponentById: (id: string) => void;
 }
 
+const Metric = ({
+  label,
+  value
+}: {
+  label: string;
+  value: React.ReactNode;
+}) => (
+  <div className="p-2.5 rounded-lg bg-black/30 border border-white/5 min-w-0">
+    <div className="text-[9px] uppercase tracking-wider text-slate-500 font-mono-cad">
+      {label}
+    </div>
+
+    <div className="text-xs text-slate-200 font-medium mt-1 break-words">
+      {value}
+    </div>
+  </div>
+);
+
 export const ComponentDetails: React.FC<ComponentDetailsProps> = ({
   component,
   depthLevel,
-  onSelectComponentById,
+  onSelectComponentById
 }) => {
   if (!component) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center text-slate-400 select-none">
-        <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 text-slate-300">
+        <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
           <Compass className="w-6 h-6 text-[#00f2ad] animate-pulse" />
         </div>
-        <h4 className="text-sm font-semibold text-slate-200 mb-1 font-mono-cad">No Component Selected</h4>
+
+        <h4 className="text-sm font-semibold text-slate-200 mb-1 font-mono-cad">
+          No Component Selected
+        </h4>
+
         <p className="text-xs text-slate-500 max-w-xs">
-          Click any component in the 3D model or assembly structure tree to inspect detailed CAD specifications, materials, and forces.
+          Click a component in the 3D model or assembly tree to inspect AI
+          findings and geometry measured directly from the uploaded asset.
         </p>
       </div>
     );
   }
 
   const isQuick = depthLevel === 'quick';
-  const isEngineeringOrExpert = depthLevel === 'engineering' || depthLevel === 'expert';
+
+  const isDetailed =
+    depthLevel === 'detailed' ||
+    depthLevel === 'engineering' ||
+    depthLevel === 'expert';
+
+  const isEngineering =
+    depthLevel === 'engineering' ||
+    depthLevel === 'expert';
+
+  const g = component.geometry;
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full text-slate-300 font-sans">
-      {/* Header */}
-      <div className="flex flex-col gap-2 pb-4 border-b border-white/10">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-mono-cad px-2.5 py-0.5 rounded-full bg-[#00f2ad]/10 border border-[#00f2ad]/30 text-[#00f2ad]">
+    <div className="p-6 space-y-5 overflow-y-auto h-full text-slate-300 font-sans">
+
+      {/* HEADER */}
+      <div className="space-y-2 pb-4 border-b border-white/10">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] font-mono-cad px-2.5 py-1 rounded-full bg-[#00f2ad]/10 border border-[#00f2ad]/30 text-[#00f2ad]">
             {component.cadId}
           </span>
-          <span className="text-[11px] font-mono-cad px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 flex items-center gap-1">
+
+          <span className="text-[10px] font-mono-cad px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 flex items-center gap-1">
             <ShieldCheck className="w-3 h-3 text-[#38bdf8]" />
             {component.dataConfidence}
           </span>
@@ -62,278 +96,330 @@ export const ComponentDetails: React.FC<ComponentDetailsProps> = ({
         <h2 className="text-xl font-bold text-slate-100 tracking-tight font-heading">
           {component.name}
         </h2>
-        <span className="text-xs font-mono-cad text-[#38bdf8] capitalize">
-          Category: {component.category}
-        </span>
-        {component.sourceMeshName && (
-          <span className="text-[10px] font-mono-cad text-slate-500 truncate">
-            Source mesh: {component.sourceMeshName}
+
+        <div className="flex flex-wrap gap-2 text-[10px] font-mono-cad">
+          <span className="text-[#38bdf8]">
+            {component.category}
           </span>
-        )}
+
+          {component.engineeringRole && (
+            <span className="px-2 py-0.5 rounded bg-purple-500/10 border border-purple-400/20 text-purple-300">
+              {component.engineeringRole}
+            </span>
+          )}
+
+          {component.importance && (
+            <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-400/20 text-amber-300">
+              {component.importance} importance
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Function Overview */}
-      <div className="p-4 rounded-xl glass-card border border-white/10 space-y-2">
+      {/* PRIMARY FUNCTION */}
+      <section className="p-4 rounded-xl glass-card border border-white/10 space-y-2">
         <div className="flex items-center gap-2 text-xs font-mono-cad font-semibold text-slate-200 uppercase tracking-wider">
           <FileText className="w-4 h-4 text-[#00f2ad]" />
-          <span>Primary Function</span>
+          Primary Function
         </div>
-        <p className="text-sm text-slate-300 leading-relaxed">{component.function}</p>
-      </div>
 
-      {/* Material & Physical Properties */}
-      <div className="p-4 rounded-xl glass-card border border-white/10 space-y-3">
+        <p className="text-sm text-slate-300 leading-relaxed">
+          {component.function}
+        </p>
+      </section>
+
+      {/* MEASURED GEOMETRY */}
+      {isDetailed && g && (
+        <section className="p-4 rounded-xl glass-card border border-[#38bdf8]/20 bg-[#38bdf8]/[0.02] space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-mono-cad font-semibold text-slate-200 uppercase tracking-wider">
+              <Ruler className="w-4 h-4 text-[#38bdf8]" />
+              Measured Geometry
+            </div>
+
+            <span className="text-[9px] text-[#38bdf8] font-mono-cad">
+              FROM 3D ASSET
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Metric
+              label="Bounding Dimensions"
+              value={g.formatted}
+            />
+
+            <Metric
+              label="Approx. Bounding Volume"
+              value={g.approxBoundingVolume}
+            />
+
+            <Metric
+              label="Triangles"
+              value={g.triangleCount.toLocaleString()}
+            />
+
+            <Metric
+              label="Meshes Grouped"
+              value={g.meshCount}
+            />
+
+            <Metric
+              label="Relative Assembly Size"
+              value={`${g.relativeSizePercent}%`}
+            />
+
+            <Metric
+              label="Center"
+              value={g.center
+                .map((v) => v.toFixed(2))
+                .join(', ')}
+            />
+          </div>
+
+          {g.sourceMaterials.length > 0 && (
+            <div>
+              <div className="text-[9px] uppercase tracking-wider text-slate-500 font-mono-cad mb-1.5">
+                Source Material Names
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                {g.sourceMaterials.map((m) => (
+                  <span
+                    key={m}
+                    className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] text-slate-300"
+                  >
+                    {m}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* MATERIAL */}
+      <section className="p-4 rounded-xl glass-card border border-white/10 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-mono-cad font-semibold text-slate-200 uppercase tracking-wider">
             <Cpu className="w-4 h-4 text-[#38bdf8]" />
-            <span>Material & Properties</span>
+            Material Estimate
           </div>
-          <span className="text-[11px] font-mono-cad text-slate-400">
+
+          <span className="text-[10px] text-slate-500">
             {component.material.type}
           </span>
         </div>
 
-        <div className="p-3 rounded-lg bg-black/40 border border-white/5 flex flex-col gap-1">
-          <span className="text-xs font-semibold text-[#00f2ad] font-mono-cad">
-            {component.material.name}
-          </span>
-          <span className="text-[11px] font-mono-cad text-slate-400">
-            Grade: {component.material.grade}
-          </span>
-        </div>
+        <Metric
+          label="Likely Material"
+          value={component.material.name}
+        />
 
         {!isQuick && (
-          <div className="grid grid-cols-2 gap-2 text-xs font-mono-cad pt-1">
-            <div className="p-2 rounded bg-white/[0.02] border border-white/5">
-              <span className="text-[10px] text-slate-500 block">Density</span>
-              <span className="text-slate-200 font-semibold">{component.material.density}</span>
-            </div>
-            {component.material.tensileStrength && (
-              <div className="p-2 rounded bg-white/[0.02] border border-white/5">
-                <span className="text-[10px] text-slate-500 block">Tensile Strength</span>
-                <span className="text-slate-200 font-semibold">{component.material.tensileStrength}</span>
-              </div>
-            )}
-            {component.material.elasticModulus && (
-              <div className="p-2 rounded bg-white/[0.02] border border-white/5">
-                <span className="text-[10px] text-slate-500 block">Elastic Modulus (E)</span>
-                <span className="text-slate-200 font-semibold">{component.material.elasticModulus}</span>
-              </div>
-            )}
-            {component.material.hardness && (
-              <div className="p-2 rounded bg-white/[0.02] border border-white/5">
-                <span className="text-[10px] text-slate-500 block">Hardness</span>
-                <span className="text-slate-200 font-semibold">{component.material.hardness}</span>
-              </div>
-            )}
+          <div className="grid grid-cols-2 gap-2">
+            <Metric
+              label="Confidence"
+              value={component.material.grade}
+            />
+
+            <Metric
+              label="Density"
+              value={component.material.density}
+            />
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Manufacturing & Dimensions */}
+      {/* MANUFACTURING */}
       {!isQuick && (
-        <div className="p-4 rounded-xl glass-card border border-white/10 space-y-3">
+        <section className="p-4 rounded-xl glass-card border border-white/10 space-y-3">
           <div className="flex items-center gap-2 text-xs font-mono-cad font-semibold text-slate-200 uppercase tracking-wider">
             <Factory className="w-4 h-4 text-amber-400" />
-            <span>Manufacturing & Tolerances</span>
+            Manufacturing Inference
           </div>
 
-          <div className="space-y-2 text-xs">
-            <div className="flex justify-between py-1 border-b border-white/5">
-              <span className="text-slate-400">Process</span>
-              <span className="text-slate-200 font-medium text-right max-w-[200px] truncate">
-                {component.manufacturing.process}
-              </span>
+          <Metric
+            label="Likely Process"
+            value={component.manufacturing.process}
+          />
+
+          <div className="grid grid-cols-2 gap-2">
+            <Metric
+              label="Tolerance Class"
+              value={component.manufacturing.tolerance}
+            />
+
+            <Metric
+              label="Tooling / Machinery"
+              value={
+                component.manufacturing.machinery ||
+                'Model-dependent'
+              }
+            />
+          </div>
+        </section>
+      )}
+
+      {/* KEY INSIGHTS */}
+      {isDetailed &&
+        component.insights &&
+        component.insights.length > 0 && (
+          <section className="p-4 rounded-xl glass-card border border-[#00f2ad]/20 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-mono-cad font-semibold text-slate-200 uppercase tracking-wider">
+              <Sparkles className="w-4 h-4 text-[#00f2ad]" />
+              Key Engineering Insights
             </div>
-            <div className="flex justify-between py-1 border-b border-white/5">
-              <span className="text-slate-400">Tolerance Class</span>
-              <span className="text-[#00f2ad] font-mono-cad font-semibold">
-                {component.manufacturing.tolerance}
-              </span>
+
+            <ul className="space-y-2">
+              {component.insights.map((item, i) => (
+                <li
+                  key={i}
+                  className="text-xs text-slate-300 leading-relaxed pl-3 border-l border-[#00f2ad]/30"
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+      {/* INTERFACES */}
+      {isDetailed &&
+        component.interfaces &&
+        component.interfaces.length > 0 && (
+          <section className="p-4 rounded-xl glass-card border border-purple-400/20 bg-purple-500/[0.02] space-y-3">
+            <div className="flex items-center gap-2 text-xs font-mono-cad font-semibold text-slate-200 uppercase tracking-wider">
+              <Network className="w-4 h-4 text-purple-400" />
+              Interfaces & Integration
             </div>
-            <div className="flex justify-between py-1 border-b border-white/5">
-              <span className="text-slate-400">CAD Dimensions</span>
-              <span className="text-slate-200 font-mono-cad">
-                {component.dimensions.formatted}
-              </span>
+
+            <div className="space-y-2">
+              {component.interfaces.map((item, i) => (
+                <div
+                  key={i}
+                  className="flex gap-2 text-xs text-slate-300 leading-relaxed"
+                >
+                  <span className="text-purple-400 font-bold">
+                    →
+                  </span>
+
+                  <span>{item}</span>
+                </div>
+              ))}
             </div>
-            {component.manufacturing.machinery && (
-              <div className="flex justify-between py-1">
-                <span className="text-slate-400">Factory Tooling</span>
-                <span className="text-slate-300 text-right max-w-[200px] truncate">
-                  {component.manufacturing.machinery}
+          </section>
+        )}
+
+      {/* DESIGN PRINCIPLES */}
+      {isDetailed &&
+        component.designPrinciples &&
+        component.designPrinciples.length > 0 && (
+          <section className="p-4 rounded-xl glass-card border border-cyan-400/20 bg-cyan-500/[0.02] space-y-3">
+            <div className="flex items-center gap-2 text-xs font-mono-cad font-semibold text-slate-200 uppercase tracking-wider">
+              <Box className="w-4 h-4 text-cyan-400" />
+              Design Principles
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {component.designPrinciples.map((item, i) => (
+                <span
+                  key={i}
+                  className="px-2.5 py-1.5 rounded-lg text-[10px] font-mono-cad bg-cyan-400/5 border border-cyan-400/20 text-cyan-200"
+                >
+                  {item}
                 </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+              ))}
+            </div>
+          </section>
+        )}
 
-      {/* Mechanical Role & Forces (Engineering & Expert Mode) */}
-      {isEngineeringOrExpert && (
-        <div className="p-4 rounded-xl glass-card border border-white/10 space-y-3">
+      {/* CLASSIFICATION EVIDENCE */}
+      {isEngineering && (
+        <section className="p-4 rounded-xl glass-card border border-white/10 space-y-3">
           <div className="flex items-center gap-2 text-xs font-mono-cad font-semibold text-slate-200 uppercase tracking-wider">
-            <Compass className="w-4 h-4 text-purple-400" />
-            <span>Kinematic Forces & Tribology</span>
+            <Target className="w-4 h-4 text-purple-400" />
+            Classification Evidence
           </div>
 
-          <div className="space-y-2 text-xs font-mono-cad">
-            {component.mechanicalRole.forces && (
-              <div className="p-2.5 rounded bg-black/40 border border-white/5">
-                <span className="text-[10px] text-purple-400 block mb-0.5">Applied Load / Stress</span>
-                <span className="text-slate-200">{component.mechanicalRole.forces}</span>
-              </div>
-            )}
-            {component.mechanicalRole.frictionCoeff && (
-              <div className="p-2.5 rounded bg-black/40 border border-white/5">
-                <span className="text-[10px] text-purple-400 block mb-0.5">Frictional Interface</span>
-                <span className="text-slate-200">{component.mechanicalRole.frictionCoeff}</span>
-              </div>
-            )}
-            {component.mechanicalRole.motion && (
-              <div className="p-2.5 rounded bg-black/40 border border-white/5">
-                <span className="text-[10px] text-purple-400 block mb-0.5">Motion Constraints</span>
-                <span className="text-slate-200">{component.mechanicalRole.motion}</span>
-              </div>
-            )}
+          <p className="text-xs text-slate-300 leading-relaxed">
+            {component.classificationReason ||
+              component.engineeringReason}
+          </p>
+
+          <div className="p-3 rounded-lg bg-black/30 border border-white/5">
+            <div className="text-[9px] uppercase tracking-wider text-slate-500 font-mono-cad mb-1">
+              Confidence rationale
+            </div>
+
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              {component.confidenceReason ||
+                'Estimated from visible geometry and mesh grouping.'}
+            </p>
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Connected Components Linkages */}
+      {/* CONNECTED COMPONENTS */}
       {component.connectedTo.length > 0 && (
-        <div className="p-4 rounded-xl glass-card border border-white/10 space-y-2">
+        <section className="p-4 rounded-xl glass-card border border-white/10 space-y-2">
           <div className="flex items-center gap-2 text-xs font-mono-cad font-semibold text-slate-200 uppercase tracking-wider">
             <Link className="w-4 h-4 text-[#38bdf8]" />
-            <span>Kinematic Linkages ({component.connectedTo.length})</span>
+            Connected Components
           </div>
 
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            {component.connectedTo.map((targetId) => (
+          <div className="flex flex-wrap gap-1.5">
+            {component.connectedTo.map((id) => (
               <button
-                key={targetId}
-                onClick={() => onSelectComponentById(targetId)}
-                className="px-2.5 py-1 rounded-lg text-xs font-mono-cad bg-white/5 hover:bg-[#00f2ad]/20 hover:text-[#00f2ad] border border-white/10 hover:border-[#00f2ad]/40 transition-all flex items-center gap-1 text-slate-300"
+                key={id}
+                onClick={() => onSelectComponentById(id)}
+                className="px-2.5 py-1 rounded-lg text-xs font-mono-cad bg-white/5 hover:bg-[#00f2ad]/20 hover:text-[#00f2ad] border border-white/10 transition-all"
               >
-                <span>{targetId.replace(/-/g, ' ')}</span>
-                <ChevronRight className="w-3 h-3 text-slate-500" />
+                {id
+                  .replace('upload-component-', '')
+                  .replace(/-/g, ' ')}
               </button>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Failure Modes & Mitigation */}
-      {component.failureModes.length > 0 && (
-        <div className="p-4 rounded-xl glass-card border border-rose-500/20 bg-rose-500/[0.02] space-y-3">
-          <div className="flex items-center gap-2 text-xs font-mono-cad font-semibold text-rose-400 uppercase tracking-wider">
-            <AlertTriangle className="w-4 h-4" />
-            <span>Failure Mode & Mitigation</span>
-          </div>
+      {/* INSPECTION POINTS */}
+      {isEngineering &&
+        component.inspectionPoints &&
+        component.inspectionPoints.length > 0 && (
+          <section className="p-4 rounded-xl glass-card border border-white/10 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-mono-cad font-semibold text-slate-200 uppercase tracking-wider">
+              <Eye className="w-4 h-4 text-amber-400" />
+              What an Engineer Inspects
+            </div>
 
-          {component.failureModes.map((fm, i) => (
-            <div key={i} className="p-3 rounded-lg bg-black/40 border border-white/5 space-y-1.5 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-slate-200">{fm.mode}</span>
-                <span className={`text-[10px] font-mono-cad px-1.5 py-0.5 rounded ${
-                  fm.severity === 'Critical' ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400'
-                }`}>
-                  {fm.severity}
+            {component.inspectionPoints.map((item, i) => (
+              <div
+                key={i}
+                className="text-xs text-slate-300 leading-relaxed flex gap-2"
+              >
+                <span className="text-amber-400">
+                  •
                 </span>
+
+                {item}
               </div>
-              <p className="text-slate-400 text-[11px] leading-relaxed">
-                <strong className="text-slate-300">Cause:</strong> {fm.cause}
-              </p>
-              <p className="text-slate-300 text-[11px] leading-relaxed">
-                <strong className="text-[#00f2ad]">Mitigation:</strong> {fm.mitigation}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </section>
+        )}
 
-      {/* Deep Technical Profile */}
-      {(component.technicalNotes?.length || component.interfaces?.length || component.inspectionPoints?.length || component.designPrinciples?.length || component.evidence) && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-xs font-mono-cad font-semibold text-slate-200 uppercase tracking-wider">
-            <BookOpen className="w-4 h-4 text-[#00f2ad]" />
-            <span>Deep Technical Profile</span>
-          </div>
-
-          {component.technicalNotes && component.technicalNotes.length > 0 && (
-            <div className="p-4 rounded-xl glass-card border border-white/10 space-y-2">
-              <div className="flex items-center gap-2 text-[11px] font-mono-cad font-semibold text-slate-300 uppercase tracking-wider">
-                <Info className="w-3.5 h-3.5 text-[#38bdf8]" /> How the part works
-              </div>
-              <ul className="space-y-2">
-                {component.technicalNotes.map((note, i) => (
-                  <li key={i} className="text-xs leading-relaxed text-slate-300 pl-3 border-l border-[#38bdf8]/30">{note}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {component.interfaces && component.interfaces.length > 0 && (
-            <div className="p-4 rounded-xl glass-card border border-white/10 space-y-2">
-              <div className="flex items-center gap-2 text-[11px] font-mono-cad font-semibold text-slate-300 uppercase tracking-wider">
-                <Network className="w-3.5 h-3.5 text-purple-400" /> Interfaces & Mating Surfaces
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {component.interfaces.map((item, i) => (
-                  <span key={i} className="px-2 py-1 rounded-md bg-purple-500/10 border border-purple-400/20 text-[11px] text-slate-300">{item}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {isEngineeringOrExpert && component.inspectionPoints && component.inspectionPoints.length > 0 && (
-            <div className="p-4 rounded-xl glass-card border border-white/10 space-y-2">
-              <div className="flex items-center gap-2 text-[11px] font-mono-cad font-semibold text-slate-300 uppercase tracking-wider">
-                <Eye className="w-3.5 h-3.5 text-amber-400" /> What an engineer inspects
-              </div>
-              <ul className="space-y-2">
-                {component.inspectionPoints.map((item, i) => (
-                  <li key={i} className="flex gap-2 text-xs text-slate-300 leading-relaxed"><span className="text-amber-400">•</span>{item}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {isEngineeringOrExpert && component.designPrinciples && component.designPrinciples.length > 0 && (
-            <div className="p-4 rounded-xl glass-card border border-white/10 space-y-2">
-              <div className="flex items-center gap-2 text-[11px] font-mono-cad font-semibold text-slate-300 uppercase tracking-wider">
-                <ListChecks className="w-3.5 h-3.5 text-[#00f2ad]" /> Design Principles
-              </div>
-              <ul className="space-y-2">
-                {component.designPrinciples.map((item, i) => (
-                  <li key={i} className="text-xs text-slate-300 leading-relaxed">{item}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {component.evidence && (
-            <div className="p-3 rounded-lg bg-black/30 border border-white/5 space-y-1">
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider font-mono-cad">3D Asset Evidence</div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">{component.evidence}</p>
-              {component.confidenceReason && (
-                <p className="text-[10px] text-slate-500 leading-relaxed pt-1">{component.confidenceReason}</p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Engineering Rationale */}
-      <div className="p-4 rounded-xl glass-card border border-[#00f2ad]/30 bg-[#00f2ad]/[0.03] space-y-2">
+      {/* ENGINEERING RATIONALE */}
+      <section className="p-4 rounded-xl glass-card border border-[#00f2ad]/30 bg-[#00f2ad]/[0.03] space-y-2">
         <div className="flex items-center gap-2 text-xs font-mono-cad font-semibold text-[#00f2ad] uppercase tracking-wider">
           <Lightbulb className="w-4 h-4" />
-          <span>Engineering Design Rationale</span>
+          Engineering Design Rationale
         </div>
+
         <p className="text-xs text-slate-300 leading-relaxed italic">
-          "{component.engineeringReason}"
+          “{component.engineeringReason}”
         </p>
-      </div>
+      </section>
+
     </div>
   );
 };

@@ -25,7 +25,7 @@ interface ComponentTreeProps {
 }
 
 export const ComponentTree: React.FC<ComponentTreeProps> = ({
-  rootComponents,
+  rootComponents: incomingRootComponents,
   selectedComponentId,
   onSelectComponent,
   hoveredComponentId,
@@ -35,8 +35,9 @@ export const ComponentTree: React.FC<ComponentTreeProps> = ({
   hiddenComponentIds,
   onToggleHide,
 }) => {
+  const rootComponents = Array.isArray(incomingRootComponents) ? incomingRootComponents : [];
   const [searchQuery, setSearchQuery] = useState('');
-  const collectNodeIds = (nodes: ComponentNode[]): string[] => nodes.flatMap((node) => [
+  const collectNodeIds = (nodes: ComponentNode[] | undefined | null): string[] => (nodes || []).flatMap((node) => [
     node.id,
     ...(node.children ? collectNodeIds(node.children) : []),
   ]);
@@ -73,9 +74,9 @@ export const ComponentTree: React.FC<ComponentTreeProps> = ({
     const matchesSearch =
       !searchQuery ||
       node.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      node.cadId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      node.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      node.material.name.toLowerCase().includes(searchQuery.toLowerCase());
+      (node.cadId || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (node.category || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (node.material?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
 
     return (
       <div key={node.id} className="flex flex-col">

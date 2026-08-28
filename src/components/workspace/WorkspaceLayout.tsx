@@ -29,6 +29,7 @@ interface WorkspaceLayoutProps {
   onReturnHome: () => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
+  uploadedModel?: { url: string; fileName: string } | null;
 }
 
 export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
@@ -39,6 +40,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   onReturnHome,
   theme,
   onToggleTheme,
+  uploadedModel = null,
 }) => {
   // 3D Viewport state
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
@@ -207,6 +209,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               isolatedComponentId={isolatedComponentId}
               hiddenComponentIds={hiddenComponentIds}
               showLeaderLines={showLeaderLines}
+              uploadedModel={uploadedModel}
             />
           )}
 

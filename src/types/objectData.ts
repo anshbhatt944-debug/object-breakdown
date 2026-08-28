@@ -97,6 +97,10 @@ export interface ComponentNode {
   dataConfidence: ConfidenceLevel;
 
   sourceMeshName?: string;
+  /** Stable IDs of one or more raw uploaded meshes represented by this semantic component. */
+  sourceMeshIds?: string[];
+  /** Source mesh names when a semantic component groups several raw meshes. */
+  sourceMeshNames?: string[];
   technicalNotes?: string[];
   inspectionPoints?: string[];
   interfaces?: string[];
@@ -104,7 +108,26 @@ export interface ComponentNode {
 
   evidence?: string;
   confidenceReason?: string;
+
+  /** Geometry measured directly from the uploaded 3D asset, not guessed by AI. */
+  geometry?: {
+    dimensions: [number, number, number];
+    formatted: string;
+    approxBoundingVolume: string;
+    triangleCount: number;
+    meshCount: number;
+    relativeSizePercent: number;
+    center: [number, number, number];
+    sourceMaterials: string[];
+  };
+
+  /** Compact semantic information inferred by the AI. */
+  engineeringRole?: string;
+  importance?: 'Low' | 'Medium' | 'High' | 'Critical';
+  insights?: string[];
+  classificationReason?: string;
 }
+
 
 export interface MaterialItem {
   name: string;
@@ -297,4 +320,20 @@ export interface ObjectBreakdownData {
   };
 
   aiSuggestedQuestions: string[];
+
+  /** Optional richer analysis for uploaded models. Existing built-in objects can omit this. */
+  assemblyAnalysis?: {
+    objectType: string;
+    complexity: 'Low' | 'Moderate' | 'High' | 'Very High';
+    primarySystems: string[];
+    analysisNotes: string[];
+    geometry: {
+      dimensions: [number, number, number];
+      formatted: string;
+      approxBoundingVolume: string;
+      triangleCount: number;
+      meshCount: number;
+      unitNote: string;
+    };
+  };
 }

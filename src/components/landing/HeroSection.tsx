@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ArrowRight, Box, Layers, Cpu, Sparkles } from 'lucide-react';
+import { Search, ArrowRight, Box, Layers, Cpu, Sparkles, Upload } from 'lucide-react';
 import { ThreeCanvas } from '../workspace/viewer3d/ThreeCanvas';
 import { wristwatchData } from '../../data/objects/wristwatch';
 
 interface HeroSectionProps {
   onSearch: (query: string) => void;
   onSelectPopular: (id: string) => void;
+  onUploadModel: (file: File) => void;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ onSearch }) => {
+export const HeroSection: React.FC<HeroSectionProps> = ({ onSearch, onUploadModel }) => {
   const [query, setQuery] = useState('');
   // Keep the featured watch mostly assembled on first load. The user can expand it with the slider.
   const [explodeAmount, setExplodeAmount] = useState(0.12);
@@ -37,7 +38,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onSearch }) => {
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={placeholders[placeholderIndex]} />
             <button type="submit"><span className="hidden sm:inline">Analyze</span><ArrowRight className="w-4 h-4" /></button>
           </form>
-          <div className="hero-tags"><span>Try</span>{['Smartphone', 'Mechanical Watch', 'Ballpoint Pen', 'Keyboard'].map((item) => <button key={item} onClick={() => onSearch(item)}>{item}</button>)}</div>
+          <div className="hero-tags"><span>Try</span>{['Smartphone', 'Mechanical Watch', 'Ballpoint Pen', 'Keyboard'].map((item) => <button key={item} onClick={() => onSearch(item)}>{item}</button>)}</div>\n          <label className="inline-flex mt-5 cursor-pointer items-center gap-2 rounded-xl border border-[#00f2ad]/40 bg-[#00f2ad]/10 px-4 py-3 text-sm font-bold text-[#00f2ad] hover:bg-[#00f2ad]/20 transition-colors"><Upload className="w-4 h-4" /> Upload your own .GLB<input className="hidden" type="file" accept=".glb,.gltf" onChange={(e) => { const file = e.target.files?.[0]; if (file) onUploadModel(file); e.currentTarget.value = ''; }} /></label>
           <div className="hero-stats">
             <div><strong>50+</strong><span>Objects</span></div>
             <div><strong>1000+</strong><span>Components</span></div>

@@ -117,6 +117,196 @@ function registerMesh(
   });
 }
 
+
+function uploadedMeshId(index: number) {
+  return `upload-mesh-${String(index + 1).padStart(3, '0')}`;
+}
+
+function colorForUploadedMesh(name: string, index: number) {
+  const value = name.toLowerCase();
+  if (/lens|glass|screen|display/.test(value)) return 0x6fa9d5;
+  if (/sensor|board|electronic/.test(value)) return 0x3f8f68;
+  if (/button|dial|control|shutter/.test(value)) return 0xc58d4d;
+  const palette = [0x5f6f82, 0x7a8798, 0x98a3b1, 0x69788a, 0xa6b0bd];
+  return palette[index % palette.length];
+}
+
+function prepareUploadedMeshMaterials(mesh: THREE.Mesh, semanticName: string, index: number) {
+  const materialList = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+  const hasUsefulMaterial = materialList.some((material) => {
+    if (!material) return false;
+    const anyMaterial = material as THREE.Material & { map?: THREE.Texture | null; color?: THREE.Color };
+    return Boolean(anyMaterial.map) || Boolean(anyMaterial.color && anyMaterial.color.getHex() !== 0xffffff);
+  });
+  if (!hasUsefulMaterial) {
+    mesh.material = new THREE.MeshStandardMaterial({
+      color: colorForUploadedMesh(semanticName, index),
+      roughness: /lens|glass|screen|display/i.test(semanticName) ? 0.22 : 0.48,
+      metalness: /body|housing|lens|barrel|mount/i.test(semanticName) ? 0.35 : 0.08,
+    });
+  }
+  if (!mesh.geometry.getAttribute('normal')) mesh.geometry.computeVertexNormals();
+}
+
+function registerUploadedGroup(
+  root: THREE.Group,
+  component: ComponentNode,
+  meshes: THREE.Mesh[],
+  sequenceIndex: number,
+  sequenceCount: number,
+  componentMap: Map<string, LoadedComponentMeshInfo>,
+) {
+  const group = new THREE.Group();
+  group.name = component.id;
+  root.add(group);
+  const originalMats = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
+  meshes.forEach((mesh) => {
+    originalMats.set(mesh, Array.isArray(mesh.material) ? mesh.material.map((m) => m.clone()) : mesh.material.clone());
+    group.attach(mesh);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+  });
+
+  // Keep each AI semantic assembly intact. Its final exploded pose is planned
+  // after every group has been registered, using the whole model geometry.
+  const explodeStart = Math.min(0.55, sequenceIndex * (0.48 / Math.max(sequenceCount - 1, 1)));
+  componentMap.set(component.id, {
+    mesh: group, componentId: component.id, displayName: component.name, category: component.category,
+    basePosition: group.position.clone(), baseRotation: group.rotation.clone(), baseScale: group.scale.clone(),
+    explodeVector: new THREE.Vector3(...component.explodeVector), explodedRotation: group.rotation.clone(), explodeStart, explodeEnd: Math.min(1, explodeStart + 0.52), originalMaterials: originalMats,
+  });
+}
+
+/** Build a coherent exploded-view plan for semantic groups in an uploaded GLB. */
+function planUploadedExplodedView(
+  root: THREE.Group,
+  componentMap: Map<string, LoadedComponentMeshInfo>,
+) {
+  const entries = Array.from(componentMap.values()).filter(
+    (info) => !info.componentId.startsWith('upload-raw-')
+  );
+  if (!entries.length) return;
+
+  root.updateMatrixWorld(true);
+  const modelBox = new THREE.Box3().setFromObject(root);
+  const modelSize = modelBox.getSize(new THREE.Vector3());
+  const modelCenter = modelBox.getCenter(new THREE.Vector3());
+
+  const axisIndex = modelSize.x >= modelSize.y && modelSize.x >= modelSize.z ? 0 : modelSize.y >= modelSize.z ? 1 : 2;
+  const dominantAxis = axisIndex === 0 ? new THREE.Vector3(1, 0, 0) : axisIndex === 1 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, 0, 1);
+  const sideAxis = axisIndex === 2 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1);
+  const verticalAxis = new THREE.Vector3(0, 1, 0);
+
+  const records = entries.map((info) => {
+    const box = new THREE.Box3().setFromObject(info.mesh);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const fromCenter = center.clone().sub(modelCenter);
+    const axial = fromCenter.dot(dominantAxis);
+    const radial = fromCenter.addScaledVector(dominantAxis, -axial);
+    return { info, center, size, projection: center.dot(dominantAxis), radial };
+  }).sort((a, b) => a.projection - b.projection);
+
+  const dominantSpan = modelSize.getComponent(axisIndex);
+  const averagePartSpan = records.reduce((sum, record) => sum + record.size.getComponent(axisIndex), 0) / Math.max(records.length, 1);
+  const axialSpacing = Math.max(dominantSpan * 0.16, averagePartSpan * 0.9, 0.45);
+  const radialSpacing = Math.max(dominantSpan * 0.10, 0.3);
+  const middleIndex = (records.length - 1) / 2;
+
+  records.forEach((record, index) => {
+    const name = `${record.info.displayName} ${record.info.category}`.toLowerCase();
+    const isCore = /main body|camera body|body housing|chassis|central housing|main housing/.test(name);
+    const isFront = /front|optical|front barrel|front lens|front element/.test(name);
+    const isRear = /rear|interface|display|back/.test(name);
+    const isRing = /ring|zoom|focus|adjustment/.test(name);
+    const isMount = /mount|rear barrel/.test(name);
+    const isGrip = /grip|handgrip|handle/.test(name);
+    const isTop = /top|control|dial|button|viewfinder|prism/.test(name);
+
+    let axialOffset = (index - middleIndex) * axialSpacing;
+    if (isCore) axialOffset *= 0.18;
+    if (isFront) axialOffset = Math.sign(axialOffset || -1) * Math.max(Math.abs(axialOffset), axialSpacing * 1.5);
+    if (isRear) axialOffset = Math.sign(axialOffset || 1) * Math.max(Math.abs(axialOffset), axialSpacing * 0.75);
+    if (isRing) axialOffset *= 1.18;
+    if (isMount) axialOffset *= 0.82;
+
+    const vector = dominantAxis.clone().multiplyScalar(axialOffset);
+    if (record.radial.lengthSq() > 1e-6 && !isCore) vector.add(record.radial.normalize().multiplyScalar(radialSpacing * 0.55));
+    if (isGrip) {
+      const sideSign = Math.sign(record.center.dot(sideAxis) - modelCenter.dot(sideAxis)) || 1;
+      vector.addScaledVector(sideAxis, sideSign * radialSpacing * 1.4);
+      vector.addScaledVector(verticalAxis, -radialSpacing * 0.25);
+    }
+    if (isTop) vector.addScaledVector(verticalAxis, radialSpacing * 1.5);
+    if (/bottom|base|plate|foot/.test(name)) vector.addScaledVector(verticalAxis, -radialSpacing * 0.85);
+
+    // Keep only a restrained AI-vector influence; actual geometry drives the view.
+    const aiBias = record.info.explodeVector.clone();
+    if (aiBias.lengthSq() > 1e-6) vector.add(aiBias.normalize().multiplyScalar(radialSpacing * 0.18));
+    record.info.explodeVector.copy(vector);
+
+    // Major groups appear first; secondary assemblies are progressively revealed.
+    const baseStart = isCore ? 0 : isFront || isRear ? 0.18 : isTop || isGrip ? 0.32 : 0.12;
+    const stagger = records.length > 1 ? index / (records.length - 1) : 0;
+    record.info.explodeStart = Math.min(0.58, baseStart + stagger * 0.22);
+    record.info.explodeEnd = Math.min(1, record.info.explodeStart + 0.62);
+  });
+}
+
+export async function loadUploaded3DModel(
+  url: string,
+  objectData: ObjectBreakdownData,
+  viewMode: ViewMode3D
+): Promise<LoadedObjectResult> {
+  const rootGroup = await loadGLTFGroup(url);
+  const componentMap = new Map<string, LoadedComponentMeshInfo>();
+  const meshes: THREE.Mesh[] = [];
+  rootGroup.traverse((child) => { if ((child as THREE.Mesh).isMesh) meshes.push(child as THREE.Mesh); });
+  const meshById = new Map<string, THREE.Mesh>();
+  meshes.forEach((mesh, index) => meshById.set(uploadedMeshId(index), mesh));
+
+  const mappedMeshIds = new Set<string>();
+  const components = objectData.rootComponents.filter((node) => node.sourceMeshIds?.length || node.sourceMeshName || node.sourceMeshNames?.length);
+  components.forEach((component, componentIndex) => {
+    let componentMeshes = (component.sourceMeshIds || []).map((id) => meshById.get(id)).filter((mesh): mesh is THREE.Mesh => Boolean(mesh));
+    if (!componentMeshes.length) {
+      const names = new Set([...(component.sourceMeshNames || []), ...(component.sourceMeshName ? [component.sourceMeshName] : [])]);
+      componentMeshes = meshes.filter((mesh) => names.has(mesh.name));
+    }
+    if (!componentMeshes.length) return;
+    componentMeshes.forEach((mesh) => {
+      const index = meshes.indexOf(mesh);
+      mappedMeshIds.add(uploadedMeshId(index));
+      prepareUploadedMeshMaterials(mesh, component.name, index);
+    });
+    registerUploadedGroup(rootGroup, component, componentMeshes, componentIndex, components.length, componentMap);
+  });
+
+  meshes.forEach((mesh, index) => {
+    const meshId = uploadedMeshId(index);
+    if (mappedMeshIds.has(meshId)) return;
+    const id = `upload-raw-${meshId}`;
+    const displayName = mesh.name || `Detected Component ${index + 1}`;
+    prepareUploadedMeshMaterials(mesh, displayName, index);
+    registerMesh(rootGroup, mesh, { componentId: id, displayName, category: 'Unmapped uploaded geometry', explodeVector: [0, 1, 0], color: '#94a3b8' }, componentMap, componentMap.size, meshes.length);
+  });
+
+  // Plan one physical motion per AI component, not one motion per raw mesh.
+  planUploadedExplodedView(rootGroup, componentMap);
+
+  rootGroup.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(rootGroup);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  rootGroup.position.sub(center);
+  const maxDimension = Math.max(size.x, size.y, size.z, 1);
+  const targetDimension = 4.8;
+  rootGroup.scale.setScalar(targetDimension / maxDimension);
+  componentMap.forEach((info) => { info.basePosition.copy(info.mesh.position); info.baseRotation.copy(info.mesh.rotation); info.baseScale.copy(info.mesh.scale); });
+  applyViewModeToModel(componentMap, viewMode);
+  return { rootGroup, componentMap, maxDimension: targetDimension, cameraDistance: targetDimension * 1.75 };
+}
+
 function normalizeMeshName(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]/g, '');
 }

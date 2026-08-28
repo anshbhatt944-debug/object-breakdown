@@ -125,3 +125,37 @@ object-breakdown/
 - Understanding the Three.js/React Three Fiber scene graph well enough to add a new object end-to-end myself
 - Cleaning up raw/auto-generated mesh names (e.g. `Cylinder026_scratch_0`) into proper labeled components across all objects
 - Writing my own exploded-view and camera-focus logic from scratch on a smaller scene, to build real understanding of what this project currently automates for me
+
+---
+
+## 🤖 Upload Any 3D Model (AI Analysis)
+
+The upload pipeline is model-agnostic:
+
+1. Upload a `.glb` or `.gltf` model.
+2. The browser extracts real mesh metadata (stable mesh IDs, hierarchy, dimensions, triangle counts, positions and source materials).
+3. The browser renders the actual uploaded model from multiple angles.
+4. Those views + mesh metadata are sent to the local analysis server.
+5. The AI identifies the object and groups one or more raw meshes into meaningful semantic assemblies.
+6. The result is converted into the same `ObjectBreakdownData` format used by the rest of the application.
+7. The existing workspace renders the grouped components, labels, selection, highlighting and exploded view.
+
+The system deliberately does **not** use filename-specific rules such as `if camera` or `if drone`. If the AI is unavailable, the application falls back to a geometry-only mode and does not pretend to know semantic component names.
+
+### Setup
+
+Copy `.env.example` to `.env` and add your API key:
+
+```bash
+OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-5.6
+```
+
+Install dependencies and run both the Vite app and analysis server:
+
+```bash
+npm install
+npm run dev:all
+```
+
+The frontend proxies `/api/analyze-model` to `http://localhost:8787` during development. Never put `OPENAI_API_KEY` in frontend code.
