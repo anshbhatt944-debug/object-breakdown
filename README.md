@@ -6,7 +6,9 @@ OBJECT//BREAKDOWN is an interactive 3D engineering exploration platform built to
 
 The application combines **interactive 3D visualization, structured engineering data, and AI-powered analysis**.
 
+
 **Live Demo:** https://object-breakdown.vercel.app/
+
 
 ## Features
 
