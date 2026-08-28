@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/analyze-model.mjs": {
+      "maxDuration": 60
+    }
+  }
+}
