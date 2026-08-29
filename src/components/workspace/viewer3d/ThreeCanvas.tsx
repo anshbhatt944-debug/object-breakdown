@@ -363,6 +363,90 @@ function buildProgressiveSubparts(
   return result;
 }
 
+function normalizeAndCenterUploadedModel(root: THREE.Object3D, targetSize = 5.5) {
+  root.updateMatrixWorld(true);
+
+  let box = new THREE.Box3().setFromObject(root);
+  if (box.isEmpty()) return null;
+
+  const size = box.getSize(new THREE.Vector3());
+  const maxDimension = Math.max(size.x, size.y, size.z);
+
+  if (!Number.isFinite(maxDimension) || maxDimension <= 1e-8) {
+    return null;
+  }
+
+  // Uploaded CAD/GLB files can use wildly different units/scales. Normalize only
+  // uploaded assets so a millimetre-scale or kilometre-scale export still presents
+  // at a sensible size. Preloaded objects are left completely untouched.
+  const scaleFactor = THREE.MathUtils.clamp(
+    targetSize / maxDimension,
+    0.001,
+    1000
+  );
+
+  root.scale.multiplyScalar(scaleFactor);
+  root.updateMatrixWorld(true);
+
+  // Re-center after scaling so the camera can always target the actual model,
+  // regardless of the GLB's original world-space origin/pivot.
+  box = new THREE.Box3().setFromObject(root);
+  const center = box.getCenter(new THREE.Vector3());
+  root.position.sub(center);
+  root.updateMatrixWorld(true);
+
+  box = new THREE.Box3().setFromObject(root);
+  const finalSize = box.getSize(new THREE.Vector3());
+  const finalCenter = box.getCenter(new THREE.Vector3());
+  const sphere = box.getBoundingSphere(new THREE.Sphere());
+
+  return {
+    box,
+    size: finalSize,
+    center: finalCenter,
+    radius: Math.max(sphere.radius, finalSize.length() * 0.5, 0.5),
+  };
+}
+
+function frameCameraToBounds(
+  camera: THREE.PerspectiveCamera,
+  bounds: { center: THREE.Vector3; radius: number },
+  aspect: number,
+  margin = 1.22
+) {
+  const verticalFov = THREE.MathUtils.degToRad(camera.fov);
+  const horizontalFov = 2 * Math.atan(
+    Math.tan(verticalFov / 2) * Math.max(aspect, 0.1)
+  );
+
+  const verticalDistance =
+    bounds.radius / Math.sin(Math.max(verticalFov / 2, 0.05));
+  const horizontalDistance =
+    bounds.radius / Math.sin(Math.max(horizontalFov / 2, 0.05));
+
+  const distance =
+    Math.max(verticalDistance, horizontalDistance) * margin;
+
+  const near = Math.max(
+    0.01,
+    distance - bounds.radius * 3
+  );
+
+  const far = Math.max(
+    50,
+    distance + bounds.radius * 6
+  );
+
+  camera.near = near;
+  camera.far = far;
+  camera.updateProjectionMatrix();
+
+  return {
+    center: bounds.center.clone(),
+    distance,
+  };
+}
+
 export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   objectData,
   selectedComponentId,
@@ -523,9 +607,24 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
 
       activeRootGroupRef.current = result.rootGroup;
       componentMapRef.current = result.componentMap;
+
+      // Uploaded GLB/GLTF assets are not guaranteed to share a common unit system,
+      // world-space origin, pivot, or overall scale. Normalize and center them before
+      // calculating the explosion layout so the same viewer works for arbitrary assets.
+      let uploadedPresentationBounds: ReturnType<typeof normalizeAndCenterUploadedModel> = null;
+
       if (uploadedModel) {
-        applyUploadedExplodeLayout(result.componentMap, result.rootGroup);
-        progressiveSubpartsRef.current = buildProgressiveSubparts(result.componentMap);
+        uploadedPresentationBounds = normalizeAndCenterUploadedModel(
+          result.rootGroup
+        );
+
+        applyUploadedExplodeLayout(
+          result.componentMap,
+          result.rootGroup
+        );
+
+        progressiveSubpartsRef.current =
+          buildProgressiveSubparts(result.componentMap);
       }
       isWatchRef.current = objectData.id === 'wristwatch';
 
@@ -550,22 +649,52 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
       // Apply initial view mode
       applyViewModeToModel(result.componentMap, viewMode);
 
-      // Smoothly frame model
-      const presentationDistance = Math.max(result.cameraDistance * 1.24, result.maxDimension * 1.7);
-      targetCameraDistanceRef.current = presentationDistance;
-      cameraRotationRef.current.spherical.radius = presentationDistance;
-      // Give the iPhone a presentation-oriented starting view: its GLB is a
-      // very thin slab, so a front-biased camera makes the technical callouts
-      // readable immediately instead of opening on an almost edge-on view.
-      if (objectData.id === 'smartphone') {
-        cameraRotationRef.current.spherical.theta = Math.PI / 2;
-        cameraRotationRef.current.spherical.phi = Math.PI / 2.08;
-      } else {
+      // Uploaded GLB/GLTF assets are framed from their real world-space bounds.
+      // Preloaded objects keep their existing curated camera behavior unchanged.
+      const camera = cameraRef.current;
+      const container = containerRef.current;
+
+      if (uploadedModel && camera && container && uploadedPresentationBounds) {
+        const aspect =
+          container.clientWidth / Math.max(container.clientHeight, 1);
+
+        const framed = frameCameraToBounds(
+          camera,
+          {
+            center: uploadedPresentationBounds.center,
+            radius: uploadedPresentationBounds.radius,
+          },
+          aspect,
+          1.28
+        );
+
+        targetCameraDistanceRef.current = framed.distance;
+        cameraRotationRef.current.spherical.radius = framed.distance;
         cameraRotationRef.current.spherical.theta = Math.PI / 4;
         cameraRotationRef.current.spherical.phi = Math.PI / 2.6;
+        cameraRotationRef.current.target.copy(framed.center);
+        updateCameraPosition();
+      } else {
+        // Existing curated behavior for preloaded objects.
+        const presentationDistance = Math.max(
+          result.cameraDistance * 1.24,
+          result.maxDimension * 1.7
+        );
+
+        targetCameraDistanceRef.current = presentationDistance;
+        cameraRotationRef.current.spherical.radius = presentationDistance;
+
+        if (objectData.id === 'smartphone') {
+          cameraRotationRef.current.spherical.theta = Math.PI / 2;
+          cameraRotationRef.current.spherical.phi = Math.PI / 2.08;
+        } else {
+          cameraRotationRef.current.spherical.theta = Math.PI / 4;
+          cameraRotationRef.current.spherical.phi = Math.PI / 2.6;
+        }
+
+        cameraRotationRef.current.target.set(0, 0, 0);
+        updateCameraPosition();
       }
-      cameraRotationRef.current.target.set(0, 0, 0);
-      updateCameraPosition();
 
       setIsLoading(false);
     });
