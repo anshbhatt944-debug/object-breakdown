@@ -101,6 +101,8 @@ export interface ComponentNode {
   sourceMeshIds?: string[];
   /** Source mesh names when a semantic component groups several raw meshes. */
   sourceMeshNames?: string[];
+  /** Source GLTF Object3D node names (e.g. parent groups) represented by this component. */
+  sourceNodeNames?: string[];
   technicalNotes?: string[];
   inspectionPoints?: string[];
   interfaces?: string[];
@@ -124,10 +126,34 @@ export interface ComponentNode {
   /** Compact semantic information inferred by the AI. */
   engineeringRole?: string;
   importance?: 'Low' | 'Medium' | 'High' | 'Critical';
+  /** Hierarchy level: 0 = outer enclosure/primary chassis, 1 = secondary assembly, 2 = internal mechanism, 3 = deep component */
+  assemblyDepth?: number;
+  /** Explosion progress (0.00 to 0.85) at which this component annotation becomes active in 3D */
+  revealThreshold?: number;
   insights?: string[];
   classificationReason?: string;
 }
 
+
+export function getComponentRevealThreshold(comp: {
+  assemblyDepth?: number;
+  importance?: 'Low' | 'Medium' | 'High' | 'Critical';
+  revealThreshold?: number;
+}): number {
+  if (typeof comp.revealThreshold === 'number') {
+    return comp.revealThreshold;
+  }
+  const depth = comp.assemblyDepth ?? 1;
+  const impOffset =
+    comp.importance === 'Critical'
+      ? 0.0
+      : comp.importance === 'High'
+      ? 0.08
+      : comp.importance === 'Medium'
+      ? 0.18
+      : 0.28;
+  return Math.min(0.85, Number((depth * 0.22 + impOffset).toFixed(2)));
+}
 
 export interface MaterialItem {
   name: string;

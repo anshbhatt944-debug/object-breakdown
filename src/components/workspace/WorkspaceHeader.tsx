@@ -1,19 +1,7 @@
 import React from 'react';
 import { ALL_OBJECTS } from '../../data/objectRegistry';
 import { ObjectBreakdownData, DepthLevel } from '../../types/objectData';
-import {
-  ChevronLeft,
-  ChevronDown,
-  Layers,
-  Sparkles,
-  Download,
-  Scale,
-  Sliders,
-  Sun,
-  Moon,
-  Share2,
-  Box,
-} from 'lucide-react';
+import { ChevronLeft, Scale, Sun, Moon, Box, Activity, Sparkles, Layers, Upload } from 'lucide-react';
 
 interface WorkspaceHeaderProps {
   currentObject: ObjectBreakdownData;
@@ -24,6 +12,7 @@ interface WorkspaceHeaderProps {
   onReturnHome: () => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
+  onUploadModel?: (file: File) => void;
 }
 
 export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
@@ -35,117 +24,163 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   onReturnHome,
   theme,
   onToggleTheme,
+  onUploadModel,
 }) => {
-  const depthModes: { id: DepthLevel; label: string; color: string; bg: string; dot: string }[] = [
-    { id: 'quick', label: 'Quick', color: 'text-emerald-400', bg: 'bg-emerald-500/15 border-emerald-500/40', dot: 'bg-emerald-400' },
-    { id: 'detailed', label: 'Detailed', color: 'text-sky-400', bg: 'bg-sky-500/15 border-sky-500/40', dot: 'bg-sky-400' },
-    { id: 'engineering', label: 'Engineering', color: 'text-purple-400', bg: 'bg-purple-500/15 border-purple-500/40', dot: 'bg-purple-400' },
-    { id: 'expert', label: 'Expert', color: 'text-rose-400', bg: 'bg-rose-500/15 border-rose-500/40', dot: 'bg-rose-400' },
+  const depthModes: { id: DepthLevel; label: string; badge: string }[] = [
+    { id: 'quick', label: 'Quick', badge: '30s' },
+    { id: 'detailed', label: 'Detailed', badge: 'Part' },
+    { id: 'engineering', label: 'Engineering', badge: 'DFMA' },
+    { id: 'expert', label: 'Expert', badge: 'FEA' },
   ];
 
-  const handleExportSpecs = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentObject, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `${currentObject.id}-engineering-spec.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-  };
+  const isLight = theme === 'light';
 
   return (
-    <header className="workspace-header h-16 px-4 sm:px-6 flex items-center justify-between select-none z-40">
-      {/* Left Breadcrumbs & Object Selector */}
-      <div className="flex items-center gap-3">
+    <header className={`workspace-header h-[70px] px-6 flex items-center justify-between border-b ${
+      isLight ? 'border-slate-200 bg-white/95 text-slate-800 shadow-sm' : 'border-white/10 bg-[#080b11]/90 text-white'
+    } backdrop-blur-xl select-none z-30`}>
+      {/* Left: Exit Studio + Object Switcher */}
+      <div className="flex items-center gap-6">
         <button
           onClick={onReturnHome}
-          className="flex items-center gap-1 text-xs font-mono-cad text-slate-400 hover:text-[#00f2ad] transition-all p-1.5 rounded-lg hover:bg-white/5"
+          className={`flex items-center gap-2 text-xs font-mono-cad uppercase tracking-wider px-3 py-1.5 rounded-lg border transition-all ${
+            isLight
+              ? 'text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 border-slate-200'
+              : 'text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border-white/10'
+          }`}
+          data-cursor="EXIT"
         >
-          <ChevronLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Landing</span>
+          <ChevronLeft className="w-4 h-4 text-[#00f2ad]" />
+          <span>Exit Studio</span>
         </button>
 
-        <div className="w-[1px] h-4 bg-white/10" />
+        <div className={`h-6 w-px ${isLight ? 'bg-slate-200' : 'bg-white/10'} hidden sm:block`} />
 
-        {/* Brand Icon */}
-        <div
-          onClick={onReturnHome}
-          className="flex items-center gap-2 cursor-pointer group"
-        >
-          <div className="w-7 h-7 rounded-lg bg-[#00f2ad]/10 border border-[#00f2ad]/30 flex items-center justify-center text-[#00f2ad] group-hover:shadow-[0_0_15px_#00f2ad] transition-all">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#00f2ad]/10 border border-[#00f2ad]/30 flex items-center justify-center text-[#00f2ad] shrink-0">
             <Box className="w-4 h-4" />
           </div>
-          <span className="text-xs font-bold tracking-tight hidden md:inline">OBJECT<span className="brand-slash">//</span>BREAKDOWN</span>
-        </div>
 
-        <span className="text-slate-600 hidden sm:inline">/</span>
-
-        {/* Object Quick Switcher Dropdown */}
-        <div className="relative">
-          <select
-            value={currentObject.id}
-            onChange={(e) => {
-              const selected = ALL_OBJECTS.find((o) => o.id === e.target.value);
-              if (selected) onSelectObject(selected);
-            }}
-            className="bg-black/50 border border-white/10 hover:border-[#00f2ad]/50 rounded-xl px-3 py-1.5 text-xs font-mono-cad font-semibold text-slate-100 focus:outline-none cursor-pointer transition-all"
-          >
-            {ALL_OBJECTS.map((obj) => (
-              <option key={obj.id} value={obj.id} className="bg-[#0d111a] text-slate-200">
-                {obj.name}
-              </option>
-            ))}
-          </select>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono-cad text-[#00f2ad] uppercase tracking-widest font-bold">
+                TARGET ASSET //
+              </span>
+              <select
+                value={currentObject.id}
+                onChange={(e) => {
+                  const selected = ALL_OBJECTS.find((o) => o.id === e.target.value);
+                  if (selected) onSelectObject(selected);
+                }}
+                className={`bg-transparent text-sm font-bold focus:outline-none cursor-pointer uppercase tracking-wider font-mono-cad border-b border-dashed pb-0.5 hover:border-[#00f2ad] transition-colors ${
+                  isLight ? 'text-slate-900 border-slate-300' : 'text-slate-100 border-white/20'
+                }`}
+              >
+                {!ALL_OBJECTS.some((o) => o.id === currentObject.id) && (
+                  <option
+                    value={currentObject.id}
+                    className={isLight ? 'bg-white text-blue-600 font-bold' : 'bg-[#0a0d14] text-[#00f2ad] font-bold'}
+                  >
+                    ★ {currentObject.name.toUpperCase()} (UPLOADED)
+                  </option>
+                )}
+                {ALL_OBJECTS.map((obj) => (
+                  <option key={obj.id} value={obj.id} className={isLight ? 'bg-white text-slate-900' : 'bg-[#0a0d14] text-slate-200'}>
+                    {obj.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <span className={`text-[10px] font-mono-cad ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>
+              {currentObject.category} • {currentObject.stats.componentCount} Components
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Center Depth Selector */}
-      <div className="hidden lg:flex items-center gap-1 p-1 rounded-xl bg-black/40 border border-white/10">
-        <span className="text-[10px] font-mono-cad text-slate-500 uppercase px-2">Depth:</span>
+      {/* Middle: Depth Mode Selector Pill */}
+      <div className={`hidden lg:flex items-center gap-1 p-1 rounded-xl border ${
+        isLight ? 'bg-slate-100 border-slate-200' : 'bg-black/50 border-white/10'
+      }`}>
         {depthModes.map((dm) => {
-          const isActive = depthLevel === dm.id;
+          const isSelected = depthLevel === dm.id;
           return (
             <button
               key={dm.id}
               onClick={() => onDepthChange(dm.id)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-mono-cad flex items-center gap-1.5 transition-all ${
-                isActive
-                  ? `${dm.bg} ${dm.color} font-semibold border shadow-md`
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent'
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-mono-cad uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                isSelected
+                  ? 'bg-[#00f2ad] text-[#050608] font-bold shadow-[0_0_15px_rgba(0,242,173,0.3)]'
+                  : isLight
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              <div className={`w-1.5 h-1.5 rounded-full ${dm.dot}`} />
               <span>{dm.label}</span>
+              <span
+                className={`text-[9px] px-1.5 py-0.2 rounded font-normal ${
+                  isSelected ? 'bg-black/20 text-black' : isLight ? 'bg-slate-200 text-slate-600' : 'bg-white/10 text-slate-400'
+                }`}
+              >
+                {dm.badge}
+              </span>
             </button>
           );
         })}
       </div>
 
-      {/* Right Actions */}
-      <div className="flex items-center gap-2">
+      {/* Right: Upload + Compare + Theme Toggle */}
+      <div className="flex items-center gap-3">
+        {onUploadModel && (
+          <label
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-mono-cad uppercase tracking-wider transition-all cursor-pointer ${
+              isLight
+                ? 'bg-blue-50 hover:bg-blue-100 text-[#2563eb] border-blue-200'
+                : 'bg-white/5 hover:bg-[#38bdf8]/15 text-slate-300 hover:text-[#38bdf8] border-white/10 hover:border-[#38bdf8]/40'
+            }`}
+            data-cursor="UPLOAD"
+            title="Upload GLB or GLTF 3D model"
+          >
+            <Upload className="w-3.5 h-3.5 text-[#38bdf8]" />
+            <span className="hidden sm:inline">Upload</span>
+            <input
+              type="file"
+              accept=".glb,.gltf"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  onUploadModel(file);
+                  e.target.value = '';
+                }
+              }}
+            />
+          </label>
+        )}
+
         <button
           onClick={onOpenCompare}
-          className="px-3 py-1.5 rounded-xl text-xs font-mono-cad text-slate-300 hover:text-[#00f2ad] hover:bg-white/5 border border-white/10 transition-all flex items-center gap-1.5"
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-mono-cad uppercase tracking-wider transition-all ${
+            isLight
+              ? 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 border-slate-200'
+              : 'bg-white/5 hover:bg-[#00f2ad]/10 text-slate-300 hover:text-[#00f2ad] border-white/10 hover:border-[#00f2ad]/30'
+          }`}
+          data-cursor="COMPARE"
         >
-          <Scale className="w-3.5 h-3.5 text-[#38bdf8]" />
+          <Scale className="w-3.5 h-3.5 text-[#00f2ad]" />
           <span className="hidden sm:inline">Compare</span>
         </button>
 
         <button
           onClick={onToggleTheme}
           title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          className="theme-toggle rounded-xl border w-9 h-9 flex items-center justify-center"
+          className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
+            isLight
+              ? 'bg-slate-100 hover:bg-slate-200/80 border-slate-200 text-slate-700'
+              : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white'
+          }`}
         >
-          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
-
-        <button
-          onClick={handleExportSpecs}
-          title="Export JSON / CAD Specification Report"
-          className="p-2 rounded-xl text-xs font-mono-cad text-slate-300 hover:text-[#00f2ad] hover:bg-white/5 border border-white/10 transition-all flex items-center gap-1.5"
-        >
-          <Download className="w-4 h-4" />
-          <span className="hidden md:inline">Export CAD Spec</span>
+          {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-slate-700" />}
         </button>
       </div>
     </header>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { DepthLevel } from '../../types/objectData';
-import { Zap, Eye, Cpu, Flame } from 'lucide-react';
+import { Zap, Eye, Cpu, Flame, Check, ShieldCheck, Layers } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface DepthSelectorSectionProps {
   depthLevel: DepthLevel;
@@ -11,103 +12,127 @@ export const DepthSelectorSection: React.FC<DepthSelectorSectionProps> = ({
   depthLevel,
   onDepthChange,
 }) => {
-  const tiers: {
-    id: DepthLevel;
-    title: string;
-    tagline: string;
-    icon: typeof Zap;
-    color: string;
-    bg: string;
-    border: string;
-    bulletPoints: string[];
-  }[] = [
+  const tiers = [
     {
-      id: 'quick',
+      id: 'quick' as DepthLevel,
       title: 'Quick',
-      tagline: 'Understand the object in 30 seconds.',
+      tagline: '30s orientation',
+      badge: 'TIER 1',
       icon: Zap,
-      color: 'text-emerald-400',
-      bg: 'bg-emerald-500/[0.04]',
-      border: 'border-emerald-500/40',
-      bulletPoints: [
-        'Core physical purpose',
-        'Top 3 primary materials',
-        'High-level mechanism summary',
-        'Visual 3D exploded view',
-      ],
+      features: ['Primary Subsystem Breakdown', 'Overall Complexity Score', 'High-level Material Summary'],
     },
     {
-      id: 'detailed',
+      id: 'detailed' as DepthLevel,
       title: 'Detailed',
-      tagline: 'Understand components and operation.',
+      tagline: 'Assembly inspection',
+      badge: 'TIER 2',
       icon: Eye,
-      color: 'text-sky-400',
-      bg: 'bg-sky-500/[0.04]',
-      border: 'border-sky-500/40',
-      bulletPoints: [
-        'Full Bill of Materials (BOM)',
-        'Kinematic step-by-step cycle',
-        'Material properties & grade',
-        'Basic failure modes & wear points',
-      ],
+      features: ['Measured Bounding Box Dimensions', 'Part Isolation & Leader Lines', 'Discrete Material Grades', 'Component Interface Graph'],
     },
     {
-      id: 'engineering',
+      id: 'engineering' as DepthLevel,
       title: 'Engineering',
-      tagline: 'Deep technical analysis & manufacturing.',
+      tagline: 'Manufacturing & DFMA',
+      badge: 'TIER 3',
       icon: Cpu,
-      color: 'text-purple-400',
-      bg: 'bg-purple-500/[0.04]',
-      border: 'border-purple-500/40',
-      bulletPoints: [
-        'Applied force vectors & contact pressures',
-        'Machining tolerances (GD&T ±0.002 mm)',
-        'Factory tooling & defect risks',
-        'Component relationship linkage network',
-      ],
+      features: ['CNC & Tooling Inferences', 'Tolerance Classifications', 'FMEA Failure Tree', 'Inspection Datum Verification'],
     },
     {
-      id: 'expert',
+      id: 'expert' as DepthLevel,
       title: 'Expert',
-      tagline: 'Advanced equations, FEA & design tradeoffs.',
+      tagline: 'First-principles physics',
+      badge: 'TIER 4',
       icon: Flame,
-      color: 'text-rose-400',
-      bg: 'bg-rose-500/[0.04]',
-      border: 'border-rose-500/40',
-      bulletPoints: [
-        'First-principles governing physics formulas',
-        'Interactive live parameter calculators',
-        'FMEA failure modes and mitigation',
-        'DFMA part consolidation & cost-down',
-      ],
+      features: ['Governing Physics Formulas', 'von Mises Stress Tensors', 'Resonance Frequency Equations', 'Thermal Flux Calculations'],
     },
   ];
 
   return (
-    <section id="depth" className="depth-section py-20 px-6 max-w-[1500px] mx-auto select-none">
-      <div className="depth-heading">
-        <div><span className="section-kicker">01 / CHOOSE YOUR DEPTH</span><h2>Learn at the level you need.</h2></div>
-        <p>Move from a rapid orientation to deep engineering analysis without changing the object or losing your place.</p>
+    <section id="depth" className="py-28 px-4 sm:px-8 max-w-[1800px] mx-auto border-t border-white/10">
+      {/* Header */}
+      <div className="mb-16">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono-cad text-[#00f2ad] uppercase tracking-widest mb-4">
+          <Layers className="w-3.5 h-3.5" />
+          <span>Cognitive Exploration Tiers</span>
+        </div>
+        <h2 className="text-[clamp(2.2rem,5vw,4.5rem)] font-light leading-[1] tracking-tighter text-slate-100 font-heading">
+          SELECT YOUR <br />
+          <span className="text-slate-400">ANALYSIS DEPTH.</span>
+        </h2>
       </div>
 
-      <div className="depth-grid">
+      {/* Grid of 4 Tiers */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {tiers.map((tier) => {
           const Icon = tier.icon;
           const isSelected = depthLevel === tier.id;
 
           return (
-            <article key={tier.id} onClick={() => onDepthChange(tier.id)} className={`depth-card ${isSelected ? 'depth-card-active' : ''}`}>
-              <div className="depth-card-head">
-                <span className="depth-number">0{tiers.findIndex((item) => item.id === tier.id) + 1}</span>
-                <Icon className="w-4 h-4 depth-icon" />
+            <motion.button
+              key={tier.id}
+              onClick={() => onDepthChange(tier.id)}
+              whileHover={{ y: -4 }}
+              className={`rounded-2xl p-6 sm:p-8 text-left transition-all duration-300 relative flex flex-col justify-between border ${
+                isSelected
+                  ? 'bg-[#00f2ad]/10 border-[#00f2ad] shadow-[0_0_30px_rgba(0,242,173,0.2)]'
+                  : 'bg-[#0a0d14] border-white/10 hover:border-white/20 hover:bg-[#0f1420]'
+              }`}
+              data-cursor="SELECT"
+            >
+              {/* Top Row: Icon & Status */}
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      isSelected
+                        ? 'bg-[#00f2ad] text-black shadow-[0_0_15px_rgba(0,242,173,0.4)]'
+                        : 'bg-white/5 text-slate-400'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                  </div>
+
+                  <span
+                    className={`text-[10px] font-mono-cad px-2.5 py-1 rounded-full font-bold ${
+                      isSelected
+                        ? 'bg-[#00f2ad] text-black'
+                        : 'bg-white/5 text-slate-400'
+                    }`}
+                  >
+                    {isSelected ? 'ACTIVE TIER' : tier.badge}
+                  </span>
+                </div>
+
+                {/* Title & Tagline */}
+                <h3 className="text-2xl font-light text-slate-100 font-heading mb-1">
+                  {tier.title}
+                </h3>
+                <p className="text-xs text-slate-400 font-mono-cad uppercase tracking-wider mb-6">
+                  {tier.tagline}
+                </p>
+
+                {/* Unlocked Features */}
+                <div className="space-y-2.5 pt-4 border-t border-white/10">
+                  {tier.features.map((feature, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs text-slate-300 leading-snug">
+                      <Check
+                        className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${
+                          isSelected ? 'text-[#00f2ad]' : 'text-slate-500'
+                        }`}
+                      />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <h3>{tier.title}</h3>
-              <p>{tier.tagline}</p>
-              <ul>
-                {tier.bulletPoints.map((bp, i) => <li key={i}>{bp}</li>)}
-              </ul>
-              <button type="button">{isSelected ? 'ACTIVE MODE' : 'SELECT DEPTH'}</button>
-            </article>
+
+              {/* Bottom Trigger Indicator */}
+              <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-[10px] font-mono-cad">
+                <span className={isSelected ? 'text-[#00f2ad] font-bold' : 'text-slate-500'}>
+                  {isSelected ? '✓ CURRENT WORKSPACE MODE' : 'CLICK TO ACTIVATE'}
+                </span>
+              </div>
+            </motion.button>
           );
         })}
       </div>
