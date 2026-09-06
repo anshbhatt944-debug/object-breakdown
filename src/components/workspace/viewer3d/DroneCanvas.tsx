@@ -2,8 +2,37 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { ObjectBreakdownData, ViewMode3D } from '../../../types/objectData';
 import { load3DModelForObject, applyViewModeToModel, LoadedComponentMeshInfo } from './DroneModelLoader';
+import { fitCameraToObject, computeModelFramingSet, CameraFramingResult } from './cameraUtils';
 import { Box, Sparkles } from 'lucide-react';
-import { iphone14ProReferenceAnnotations } from '../../../data/smartphoneReference';
+import { solveAnnotationLayout, AnnotationItem } from '../../../utils/annotationSolver';
+
+function disposeMaterial(mat: THREE.Material) {
+  mat.dispose();
+  for (const key of Object.keys(mat)) {
+    const val = (mat as any)[key];
+    if (val && typeof val === 'object' && 'isTexture' in val && typeof val.dispose === 'function') {
+      val.dispose();
+    }
+  }
+}
+
+function disposeObjectTree(obj: THREE.Object3D) {
+  obj.traverse((child) => {
+    if ((child as THREE.Mesh).isMesh) {
+      const mesh = child as THREE.Mesh;
+      if (mesh.geometry) {
+        mesh.geometry.dispose();
+      }
+      if (mesh.material) {
+        if (Array.isArray(mesh.material)) {
+          mesh.material.forEach((m) => disposeMaterial(m));
+        } else {
+          disposeMaterial(mesh.material);
+        }
+      }
+    }
+  });
+}
 
 interface DroneCanvasProps {
   objectData: ObjectBreakdownData;
@@ -17,22 +46,29 @@ interface DroneCanvasProps {
   isolatedComponentId: string | null;
   hiddenComponentIds: Set<string>;
   showLeaderLines: boolean;
+  theme?: 'light' | 'dark';
 }
 
 interface LeaderLineAnnotation {
   nodeId: string;
   name: string;
   category: string;
-  screenX: number;
-  screenY: number;
-  anchorX?: number;
-  anchorY?: number;
-  labelX?: number;
-  labelY?: number;
+  modelId?: string;
   isLeft: boolean;
   visible: boolean;
   isVirtual?: boolean;
   side?: 'front' | 'back' | 'edge';
+  anchorX: number;
+  anchorY: number;
+  labelX: number;
+  labelY: number;
+  cardWidth: number;
+  cardHeight: number;
+  cardAttachX: number;
+  cardCenterY: number;
+  elbowX: number;
+  elbowY: number;
+  pathD: string;
 }
 
 export const DroneCanvas: React.FC<DroneCanvasProps> = ({
@@ -47,13 +83,46 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
   isolatedComponentId,
   hiddenComponentIds,
   showLeaderLines,
+  theme = 'dark',
 }) => {
+  const explodeAmountRef = useRef(explodeAmount);
+  explodeAmountRef.current = explodeAmount;
+
+  const isPlayingMechanismRef = useRef(isPlayingMechanism);
+  isPlayingMechanismRef.current = isPlayingMechanism;
+
+  const showLeaderLinesRef = useRef(showLeaderLines);
+  showLeaderLinesRef.current = showLeaderLines;
+
+  const selectedComponentIdRef = useRef(selectedComponentId);
+  selectedComponentIdRef.current = selectedComponentId;
+
+  const isolatedComponentIdRef = useRef(isolatedComponentId);
+  isolatedComponentIdRef.current = isolatedComponentId;
+
+  const hiddenComponentIdsRef = useRef(hiddenComponentIds);
+  hiddenComponentIdsRef.current = hiddenComponentIds;
+
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
+
+  const modelGenerationRef = useRef(0);
+  const objectDataRef = useRef(objectData);
+  objectDataRef.current = objectData;
+
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+
+  // Dynamic Theme Lighting Refs
+  const ambientLightRef = useRef<THREE.AmbientLight | null>(null);
+  const keyLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const fillLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const blueRimLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const cyanRimLightRef = useRef<THREE.DirectionalLight | null>(null);
 
   const activeRootGroupRef = useRef<THREE.Group | null>(null);
   const componentMapRef = useRef<Map<string, LoadedComponentMeshInfo>>(new Map());
@@ -96,6 +165,16 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
   // to DroneCanvas so the OG viewer and every non-drone object remain untouched.
   const isDroneRef = useRef(false);
 
+  // Dynamic assembled vs exploded framing set
+  const assembledFramingRef = useRef<CameraFramingResult | null>(null);
+  const explodedFramingRef = useRef<CameraFramingResult | null>(null);
+
+  // Master Kinematic Animation Clock (Freezes in place when isPlayingMechanism is false)
+  const kinematicTimeRef = useRef<number>(0);
+
+  // Flat cached interactive mesh list for allocation-free, high-performance raycasting
+  const interactiveMeshesRef = useRef<THREE.Mesh[]>([]);
+
   // Update camera position helper
   const updateCameraPosition = useCallback(() => {
     if (!cameraRef.current) return;
@@ -111,59 +190,62 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     const width = containerRef.current.clientWidth || 800;
     const height = containerRef.current.clientHeight || 600;
 
+    const isLight = theme === 'light';
+
     const scene = new THREE.Scene();
-    scene.background = null;
+    scene.background = new THREE.Color(isLight ? 0xf1f4f8 : 0x020408);
     sceneRef.current = scene;
 
-    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 100);
     cameraRef.current = camera;
     updateCameraPosition();
 
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
       antialias: true,
-      alpha: true,
+      alpha: false,
       powerPreference: 'high-performance',
       stencil: false,
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
-    // DroneCanvas renders only the isolated drone path. Disable the costly shadow
-    // map pass here; the multi-light rig still provides depth without affecting the
-    // original shared viewer used by every other object.
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.shadowMap.enabled = false;
-    // PCFSoft at 2K is particularly expensive for the dense watch. Use a cheaper
-    // filtered map; the visual difference is negligible at this viewer scale.
-    renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.35;
+    renderer.toneMappingExposure = isLight ? 1.15 : 1.35;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     rendererRef.current = renderer;
 
-    // Professional Studio CAD Lighting Rig
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
+    // Precision Studio CAD Lighting Rig
+    const ambientLight = new THREE.AmbientLight(0xffffff, isLight ? 0.90 : 0.45);
+    ambientLightRef.current = ambientLight;
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    const keyLight = new THREE.DirectionalLight(0xffffff, isLight ? 2.2 : 2.5);
     keyLight.position.set(6, 12, 8);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.width = 1024;
-    keyLight.shadow.mapSize.height = 1024;
-    keyLight.shadow.bias = -0.0001;
+    keyLightRef.current = keyLight;
     scene.add(keyLight);
 
-    const fillLight = new THREE.DirectionalLight(0xd6c7ba, 1.15);
+    const fillLight = new THREE.DirectionalLight(isLight ? 0x94a3b8 : 0x1e293b, isLight ? 1.4 : 1.0);
     fillLight.position.set(-8, -4, -6);
+    fillLightRef.current = fillLight;
     scene.add(fillLight);
 
-    const rimLight = new THREE.PointLight(0xff5c35, 1.25, 30);
-    rimLight.position.set(0, 8, -6);
-    scene.add(rimLight);
+    // Electric Blue & Cool Cyan Rim Lights
+    const blueRimLight = new THREE.DirectionalLight(isLight ? 0x2563eb : 0x3b82f6, isLight ? 1.35 : 1.8);
+    blueRimLight.position.set(-4, 4, -8);
+    blueRimLightRef.current = blueRimLight;
+    scene.add(blueRimLight);
+
+    const cyanRimLight = new THREE.DirectionalLight(isLight ? 0x0284c7 : 0x38bdf8, isLight ? 0.85 : 1.1);
+    cyanRimLight.position.set(6, -2, -6);
+    cyanRimLightRef.current = cyanRimLight;
+    scene.add(cyanRimLight);
 
     // Subtle CAD Floor Grid
-    const gridHelper = new THREE.GridHelper(18, 36, 0xff5c35, 0x383838);
+    const gridHelper = new THREE.GridHelper(18, 36, isLight ? 0x2563eb : 0x3b82f6, isLight ? 0xcbd5e1 : 0x1e293b);
     gridHelper.position.y = -2.8;
     (gridHelper.material as THREE.Material).transparent = true;
-    (gridHelper.material as THREE.Material).opacity = 0.28;
+    (gridHelper.material as THREE.Material).opacity = isLight ? 0.35 : 0.22;
     scene.add(gridHelper);
 
     const handleResize = () => {
@@ -184,17 +266,49 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     };
   }, [updateCameraPosition]);
 
+  // Dynamically respond to Light / Dark Mode toggles
+  useEffect(() => {
+    const isLight = theme === 'light';
+    if (sceneRef.current) {
+      sceneRef.current.background = new THREE.Color(isLight ? 0xf1f4f8 : 0x020408);
+    }
+    if (ambientLightRef.current) {
+      ambientLightRef.current.intensity = isLight ? 0.90 : 0.45;
+    }
+    if (keyLightRef.current) {
+      keyLightRef.current.intensity = isLight ? 2.2 : 2.5;
+    }
+    if (fillLightRef.current) {
+      fillLightRef.current.color.setHex(isLight ? 0x94a3b8 : 0x1e293b);
+      fillLightRef.current.intensity = isLight ? 1.4 : 1.0;
+    }
+    if (blueRimLightRef.current) {
+      blueRimLightRef.current.color.setHex(isLight ? 0x2563eb : 0x3b82f6);
+      blueRimLightRef.current.intensity = isLight ? 1.35 : 1.8;
+    }
+    if (cyanRimLightRef.current) {
+      cyanRimLightRef.current.color.setHex(isLight ? 0x0284c7 : 0x38bdf8);
+      cyanRimLightRef.current.intensity = isLight ? 0.85 : 1.1;
+    }
+    if (rendererRef.current) {
+      rendererRef.current.toneMappingExposure = isLight ? 1.15 : 1.35;
+    }
+  }, [theme]);
+
   // Load Real GLB / Composite Model when objectData changes
   useEffect(() => {
     const scene = sceneRef.current;
     if (!scene) return;
 
     let isMounted = true;
+    const loadGeneration = ++modelGenerationRef.current;
     setIsLoading(true);
+    setAnnotations([]);
 
-    // Remove existing root group
+    // Remove and dispose existing root group
     if (activeRootGroupRef.current) {
       scene.remove(activeRootGroupRef.current);
+      disposeObjectTree(activeRootGroupRef.current);
       activeRootGroupRef.current = null;
     }
     componentMapRef.current.clear();
@@ -206,7 +320,10 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     activeHoverIdRef.current = null;
 
     load3DModelForObject(objectData, viewMode).then((result) => {
-      if (!isMounted) return;
+      if (!isMounted || loadGeneration !== modelGenerationRef.current) {
+        disposeObjectTree(result.rootGroup);
+        return;
+      }
 
       activeRootGroupRef.current = result.rootGroup;
       componentMapRef.current = result.componentMap;
@@ -238,18 +355,26 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
       // Apply initial view mode
       applyViewModeToModel(result.componentMap, viewMode);
 
-      // The drone is an inspection object, but its previous presentation distance
-      // was too aggressive and opened on a cropped close-up. Pull back enough to
-      // show the whole assembled airframe, while keeping it substantially larger
-      // than a thumbnail.
-      const presentationDistance = objectData.id === 'drone'
-        ? Math.max(15.5, result.cameraDistance * 1.5, result.maxDimension * 1.18)
-        : Math.max(result.cameraDistance * 1.24, result.maxDimension * 1.7);
-      targetCameraDistanceRef.current = presentationDistance;
-      cameraRotationRef.current.spherical.radius = presentationDistance;
-      // Give the iPhone a presentation-oriented starting view: its GLB is a
-      // very thin slab, so a front-biased camera makes the technical callouts
-      // readable immediately instead of opening on an almost edge-on view.
+      // Dynamic framing: Calculate assembled AND exploded framing sets
+      if (cameraRef.current) {
+        const framingSet = computeModelFramingSet(cameraRef.current, result);
+        assembledFramingRef.current = framingSet.assembledFraming;
+        explodedFramingRef.current = framingSet.explodedFraming;
+
+        const initialDist = THREE.MathUtils.lerp(
+          framingSet.assembledFraming.distance,
+          framingSet.explodedFraming.distance,
+          explodeAmount
+        );
+        targetCameraDistanceRef.current = initialDist;
+        cameraRotationRef.current.spherical.radius = initialDist;
+        cameraRotationRef.current.target.copy(framingSet.assembledFraming.center);
+      } else {
+        const fallbackDist = objectData.id === 'drone' ? 17.5 : 8.5;
+        targetCameraDistanceRef.current = fallbackDist;
+        cameraRotationRef.current.spherical.radius = fallbackDist;
+      }
+      
       if (objectData.id === 'smartphone') {
         cameraRotationRef.current.spherical.theta = Math.PI / 2;
         cameraRotationRef.current.spherical.phi = Math.PI / 2.08;
@@ -257,16 +382,53 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
         cameraRotationRef.current.spherical.theta = Math.PI / 4;
         cameraRotationRef.current.spherical.phi = Math.PI / 2.6;
       }
-      cameraRotationRef.current.target.set(0, 0, 0);
       updateCameraPosition();
+
+      // Pre-cache flat interactive mesh array for instant, allocation-free raycasting
+      const interactiveList: THREE.Mesh[] = [];
+      result.componentMap.forEach((info) => {
+        if (info.sourceMeshes && info.sourceMeshes.length > 0) {
+          interactiveList.push(...info.sourceMeshes);
+        } else {
+          info.mesh.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) interactiveList.push(child as THREE.Mesh);
+          });
+        }
+      });
+      interactiveMeshesRef.current = interactiveList;
 
       setIsLoading(false);
     });
 
     return () => {
       isMounted = false;
+      if (activeRootGroupRef.current && sceneRef.current) {
+        sceneRef.current.remove(activeRootGroupRef.current);
+        disposeObjectTree(activeRootGroupRef.current);
+        activeRootGroupRef.current = null;
+      }
     };
   }, [objectData.id, updateCameraPosition]);
+
+  // Dynamically update camera framing distance and target center as explodeAmount changes
+  useEffect(() => {
+    if (assembledFramingRef.current && explodedFramingRef.current) {
+      const t = Math.max(0, Math.min(1, explodeAmount));
+      const eased = t * t * (3 - 2 * t);
+      const targetDist = THREE.MathUtils.lerp(
+        assembledFramingRef.current.distance,
+        explodedFramingRef.current.distance,
+        eased
+      );
+      targetCameraDistanceRef.current = targetDist;
+      cameraRotationRef.current.target.lerpVectors(
+        assembledFramingRef.current.center,
+        explodedFramingRef.current.center,
+        eased
+      );
+      updateCameraPosition();
+    }
+  }, [explodeAmount, updateCameraPosition]);
 
   // Apply ViewMode changes to model (without reloading)
   useEffect(() => {
@@ -300,11 +462,11 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
         if ((mat as THREE.MeshStandardMaterial).emissive) {
           const stdMat = mat as THREE.MeshStandardMaterial;
           if (isSelected) {
-            stdMat.emissive.set('#ff5c35');
-            stdMat.emissiveIntensity = 0.45;
+            stdMat.emissive.set('#38bdf8');
+            stdMat.emissiveIntensity = 0.14;
           } else if (isHovered) {
-            stdMat.emissive.set('#d4a28f');
-            stdMat.emissiveIntensity = 0.3;
+            stdMat.emissive.set('#38bdf8');
+            stdMat.emissiveIntensity = 0.07;
           } else {
             stdMat.emissive.set('#000000');
             stdMat.emissiveIntensity = 0.0;
@@ -328,16 +490,18 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     };
 
     const renderLoop = () => {
-      const delta = clock.getDelta();
+      // 144Hz-friendly: natural rAF pacing using delta without arbitrary FPS throttling
+      const delta = Math.min(clock.getDelta(), 0.1);
       const elapsed = clock.getElapsedTime();
       const isWatch = isWatchRef.current;
       const isDrone = isDroneRef.current;
-      const isHeavyAsset = isWatch || isDrone;
+      const explode = explodeAmountRef.current;
 
-      // Do not artificially cap the isolated drone viewer. On a 144 Hz display
-      // the old 45 FPS gate made camera motion feel inherently sluggish even
-      // when the GPU had headroom. Expensive work below is cached instead.
-      lastWatchRender = elapsed;
+      // Master kinematic timer advances only when mechanism is actively playing
+      if (isPlayingMechanismRef.current) {
+        kinematicTimeRef.current += delta;
+      }
+      const kTime = kinematicTimeRef.current;
 
       const spherical = cameraRotationRef.current.spherical;
       spherical.radius += (targetCameraDistanceRef.current - spherical.radius) * 0.12;
@@ -355,7 +519,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
             explodedAnimationRef.current.duration,
           ),
         );
-        const clampedExplode = Math.max(0, Math.min(1, explodeAmount));
+        const clampedExplode = Math.max(0, Math.min(1, explode));
 
         // Only evaluate the expensive skinned explode clip when the slider pose
         // actually changes. Camera orbiting no longer recomputes 77 skinned
@@ -366,15 +530,22 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
           lastDroneExplodeRef.current = clampedExplode;
         }
 
-        // Propeller rotation is intentionally kept independent from the explode
-        // pose. This is the only per-frame animation work when the slider rests.
-        propellerMixerRef.current?.update(delta);
+        // Propeller rotation is active ONLY when isPlayingMechanism is true
+        if (isPlayingMechanismRef.current) {
+          propellerMixerRef.current?.update(delta);
+        }
+
+        // Subtle aerodynamic idle float only when isPlayingMechanism is true
+        if (activeRootGroupRef.current) {
+          const hoverFloat = isPlayingMechanismRef.current ? Math.sin(kTime * 2.0) * 0.04 : 0;
+          activeRootGroupRef.current.position.y = hoverFloat;
+        }
       }
 
       componentMapRef.current.forEach((info, id) => {
         const isSupplemental = Boolean(info.mesh.userData?.supplemental);
-        const hiddenByUser = hiddenComponentIds.has(id);
-        const isolatedOut = isolatedComponentId ? isolatedComponentId !== id : false;
+        const hiddenByUser = hiddenComponentIdsRef.current.has(id);
+        const isolatedOut = isolatedComponentIdRef.current ? isolatedComponentIdRef.current !== id : false;
         const renderMeshes: THREE.Mesh[] = info.sourceMeshes || (() => {
           const meshes: THREE.Mesh[] = [];
           info.mesh.traverse((child) => { if ((child as THREE.Mesh).isMesh) meshes.push(child as THREE.Mesh); });
@@ -382,7 +553,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
         })();
         if (info.sourceMeshes) {
           renderMeshes.forEach((mesh) => { mesh.visible = !hiddenByUser && !isolatedOut; });
-        } else if (isSupplemental && explodeAmount < info.explodeStart) {
+        } else if (isSupplemental && explode < info.explodeStart) {
           info.mesh.visible = false;
         } else if (!hiddenByUser && !isolatedOut) {
           info.mesh.visible = true;
@@ -393,7 +564,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
         const range = Math.max(0.001, info.explodeEnd - info.explodeStart);
         const localProgress = Math.max(
           0,
-          Math.min(1, (explodeAmount - info.explodeStart) / range)
+          Math.min(1, (explode - info.explodeStart) / range)
         );
         const easedProgress = smoothStep(localProgress);
 
@@ -407,24 +578,17 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
         targetRot.y += (info.explodedRotation.y - info.baseRotation.y) * easedProgress;
         targetRot.z += (info.explodedRotation.z - info.baseRotation.z) * easedProgress;
 
-        // Use the exact state derived from the slider on every frame.
-        // The previous lerp-based approach allowed each watch mesh to lag by a
-        // different amount while the slider was moving, which looked like parts
-        // were wobbling or tearing through one another. Keeping the explode pose
-        // deterministic makes the mechanism read like a precise CAD disassembly.
         info.mesh.position.copy(targetPos);
         info.mesh.rotation.copy(targetRot);
         info.mesh.scale.copy(info.baseScale);
 
-        // Mechanism motion is layered on top of the stable exploded pose, never
-        // accumulated from the previous frame. This prevents rotational drift.
-        if (isPlayingMechanism) {
+        if (isPlayingMechanismRef.current) {
           if (id.includes('ball') || id.includes('wheel') || id.includes('gear') || id.includes('rotor')) {
-            info.mesh.rotation.y += elapsed * 2.2;
+            info.mesh.rotation.y += kTime * 2.2;
           }
 
           if (id.includes('spring')) {
-            const compression = 1.0 + Math.sin(elapsed * 7) * 0.06 * localProgress;
+            const compression = 1.0 + Math.sin(kTime * 7) * 0.06 * localProgress;
             info.mesh.scale.set(
               info.baseScale.x,
               info.baseScale.y * compression,
@@ -434,252 +598,100 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
         }
       });
 
-      // DOM annotations are expensive to update at 60 FPS and can cause the cursor
-      // to move between a canvas hit and a label. Update them at a modest rate.
+      // Annotations powered by universal solver
       if (
-        showLeaderLines &&
+        showLeaderLinesRef.current &&
         cameraRef.current &&
         containerRef.current &&
         componentMapRef.current.size > 0 &&
-        elapsed - lastAnnotationUpdate > (isHeavyAsset ? (isDrone ? 0.20 : 0.18) : 0.08)
+        elapsed - lastAnnotationUpdate > (isWatch ? 0.045 : 0.032)
       ) {
         lastAnnotationUpdate = elapsed;
 
         const width = containerRef.current.clientWidth;
         const height = containerRef.current.clientHeight;
+        const items: AnnotationItem[] = [];
+
+        const selectedId = selectedComponentIdRef.current;
         const entries = Array.from(componentMapRef.current.entries());
-        const isSmartphone = objectData.id === 'smartphone';
+        const targets = entries.filter(([id, info]) => {
+          const isVisible = info.sourceMeshes?.some((m) => m.visible) || info.mesh.visible;
+          if (!isVisible) return false;
+          if (selectedId && id === selectedId) return true;
+          const threshold = info.revealThreshold ?? (
+            info.assemblyDepth !== undefined
+              ? (info.assemblyDepth <= 0 ? 0.0 : info.assemblyDepth === 1 ? 0.25 : info.assemblyDepth === 2 ? 0.45 : 0.65)
+              : 0.0
+          );
+          return explode >= threshold;
+        });
 
-        const newAnnotations: LeaderLineAnnotation[] = [];
-
-        if (isSmartphone && activeRootGroupRef.current) {
-          // The supplied iPhone GLB is a single exterior mesh. We therefore use
-          // a true technical reference map: the dot is projected onto the
-          // corresponding region of the phone, while the readable badge is
-          // laid out in a clean left/right column with a leader line.
-          const root = activeRootGroupRef.current;
-          const box = new THREE.Box3().setFromObject(root);
-          const size = box.getSize(new THREE.Vector3());
-          const center = box.getCenter(new THREE.Vector3());
-
-          const cameraLocal = root.worldToLocal(cameraRef.current!.position.clone());
-          const viewingFront = cameraLocal.z >= 0;
-
-          const visibleRefs = iphone14ProReferenceAnnotations.filter((ref) => {
-            if (ref.side === 'edge') return true;
-            return ref.side === (viewingFront ? 'front' : 'back');
-          });
-
-          // Keep all relevant systems visible once the technical map is open.
-          // At very low explosion values use a slightly smaller set to preserve
-          // visual clarity; the full map appears as the user explores.
-          const maxVisible = explodeAmount < 0.18 ? 9 : 14;
-          const rankedRefs = [...visibleRefs]
-            .sort((a, b) => {
-              const aPriority = a.nodeId === 'iphone-display-assembly' || a.nodeId === 'iphone-logic-board' ? -2 : 0;
-              const bPriority = b.nodeId === 'iphone-display-assembly' || b.nodeId === 'iphone-logic-board' ? -2 : 0;
-              return aPriority - bPriority;
-            })
-            .slice(0, maxVisible);
-
-          const projected = rankedRefs.map((ref) => {
-            const local = new THREE.Vector3(
-              center.x + (ref.anchor[0] * 0.5) * size.x,
-              center.y + (ref.anchor[1] * 0.5) * size.y,
-              center.z + (ref.anchor[2] * 0.5) * size.z,
-            );
-            const worldPos = root.localToWorld(local.clone());
-            const screenPos = worldPos.project(cameraRef.current!);
-            return { ref, screenPos, worldPos };
-          }).filter(({ screenPos }) => screenPos.z <= 1.2);
-
-          const left = projected
-            .filter(({ ref }) => ref.anchor[0] < 0)
-            .sort((a, b) => a.screenPos.y - b.screenPos.y);
-          const right = projected
-            .filter(({ ref }) => ref.anchor[0] >= 0)
-            .sort((a, b) => a.screenPos.y - b.screenPos.y);
-
-          const layoutColumn = (items: typeof left, isLeft: boolean) => {
-            const minY = Math.max(110, height * 0.16);
-            const maxY = Math.min(height - 105, height * 0.86);
-            const step = items.length > 1
-              ? Math.min(72, (maxY - minY) / (items.length - 1))
-              : 0;
-            const labelX = isLeft ? Math.max(145, width * 0.20) : Math.min(width - 145, width * 0.80);
-
-            return items.map(({ ref, screenPos }, index) => {
-              const labelY = items.length === 1
-                ? (minY + maxY) / 2
-                : minY + index * step;
-              const anchorX = (screenPos.x * 0.5 + 0.5) * width;
-              const anchorY = (-(screenPos.y * 0.5) + 0.5) * height;
-
-              return {
-                nodeId: ref.nodeId,
-                name: ref.label,
-                category: ref.category,
-                screenX: labelX,
-                screenY: labelY,
-                anchorX,
-                anchorY,
-                labelX,
-                labelY,
-                isLeft,
-                visible: true,
-                isVirtual: true,
-                side: ref.side,
-              } satisfies LeaderLineAnnotation;
-            });
-          };
-
-          newAnnotations.push(...layoutColumn(left, true), ...layoutColumn(right, false));
-        } else {
-          // For real multi-mesh assets, project the actual mesh hierarchy and
-          // then lay labels out in dedicated left/right annotation columns.
-          // This keeps the model readable instead of covering it with badges.
-          const targets = selectedComponentId
-            ? entries.filter(([id]) => id === selectedComponentId)
-            : objectData.id === 'drone'
-              // Keep the drone informative without rebuilding all label DOM every pass.
-              ? entries.filter(([, info]) => info.sourceMeshes?.some((mesh) => mesh.visible) || info.mesh.visible).slice(0, explodeAmount >= 0.52 ? 15 : 10)
-              : objectData.id === 'wristwatch'
-              // Rendering 50+ DOM labels and raycasting every one of them against a
-              // 300k triangle assembly is the main cause of the watch slowdown. Keep
-              // the same annotation system, but show a curated visible set; every
-              // component remains available in the component tree and can be selected.
-              ? entries.filter(([id, info]) => info.mesh.visible).slice(0, explodeAmount >= 0.52 ? 18 : 10)
-              : explodeAmount >= 0.52
-                ? entries
-                : entries.slice(0, Math.min(10, entries.length));
-
-          const projectedTargets = targets.flatMap(([id, info]) => {
-            const renderMeshes: THREE.Mesh[] = info.sourceMeshes || [];
-            const isVisible = info.sourceMeshes
-              ? renderMeshes.some((mesh) => mesh.visible)
-              : info.mesh.visible;
-            if (!isVisible) return [];
-
-            // Dense/skinned assets are annotation-heavy. For the drone and watch,
-            // derive a camera-facing anchor from transformed geometry bounding spheres
-            // instead of Box3.setFromObject + triangle raycasts. This avoids repeatedly
-            // traversing/skinning the GLB just to place DOM labels.
+        for (const [id, info] of targets) {
+          const geometryBox = new THREE.Box3();
+          if (info.sourceMeshes && info.sourceMeshes.length > 0) {
+            for (const sm of info.sourceMeshes) {
+              if (sm.visible) {
+                sm.updateWorldMatrix(true, true);
+                geometryBox.expandByObject(sm);
+              }
+            }
+          } else {
             info.mesh.updateWorldMatrix(true, true);
-            let componentCenter = new THREE.Vector3();
-            let componentRadius = 0;
+            geometryBox.setFromObject(info.mesh);
+          }
+          if (geometryBox.isEmpty()) continue;
 
-            if (isHeavyAsset && info.sourceMeshes?.length) {
-              let count = 0;
-              info.sourceMeshes.forEach((mesh) => {
-                if (!mesh.visible || !mesh.geometry) return;
-                if (!mesh.geometry.boundingSphere) mesh.geometry.computeBoundingSphere();
-                const sphere = mesh.geometry.boundingSphere;
-                if (!sphere) return;
-                const worldCenter = sphere.center.clone().applyMatrix4(mesh.matrixWorld);
-                const worldScale = Math.max(
-                  mesh.matrixWorld.getMaxScaleOnAxis(),
-                  0.0001,
-                );
-                componentCenter.add(worldCenter);
-                componentRadius = Math.max(componentRadius, sphere.radius * worldScale);
-                count += 1;
-              });
-              if (!count) return [];
-              componentCenter.multiplyScalar(1 / count);
-              componentRadius = Math.max(componentRadius, 0.03);
-            } else {
-              const geometryBox = new THREE.Box3().setFromObject(info.mesh);
-              if (geometryBox.isEmpty()) return [];
-              componentCenter = geometryBox.getCenter(new THREE.Vector3());
-              componentRadius = geometryBox.getSize(new THREE.Vector3()).length() * 0.28;
-            }
-
-            let anchorWorld: THREE.Vector3;
-            if (isHeavyAsset) {
-              const towardCamera = cameraRef.current!.position.clone().sub(componentCenter);
-              if (towardCamera.lengthSq() < 1e-8) return [];
-              towardCamera.normalize();
-              anchorWorld = componentCenter.clone().addScaledVector(towardCamera, componentRadius * 0.72);
-            } else {
-              const rayDirection = componentCenter.clone().sub(cameraRef.current!.position);
-              if (rayDirection.lengthSq() < 1e-8) return [];
-              rayDirection.normalize();
-              const anchorRaycaster = annotationRaycasterRef.current;
-              anchorRaycaster.set(cameraRef.current!.position, rayDirection);
-              anchorRaycaster.near = 0.01;
-              anchorRaycaster.far = cameraRef.current!.position.distanceTo(componentCenter) + componentRadius * 4;
-              const hits = anchorRaycaster.intersectObject(info.mesh, true);
-              anchorWorld = hits.length ? hits[0].point.clone() : componentCenter.clone();
-            }
-
-            const screenPos = anchorWorld.clone().project(cameraRef.current!);
-            if (screenPos.z > 1 || screenPos.z < -1.2) return [];
-
-            return [{
-              id,
-              info,
-              screenX: (screenPos.x * 0.5 + 0.5) * width,
-              screenY: (-(screenPos.y * 0.5) + 0.5) * height,
-            }];
+          const componentCenter = geometryBox.getCenter(new THREE.Vector3());
+          items.push({
+            id,
+            name: info.displayName,
+            category: info.category,
+            worldPosition: componentCenter,
+            modelId: 'drone',
+            isSelected: selectedComponentIdRef.current === id,
           });
-
-          const genericLeft = projectedTargets.filter((item) => item.screenX < width * 0.5).sort((a, b) => a.screenY - b.screenY);
-          const genericRight = projectedTargets.filter((item) => item.screenX >= width * 0.5).sort((a, b) => a.screenY - b.screenY);
-
-          const layoutGenericColumn = (items: typeof genericLeft, isLeft: boolean) => {
-            const minY = Math.max(74, height * 0.14);
-            const maxY = Math.min(height - 82, height * 0.86);
-            const minGap = 56;
-            const step = items.length > 1
-              ? Math.max(minGap, Math.min(76, (maxY - minY) / Math.max(1, items.length - 1)))
-              : 0;
-            const labelX = isLeft ? Math.max(160, width * 0.18) : Math.min(width - 160, width * 0.82);
-
-            return items.map((item, index) => {
-              const preferredY = Math.max(minY, Math.min(maxY, item.screenY));
-              const labelY = items.length === 1 ? preferredY : Math.max(minY + index * step, Math.min(maxY, preferredY));
-              return {
-                nodeId: item.id,
-                name: item.info.displayName,
-                category: item.info.category,
-                screenX: labelX,
-                screenY: labelY,
-                anchorX: item.screenX,
-                anchorY: item.screenY,
-                labelX,
-                labelY,
-                isLeft,
-                visible: true,
-              } satisfies LeaderLineAnnotation;
-            });
-          };
-
-          newAnnotations.push(...layoutGenericColumn(genericLeft, true), ...layoutGenericColumn(genericRight, false));
         }
 
-        const leftLabels = newAnnotations.filter((a) => a.isLeft).sort((a, b) => a.screenY - b.screenY);
-        const rightLabels = newAnnotations.filter((a) => !a.isLeft).sort((a, b) => a.screenY - b.screenY);
+        const solved = solveAnnotationLayout(
+          items,
+          cameraRef.current,
+          { width, height },
+          {
+            activeModelId: 'drone',
+            cardWidth: 210,
+            cardHeight: 46,
+            verticalGap: 10,
+            topMargin: 76,
+            bottomMargin: 144,
+            leftMargin: 24,
+            rightMargin: 24,
+          }
+        );
 
-        const adjustSpacing = (labels: LeaderLineAnnotation[], topLimit: number, bottomLimit: number) => {
-          const gap = 56;
-          for (let i = 1; i < labels.length; i++) {
-            labels[i].screenY = Math.max(labels[i].screenY, labels[i - 1].screenY + gap);
-          }
-          if (labels.length && labels[labels.length - 1].screenY > bottomLimit) {
-            labels[labels.length - 1].screenY = bottomLimit;
-            for (let i = labels.length - 2; i >= 0; i--) labels[i].screenY = Math.min(labels[i].screenY, labels[i + 1].screenY - gap);
-          }
-          if (labels.length && labels[0].screenY < topLimit) {
-            const shift = topLimit - labels[0].screenY;
-            labels.forEach((label) => { label.screenY += shift; });
-          }
-          labels.forEach((label) => { label.labelY = label.screenY; });
-        };
-
-        adjustSpacing(leftLabels, 66, height - 66);
-        adjustSpacing(rightLabels, 66, height - 66);
-        setAnnotations([...leftLabels, ...rightLabels]);
-      } else if (!showLeaderLines && annotations.length > 0) {
+        setAnnotations(
+          solved.map((s) => ({
+            nodeId: s.nodeId,
+            name: s.name,
+            category: s.category,
+            modelId: s.modelId,
+            isLeft: s.isLeft,
+            visible: s.visible,
+            isVirtual: s.isVirtual,
+            side: s.side,
+            anchorX: s.anchorX,
+            anchorY: s.anchorY,
+            labelX: s.labelX,
+            labelY: s.labelY,
+            cardWidth: s.cardWidth,
+            cardHeight: s.cardHeight,
+            cardAttachX: s.cardAttachX,
+            cardCenterY: s.cardCenterY,
+            elbowX: s.elbowX,
+            elbowY: s.elbowY,
+            pathD: s.pathD,
+          }))
+        );
+      } else if (!showLeaderLinesRef.current && annotations.length > 0) {
         setAnnotations([]);
       }
 
@@ -692,13 +704,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [
-    explodeAmount,
-    isPlayingMechanism,
-    showLeaderLines,
-    selectedComponentId,
-    updateCameraPosition,
-  ]);
+  }, [updateCameraPosition]);
 
   // Stable In-Place Hover Function (100% Zero Flickering!)
   const setMeshHoverState = (targetId: string | null) => {
@@ -730,14 +736,22 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
           const mat = mesh.material;
           const targetMat = Array.isArray(mat) ? mat[0] : mat;
           if ((targetMat as THREE.MeshStandardMaterial)?.emissive) {
-            (targetMat as THREE.MeshStandardMaterial).emissive.set('#0ea5e9');
-            (targetMat as THREE.MeshStandardMaterial).emissiveIntensity = 0.35;
+            (targetMat as THREE.MeshStandardMaterial).emissive.set('#38bdf8');
+            (targetMat as THREE.MeshStandardMaterial).emissiveIntensity = 0.07;
           }
         });
       }
     }
 
-    // Throttled notification to React
+    // Instant notification to CustomCursor (0 ms delay)
+    const current = targetId ? componentMapRef.current.get(targetId) : null;
+    window.dispatchEvent(
+      new CustomEvent('component-hover', {
+        detail: current ? { name: current.displayName, category: current.category } : null,
+      })
+    );
+
+    // Responsive, lightly throttled notification to React state
     if (hoverThrottleTimerRef.current) {
       window.clearTimeout(hoverThrottleTimerRef.current);
     }
@@ -746,7 +760,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
         lastReportedHoverIdRef.current = targetId;
         onHoverComponent(targetId);
       }
-    }, 60);
+    }, 20);
   };
 
   // Pointer Interaction Handlers
@@ -769,7 +783,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
       return;
     }
 
-    // Raycast hover detection against meshes in scene
+    // Instant raycast hover detection against pre-cached interactive meshes
     if (!containerRef.current || !cameraRef.current || !sceneRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const mouse = mouseRef.current.set(
@@ -786,7 +800,8 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
       return;
     }
 
-    const intersects = raycaster.intersectObjects(root.children, true);
+    const targets = interactiveMeshesRef.current.length > 0 ? interactiveMeshesRef.current : root.children;
+    const intersects = raycaster.intersectObjects(targets, true);
     if (intersects.length > 0) {
       let hitMesh: THREE.Object3D | null = intersects[0].object;
       while (hitMesh && hitMesh !== sceneRef.current) {
@@ -852,49 +867,48 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     >
       <canvas ref={canvasRef} className="w-full h-full block" />
 
-      {objectData.id === 'smartphone' && !isLoading && (
-        <div className="absolute top-4 left-4 z-20 max-w-[310px] pointer-events-none">
-          <div className="px-3 py-2 rounded-xl border border-[#38bdf8]/20 bg-[#0d111a]/75 backdrop-blur-md shadow-lg">
-            <div className="text-[10px] font-mono-cad uppercase tracking-[0.18em] text-[#38bdf8] font-bold">Technical Component Map</div>
-            <div className="mt-1 text-[10px] leading-relaxed text-slate-400">Internal systems are shown as reference callouts because the supplied smartphone GLB is an exterior model, not a separated teardown.</div>
-          </div>
-        </div>
-      )}
-
       {/* Loading Indicator */}
       {isLoading && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#07090e]/80 backdrop-blur-md font-mono-cad text-xs text-slate-300">
-          <div className="w-10 h-10 rounded-xl bg-[#00f2ad]/10 border border-[#00f2ad]/30 flex items-center justify-center text-[#00f2ad] animate-spin mb-3">
+        <div className={`absolute inset-0 z-30 flex flex-col items-center justify-center backdrop-blur-md font-mono text-xs ${
+          theme === 'light' ? 'bg-[#f8fafc]/90 text-slate-800' : 'bg-[#020408]/85 text-white'
+        }`}>
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center animate-spin mb-3 ${
+            theme === 'light' ? 'bg-blue-50 border border-blue-200 text-[#0284c7]' : 'bg-[#3b82f6]/10 border border-[#3b82f6]/30 text-[#38bdf8]'
+          }`}>
             <Box className="w-5 h-5" />
           </div>
-          <span className="font-bold tracking-widest text-[#00f2ad] uppercase animate-pulse">
-            LOADING REAL 3D ASSET...
+          <span className={`font-bold tracking-widest uppercase animate-pulse ${
+            theme === 'light' ? 'text-[#0284c7]' : 'text-[#38bdf8]'
+          }`}>
+            CALIBRATING 3D ASSET...
           </span>
-          <span className="text-[10px] text-slate-500 mt-1">Calibrating CAD geometry & PBR materials</span>
+          <span className={`text-[10px] mt-1 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Framing CAD geometry & PBR materials</span>
         </div>
       )}
 
-      {/* Engineering-style leader lines. Every label lives outside the model and
-          connects back to a projected anchor point with a small elbow line. */}
+      {/* Engineering-style leader lines and cards strictly confined to 3D safe zone */}
       <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden">
         {showLeaderLines && !isLoading && (
           <svg className="absolute inset-0 w-full h-full overflow-visible" aria-hidden="true">
             {annotations.map((ann) => {
-              if (ann.anchorX == null || ann.anchorY == null || ann.labelX == null || ann.labelY == null) return null;
-              const labelEdgeX = ann.isLeft ? ann.labelX + 8 : ann.labelX - 8;
-              const elbowX = ann.isLeft ? Math.max(ann.anchorX - 38, labelEdgeX + 30) : Math.min(ann.anchorX + 38, labelEdgeX - 30);
+              if (!ann.visible || !ann.pathD) return null;
               const active = selectedComponentId === ann.nodeId;
               return (
                 <g key={`line-${ann.nodeId}`}>
-                  <polyline
-                    points={`${ann.anchorX},${ann.anchorY} ${elbowX},${ann.anchorY} ${labelEdgeX},${ann.labelY}`}
+                  <path
+                    d={ann.pathD}
                     fill="none"
-                    stroke={active ? '#ff5c35' : '#8b8b84'}
-                    strokeOpacity={active ? 1 : 0.62}
-                    strokeWidth={active ? 2 : 1}
+                    stroke={active ? (theme === 'light' ? '#0284c7' : '#38bdf8') : (theme === 'light' ? '#2563eb' : '#3b82f6')}
+                    strokeOpacity={active ? 1 : 0.65}
+                    strokeWidth={active ? 2 : 1.2}
                     strokeDasharray={active ? undefined : '3 3'}
                   />
-                  <circle cx={ann.anchorX} cy={ann.anchorY} r={active ? 4.5 : 3.2} fill={active ? '#ff5c35' : '#8b8b84'} />
+                  <circle
+                    cx={ann.anchorX}
+                    cy={ann.anchorY}
+                    r={active ? 4.5 : 3}
+                    fill={active ? (theme === 'light' ? '#0284c7' : '#38bdf8') : (theme === 'light' ? '#2563eb' : '#3b82f6')}
+                  />
                 </g>
               );
             })}
@@ -906,18 +920,17 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
           annotations.map((ann, idx) => {
             const isSelected = selectedComponentId === ann.nodeId;
             const isHovered = activeHoverIdRef.current === ann.nodeId;
-            const left = ann.labelX ?? ann.screenX;
-            const top = ann.labelY ?? ann.screenY;
 
             return (
               <div
                 key={ann.nodeId}
                 style={{
-                  left: `${left}px`,
-                  top: `${top}px`,
-                  transform: `translate(${ann.isLeft ? '-100%' : '0%'}, -50%)`,
+                  left: `${ann.labelX}px`,
+                  top: `${ann.labelY}px`,
+                  width: `${ann.cardWidth}px`,
+                  transform: 'translate(0, -50%)',
                 }}
-                className="absolute flex items-center gap-2"
+                className="absolute pointer-events-none"
               >
                 <div
                   onPointerDown={(e) => e.stopPropagation()}
@@ -925,7 +938,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
                     e.stopPropagation();
                     onSelectComponent(isSelected ? null : ann.nodeId);
                   }}
-                  className={`three-label pointer-events-auto cursor-pointer min-w-[184px] max-w-[250px] px-3 py-2 text-xs font-mono-cad border transition-all ${
+                  className={`three-label pointer-events-auto cursor-pointer w-full px-3 py-2 text-xs font-mono-cad border transition-all ${
                     isSelected
                       ? 'three-label-selected'
                       : isHovered
@@ -937,9 +950,9 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
                     <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center text-[9px] font-bold annotation-index ${isSelected ? 'annotation-index-active' : ''}`}>
                       {String(idx + 1).padStart(2, '0')}
                     </span>
-                    <div className="min-w-0">
-                      <div className="three-label-name font-semibold tracking-wide leading-tight">{ann.name}</div>
-                      <div className="three-label-meta mt-1 text-[9px] uppercase tracking-[0.12em] flex items-center gap-1.5">
+                    <div className="min-w-0 flex-1">
+                      <div className="three-label-name font-semibold tracking-wide leading-tight truncate">{ann.name}</div>
+                      <div className="three-label-meta mt-1 text-[9px] uppercase tracking-[0.12em] flex items-center gap-1.5 truncate">
                         {ann.category}
                         {ann.isVirtual && <span className="text-[8px] text-amber-300/90 border border-amber-300/20 rounded px-1 py-0.5">REFERENCE</span>}
                       </div>

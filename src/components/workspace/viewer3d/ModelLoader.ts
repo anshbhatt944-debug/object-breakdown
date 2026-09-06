@@ -2,9 +2,11 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { ObjectBreakdownData, ViewMode3D, ComponentNode } from '../../../types/objectData';
 import { MODEL_ASSETS, ModelAssetConfig, ModelMeshMapping } from '../../../data/modelRegistry';
+import { isMeaningfulComponentName } from '../../../data/uploadAnalysis';
 import { createComponentMesh } from './proceduralMeshes';
 
 const gltfSceneCache = new Map<string, THREE.Group>();
+const gltfAnimationsCache = new Map<string, THREE.AnimationClip[]>();
 const gltfLoader = new GLTFLoader();
 
 export interface LoadedComponentMeshInfo {
@@ -19,7 +21,11 @@ export interface LoadedComponentMeshInfo {
   explodedRotation: THREE.Euler;
   explodeStart: number;
   explodeEnd: number;
+  revealThreshold?: number;
+  assemblyDepth?: number;
   originalMaterials: Map<THREE.Mesh, THREE.Material | THREE.Material[]>;
+  sourceMeshes?: THREE.Mesh[];
+  nativeAnimated?: boolean;
 }
 
 export interface LoadedObjectResult {
@@ -27,6 +33,7 @@ export interface LoadedObjectResult {
   componentMap: Map<string, LoadedComponentMeshInfo>;
   maxDimension: number;
   cameraDistance: number;
+  animations?: THREE.AnimationClip[];
 }
 
 export async function loadGLTFGroup(url: string): Promise<THREE.Group> {
@@ -45,6 +52,7 @@ export async function loadGLTFGroup(url: string): Promise<THREE.Group> {
           }
         });
         gltfSceneCache.set(url, gltf.scene);
+        gltfAnimationsCache.set(url, gltf.animations || []);
         resolve(gltf.scene.clone(true));
       },
       undefined,
@@ -61,8 +69,9 @@ function registerMesh(
   mesh: THREE.Mesh,
   mapping: ModelMeshMapping | undefined,
   componentMap: Map<string, LoadedComponentMeshInfo>,
-  sequenceIndex: number,
-  sequenceCount: number,
+  sequenceIndex: number = 0,
+  sequenceCount: number = 1,
+  objectId?: string
 ) {
   root.updateMatrixWorld(true);
   mesh.updateMatrixWorld(true);
@@ -82,10 +91,11 @@ function registerMesh(
       : mesh.material.clone()
   );
 
+  const isWatch = objectId === 'wristwatch';
   const meshName = mesh.name;
-  const compId = mapping?.componentId || meshName || `comp-${mesh.id}`;
-  const displayName = mapping?.displayName || meshName || 'Component';
-  const category = mapping?.category || 'Mechanical';
+  const compId = mapping?.componentId || (isMeaningfulComponentName(meshName) ? meshName : (isWatch ? `watch-part-${sequenceIndex + 1}` : `aux-assembly-${sequenceIndex + 1}`));
+  const displayName = mapping?.displayName || (isMeaningfulComponentName(meshName) ? meshName : (isWatch ? `Movement Structural Component ${sequenceIndex + 1}` : `Auxiliary Subsystem ${sequenceIndex + 1}`));
+  const category = mapping?.category || (isWatch ? 'Horological Mechanism' : 'Mechanical');
 
   // Mapping vectors are deliberately object-specific. A small staged delay makes
   // the breakdown read as a disassembly instead of every part moving simultaneously.
@@ -100,6 +110,24 @@ function registerMesh(
   const explodeEnd = mapping?.explodeEnd ?? Math.min(1, explodeStart + 0.52);
 
   mesh.name = compId;
+  mesh.userData.basePosition = mesh.position.clone();
+  mesh.userData.baseRotation = mesh.rotation.clone();
+  mesh.userData.baseScale = mesh.scale.clone();
+
+  const existing = componentMap.get(compId);
+  if (existing) {
+    if (!existing.sourceMeshes) {
+      existing.sourceMeshes = [existing.mesh as THREE.Mesh];
+    }
+    existing.sourceMeshes.push(mesh);
+    existing.originalMaterials.set(
+      mesh,
+      Array.isArray(mesh.material)
+        ? mesh.material.map((m) => m.clone())
+        : mesh.material.clone()
+    );
+    return;
+  }
 
   componentMap.set(compId, {
     mesh,
@@ -113,7 +141,10 @@ function registerMesh(
     explodedRotation: mesh.rotation.clone(),
     explodeStart,
     explodeEnd,
+    revealThreshold: mapping?.revealThreshold,
+    assemblyDepth: mapping?.assemblyDepth,
     originalMaterials: originalMats,
+    sourceMeshes: [mesh],
   });
 }
 
@@ -171,9 +202,20 @@ function registerUploadedGroup(
   // after every group has been registered, using the whole model geometry.
   const explodeStart = Math.min(0.55, sequenceIndex * (0.48 / Math.max(sequenceCount - 1, 1)));
   componentMap.set(component.id, {
-    mesh: group, componentId: component.id, displayName: component.name, category: component.category,
-    basePosition: group.position.clone(), baseRotation: group.rotation.clone(), baseScale: group.scale.clone(),
-    explodeVector: new THREE.Vector3(...component.explodeVector), explodedRotation: group.rotation.clone(), explodeStart, explodeEnd: Math.min(1, explodeStart + 0.52), originalMaterials: originalMats,
+    mesh: group,
+    componentId: component.id,
+    displayName: component.name,
+    category: component.category,
+    basePosition: group.position.clone(),
+    baseRotation: group.rotation.clone(),
+    baseScale: group.scale.clone(),
+    explodeVector: new THREE.Vector3(...component.explodeVector),
+    explodedRotation: group.rotation.clone(),
+    explodeStart,
+    explodeEnd: Math.min(1, explodeStart + 0.52),
+    revealThreshold: 0.0,
+    assemblyDepth: 0,
+    originalMaterials: originalMats,
   });
 }
 
@@ -286,9 +328,24 @@ export async function loadUploaded3DModel(
     const meshId = uploadedMeshId(index);
     if (mappedMeshIds.has(meshId)) return;
     const id = `upload-raw-${meshId}`;
-    const displayName = mesh.name || `Detected Component ${index + 1}`;
+    const displayName = isMeaningfulComponentName(mesh.name) ? mesh.name : `Auxiliary Subsystem ${index + 1}`;
     prepareUploadedMeshMaterials(mesh, displayName, index);
-    registerMesh(rootGroup, mesh, { componentId: id, displayName, category: 'Unmapped uploaded geometry', explodeVector: [0, 1, 0], color: '#94a3b8' }, componentMap, componentMap.size, meshes.length);
+    registerMesh(
+      rootGroup,
+      mesh,
+      {
+        componentId: id,
+        displayName,
+        category: 'Auxiliary Mechanical Assembly',
+        explodeVector: [0, 1, 0],
+        color: '#94a3b8',
+        revealThreshold: 0.0,
+        assemblyDepth: 0,
+      },
+      componentMap,
+      componentMap.size,
+      meshes.length
+    );
   });
 
   // Plan one physical motion per AI component, not one motion per raw mesh.
@@ -304,23 +361,61 @@ export async function loadUploaded3DModel(
   rootGroup.scale.setScalar(targetDimension / maxDimension);
   componentMap.forEach((info) => { info.basePosition.copy(info.mesh.position); info.baseRotation.copy(info.mesh.rotation); info.baseScale.copy(info.mesh.scale); });
   applyViewModeToModel(componentMap, viewMode);
-  return { rootGroup, componentMap, maxDimension: targetDimension, cameraDistance: targetDimension * 1.75 };
+  return {
+    rootGroup,
+    componentMap,
+    maxDimension: targetDimension,
+    cameraDistance: targetDimension * 1.75,
+    animations: gltfAnimationsCache.get(url) || [],
+  };
 }
 
 function normalizeMeshName(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-function findMeshMapping(config: ModelAssetConfig, meshName: string): ModelMeshMapping | undefined {
+function getSemanticMeshName(mesh: THREE.Mesh): string {
+  if (!/^Object_\d+$/i.test(mesh.name)) return mesh.name;
+  let current: THREE.Object3D | null = mesh.parent;
+  while (current) {
+    if (current.name && !/^Object_\d+$/i.test(current.name)) return current.name;
+    current = current.parent;
+  }
+  return mesh.name;
+}
+
+function findMeshMapping(config: ModelAssetConfig, meshName: string, originalMeshName?: string): ModelMeshMapping | undefined {
   const mappings: Array<[string, ModelMeshMapping]> = Object.keys(config.meshMappings || {}).map((key) => [key, config.meshMappings![key]]);
-  const exact = mappings.find(([key]) => key === meshName);
+  const normalizedMesh = normalizeMeshName(meshName);
+  const normalizedOrig = originalMeshName ? normalizeMeshName(originalMeshName) : '';
+
+  // 1. Match in sourceMeshNames (exact OR normalized to handle Three.js dot removal)
+  const aliased = mappings.find(([, mapping]) =>
+    mapping.sourceMeshNames?.some(
+      (sn) => {
+        const normSn = normalizeMeshName(sn);
+        return sn === meshName ||
+          sn === originalMeshName ||
+          normSn === normalizedMesh ||
+          (normalizedOrig && normSn === normalizedOrig);
+      }
+    )
+  );
+  if (aliased) return aliased[1];
+
+  // 2. Exact key match
+  const exact = mappings.find(([key]) => key === meshName || (originalMeshName && key === originalMeshName));
   if (exact) return exact[1];
 
-  const normalized = normalizeMeshName(meshName);
-  const normalizedMatch = mappings.find(([key]) => normalizeMeshName(key) === normalized);
+  // 3. Normalized key match
+  const normalizedMatch = mappings.find(([key]) => {
+    const normKey = normalizeMeshName(key);
+    return normKey === normalizedMesh || (normalizedOrig && normKey === normalizedOrig);
+  });
   if (normalizedMatch) return normalizedMatch[1];
 
-  const tokens: string[] = normalized.match(/[a-z]+|\d+/g) || [];
+  // 4. Token overlap
+  const tokens: string[] = normalizedMesh.match(/[a-z]+|\d+/g) || [];
   let best: { score: number; mapping: ModelMeshMapping } | null = null;
   for (const [key, mapping] of mappings) {
     const keyTokens: string[] = normalizeMeshName(key).match(/[a-z]+|\d+/g) || [];
@@ -342,14 +437,20 @@ function processGLTFMeshes(
   });
 
   meshes.forEach((mesh, index) => {
+    const originalName = mesh.name;
+    const semanticName = getSemanticMeshName(mesh);
+    mesh.name = semanticName;
+
     registerMesh(
       root,
       mesh,
-      findMeshMapping(config, mesh.name),
+      findMeshMapping(config, semanticName, originalName),
       componentMap,
       index,
       meshes.length,
+      config.objectId,
     );
+    mesh.userData.sourceMeshName = originalName;
   });
 }
 
@@ -380,6 +481,8 @@ function addPenEngineeringInternals(
     explodeVector: [number, number, number];
     start: number;
     end: number;
+    revealThreshold: number;
+    assemblyDepth: number;
   }> = [
     {
       id: 'supplemental-ink-cartridge',
@@ -387,11 +490,13 @@ function addPenEngineeringInternals(
       category: 'Fluidics',
       meshKey: 'pen-cartridge',
       color: '#64748b',
-      position: [0.1, 0, 0],
+      position: [0, 0.1, 0],
       scale: 0.82,
-      explodeVector: [-0.35, 0, 0],
+      explodeVector: [0, -0.6, 0],
       start: 0.18,
       end: 0.72,
+      revealThreshold: 0.35,
+      assemblyDepth: 2,
     },
     {
       id: 'supplemental-return-spring',
@@ -399,11 +504,13 @@ function addPenEngineeringInternals(
       category: 'Kinematics',
       meshKey: 'pen-spring',
       color: '#d4d4d8',
-      position: [1.05, 0, 0],
+      position: [0, -1.35, 0],
       scale: 0.8,
-      explodeVector: [0.9, 0, 0],
+      explodeVector: [0, -1.5, 0],
       start: 0.3,
       end: 0.82,
+      revealThreshold: 0.50,
+      assemblyDepth: 2,
     },
     {
       id: 'supplemental-click-cam',
@@ -411,11 +518,13 @@ function addPenEngineeringInternals(
       category: 'Kinematics',
       meshKey: 'pen-cam',
       color: '#f59e0b',
-      position: [1.65, 0, 0],
+      position: [0, 1.25, 0],
       scale: 0.65,
-      explodeVector: [1.35, 0.25, 0],
+      explodeVector: [0, 1.8, 0],
       start: 0.42,
       end: 0.9,
+      revealThreshold: 0.60,
+      assemblyDepth: 2,
     },
     {
       id: 'supplemental-writing-tip',
@@ -423,11 +532,13 @@ function addPenEngineeringInternals(
       category: 'Fluidics',
       meshKey: 'pen-tip',
       color: '#b45309',
-      position: [-2.15, 0, 0],
+      position: [0, -2.15, 0],
       scale: 0.9,
-      explodeVector: [-1.0, -0.25, 0],
+      explodeVector: [0, -2.8, 0],
       start: 0.28,
       end: 0.78,
+      revealThreshold: 0.70,
+      assemblyDepth: 3,
     },
     {
       id: 'supplemental-tungsten-ball',
@@ -435,11 +546,13 @@ function addPenEngineeringInternals(
       category: 'Tribology',
       meshKey: 'pen-ball',
       color: '#a1a1aa',
-      position: [-2.55, 0, 0],
+      position: [0, -2.55, 0],
       scale: 0.95,
-      explodeVector: [-1.35, -0.4, 0],
-      start: 0.52,
+      explodeVector: [0, -3.4, 0],
+      start: 0.32,
       end: 0.96,
+      revealThreshold: 0.75,
+      assemblyDepth: 3,
     },
   ];
 
@@ -471,6 +584,8 @@ function addPenEngineeringInternals(
       failureModes: [],
       engineeringReason: 'Supplemental visualization because the supplied exterior GLB does not contain this internal mesh as a separate node.',
       dataConfidence: 'Model-dependent' as const,
+      revealThreshold: def.revealThreshold,
+      assemblyDepth: def.assemblyDepth,
     } satisfies ComponentNode;
 
     const group = createComponentMesh(node, objectData.id, viewMode, false, false);
@@ -511,6 +626,8 @@ function addPenEngineeringInternals(
       explodedRotation: group.rotation.clone(),
       explodeStart: def.start,
       explodeEnd: def.end,
+      revealThreshold: def.revealThreshold,
+      assemblyDepth: def.assemblyDepth,
       originalMaterials,
     });
   });
@@ -570,6 +687,8 @@ function buildProceduralFallback(
       explodedRotation: group.rotation.clone(),
       explodeStart: Math.min(0.55, index * (0.48 / Math.max(allNodes.length - 1, 1))),
       explodeEnd: Math.min(1, index * (0.48 / Math.max(allNodes.length - 1, 1)) + 0.52),
+      revealThreshold: node.revealThreshold,
+      assemblyDepth: node.assemblyDepth,
       originalMaterials: originalMats,
     });
   });
@@ -626,12 +745,21 @@ export async function load3DModelForObject(
   const center = new THREE.Vector3();
   bbox.getCenter(center);
 
-  rootGroup.position.sub(center);
+  // Center all child meshes/groups inside rootGroup so (0,0,0) is the true geometric center
+  rootGroup.children.forEach((child) => {
+    child.position.sub(center);
+    if (child.userData) {
+      child.userData.basePosition = child.position.clone();
+    }
+  });
+  rootGroup.position.set(0, 0, 0);
 
   const maxDim = Math.max(size.x, size.y, size.z) || 1;
   const targetDim = config?.targetMaxDimension || 4.5;
   const normalizationScale = targetDim / maxDim;
-  rootGroup.scale.multiplyScalar(normalizationScale);
+  rootGroup.scale.setScalar(normalizationScale);
+
+  rootGroup.updateWorldMatrix(true, true);
 
   // All GLTF meshes were detached to root before normalization, so local transforms
   // remain stable and can be interpolated directly.
@@ -641,6 +769,13 @@ export async function load3DModelForObject(
     info.baseScale.copy(info.mesh.scale);
     info.mesh.position.copy(info.basePosition);
     info.mesh.rotation.copy(info.baseRotation);
+    if (info.sourceMeshes) {
+      info.sourceMeshes.forEach((m) => {
+        if (m.userData?.basePosition) {
+          m.userData.basePosition.copy(m.position);
+        }
+      });
+    }
   });
 
   return {

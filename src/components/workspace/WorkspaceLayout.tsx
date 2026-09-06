@@ -30,6 +30,7 @@ interface WorkspaceLayoutProps {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   uploadedModel?: { url: string; fileName: string } | null;
+  onUploadModel?: (file: File) => void;
 }
 
 export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
@@ -41,13 +42,14 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   theme,
   onToggleTheme,
   uploadedModel = null,
+  onUploadModel,
 }) => {
   // 3D Viewport state
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
   const [hoveredComponentId, setHoveredComponentId] = useState<string | null>(null);
   const [explodeAmount, setExplodeAmount] = useState<number>(0.16);
   const [viewMode, setViewMode] = useState<ViewMode3D>('solid');
-  const [isPlayingMechanism, setIsPlayingMechanism] = useState<boolean>(false);
+  const [isPlayingMechanism, setIsPlayingMechanism] = useState<boolean>(true);
   const [isolatedComponentId, setIsolatedComponentId] = useState<string | null>(null);
   const [hiddenComponentIds, setHiddenComponentIds] = useState<Set<string>>(new Set());
   const [showLeaderLines, setShowLeaderLines] = useState<boolean>(true);
@@ -61,6 +63,16 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     return Number.isFinite(saved) && saved >= 360 && saved <= 760 ? saved : 480;
   });
   const resizingInspectorRef = useRef(false);
+
+  // Model teardown & reset: purge all previous component selections and states
+  useEffect(() => {
+    setSelectedComponentId(null);
+    setHoveredComponentId(null);
+    setIsolatedComponentId(null);
+    setHiddenComponentIds(new Set());
+    setExplodeAmount(0.0);
+    setIsPlayingMechanism(true);
+  }, [currentObject.id]);
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
@@ -161,6 +173,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         onReturnHome={onReturnHome}
         theme={theme}
         onToggleTheme={onToggleTheme}
+        onUploadModel={onUploadModel}
       />
 
       {/* Main 3-Column Engineering Studio */}
@@ -177,11 +190,12 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             onToggleIsolate={handleToggleIsolate}
             hiddenComponentIds={hiddenComponentIds}
             onToggleHide={handleToggleHide}
+            theme={theme}
           />
         </div>
 
         {/* CENTER PANEL: Interactive 3D WebGL Workbench */}
-        <div className="workspace-viewport flex-1 h-full relative bg-[#06080d] cad-grid overflow-hidden">
+        <div className={`workspace-viewport flex-1 h-full relative ${theme === 'light' ? 'bg-[#f1f4f8]' : 'bg-[#020408]'} cad-grid overflow-hidden`}>
           {currentObject.id === 'drone' ? (
             <DroneCanvas
               objectData={currentObject}
@@ -195,6 +209,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               isolatedComponentId={isolatedComponentId}
               hiddenComponentIds={hiddenComponentIds}
               showLeaderLines={showLeaderLines}
+              theme={theme}
             />
           ) : (
             <ThreeCanvas
@@ -210,6 +225,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               hiddenComponentIds={hiddenComponentIds}
               showLeaderLines={showLeaderLines}
               uploadedModel={uploadedModel}
+              theme={theme}
             />
           )}
 
@@ -234,12 +250,15 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             showCalipers={showCalipers}
             onToggleCalipers={() => setShowCalipers(!showCalipers)}
             onResetView={handleResetView}
+            theme={theme}
           />
         </div>
 
         {/* RIGHT PANEL: Engineering Inspector & Analysis Studio (drag to resize) */}
         <div
-          className="workspace-inspector hidden md:flex shrink-0 h-full relative flex-col bg-[#0d111a]/95 backdrop-blur-2xl border-l border-white/10 z-20 min-w-0"
+          className={`workspace-inspector hidden md:flex shrink-0 h-full relative flex-col ${
+            theme === 'light' ? 'bg-white/95 border-slate-200 shadow-sm' : 'bg-[#0d111a]/95 border-white/10'
+          } backdrop-blur-2xl border-l z-20 min-w-0`}
           style={{ width: inspectorWidth }}
         >
           <div
@@ -259,6 +278,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             onTabChange={setActiveInspectorTab}
             hasSelectedComponent={Boolean(selectedComponentId)}
             onOpenCompare={() => setIsCompareOpen(true)}
+            theme={theme}
           />
 
           <div className="flex-1 overflow-y-auto">
@@ -267,6 +287,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                 component={selectedNode}
                 depthLevel={depthLevel}
                 onSelectComponentById={handleSelectComponent}
+                objectData={currentObject}
+                theme={theme}
               />
             )}
             {activeInspectorTab === 'overview' && (

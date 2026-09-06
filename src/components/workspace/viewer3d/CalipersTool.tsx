@@ -9,7 +9,7 @@ interface CalipersToolProps {
 
 export const CalipersTool: React.FC<CalipersToolProps> = ({ selectedComponent, onClose }) => {
   return (
-    <div className="absolute top-6 left-6 z-30 p-4 rounded-xl glass-panel-accent bg-[#0d111a]/90 border border-white/10 shadow-2xl space-y-2 select-none w-72 backdrop-blur-xl">
+    <div className="calipers-card absolute top-6 left-6 z-30 p-4 rounded-xl glass-panel-accent bg-[#0d111a]/90 border border-white/10 shadow-2xl space-y-2 select-none w-72 backdrop-blur-xl">
       <div className="flex items-center justify-between pb-2 border-b border-white/10">
         <div className="flex items-center gap-1.5 text-xs font-mono-cad text-[#38bdf8] font-bold">
           <Ruler className="w-4 h-4" />

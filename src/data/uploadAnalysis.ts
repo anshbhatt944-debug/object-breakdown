@@ -162,7 +162,7 @@ function cleanFileName(
    GARBAGE COMPONENT PROTECTION
 ========================================================= */
 
-function isGarbageComponentName(
+export function isGarbageComponentName(
   name: string
 ): boolean {
   const value = name
@@ -196,7 +196,7 @@ function isGarbageComponentName(
   );
 }
 
-function isMeaningfulComponentName(
+export function isMeaningfulComponentName(
   name: string
 ): boolean {
   return (
@@ -1958,3 +1958,4 @@ export async function analyzeUploadedModelWithAI(
       ),
   });
 }
+export const analyzeUploadedModel = analyzeUploadedScene;

@@ -58,6 +58,8 @@ export interface LoadedComponentMeshInfo {
   explodedRotation: THREE.Euler;
   explodeStart: number;
   explodeEnd: number;
+  revealThreshold?: number;
+  assemblyDepth?: number;
   originalMaterials: Map<THREE.Mesh, THREE.Material | THREE.Material[]>;
   /** Real render meshes for logical components that cannot be re-parented (e.g. skinned assets). */
   sourceMeshes?: THREE.Mesh[];
@@ -152,6 +154,24 @@ function registerMesh(
   const explodeEnd = mapping?.explodeEnd ?? Math.min(1, explodeStart + 0.52);
 
   mesh.name = compId;
+  mesh.userData.basePosition = mesh.position.clone();
+  mesh.userData.baseRotation = mesh.rotation.clone();
+  mesh.userData.baseScale = mesh.scale.clone();
+
+  const existing = componentMap.get(compId);
+  if (existing) {
+    if (!existing.sourceMeshes) {
+      existing.sourceMeshes = [existing.mesh as THREE.Mesh];
+    }
+    existing.sourceMeshes.push(mesh);
+    existing.originalMaterials.set(
+      mesh,
+      Array.isArray(mesh.material)
+        ? mesh.material.map((m) => m.clone())
+        : mesh.material.clone()
+    );
+    return;
+  }
 
   componentMap.set(compId, {
     mesh,
@@ -165,7 +185,10 @@ function registerMesh(
     explodedRotation: mesh.rotation.clone(),
     explodeStart,
     explodeEnd,
+    revealThreshold: mapping?.revealThreshold,
+    assemblyDepth: mapping?.assemblyDepth,
     originalMaterials: originalMats,
+    sourceMeshes: [mesh],
   });
 }
 
@@ -183,21 +206,35 @@ function getSemanticMeshName(mesh: THREE.Mesh): string {
   return mesh.name;
 }
 
-function findMeshMapping(config: ModelAssetConfig, meshName: string): ModelMeshMapping | undefined {
+function findMeshMapping(config: ModelAssetConfig, meshName: string, originalMeshName?: string): ModelMeshMapping | undefined {
   const mappings: Array<[string, ModelMeshMapping]> = Object.keys(config.meshMappings || {}).map((key) => [key, config.meshMappings![key]]);
+  const normalizedMesh = normalizeMeshName(meshName);
+  const normalizedOrig = originalMeshName ? normalizeMeshName(originalMeshName) : '';
 
-  // Explicit source mesh aliases are used for complex assets such as the drone.
-  const aliased = mappings.find(([, mapping]) => mapping.sourceMeshNames?.includes(meshName));
+  // Explicit source mesh aliases: check both semantic name and original GLB node/mesh name
+  const aliased = mappings.find(([, mapping]) =>
+    mapping.sourceMeshNames?.some(
+      (sn) => {
+        const normSn = normalizeMeshName(sn);
+        return sn === meshName ||
+          sn === originalMeshName ||
+          normSn === normalizedMesh ||
+          (normalizedOrig && normSn === normalizedOrig);
+      }
+    )
+  );
   if (aliased) return aliased[1];
 
-  const exact = mappings.find(([key]) => key === meshName);
+  const exact = mappings.find(([key]) => key === meshName || (originalMeshName && key === originalMeshName));
   if (exact) return exact[1];
 
-  const normalized = normalizeMeshName(meshName);
-  const normalizedMatch = mappings.find(([key]) => normalizeMeshName(key) === normalized);
+  const normalizedMatch = mappings.find(([key]) => {
+    const normKey = normalizeMeshName(key);
+    return normKey === normalizedMesh || (normalizedOrig && normKey === normalizedOrig);
+  });
   if (normalizedMatch) return normalizedMatch[1];
 
-  const tokens: string[] = normalized.match(/[a-z]+|\d+/g) || [];
+  const tokens: string[] = normalizedMesh.match(/[a-z]+|\d+/g) || [];
   let best: { score: number; mapping: ModelMeshMapping } | null = null;
   for (const [key, mapping] of mappings) {
     const keyTokens: string[] = normalizeMeshName(key).match(/[a-z]+|\d+/g) || [];
@@ -271,6 +308,8 @@ function registerDroneComponentGroups(
       explodedRotation: new THREE.Euler(),
       explodeStart,
       explodeEnd,
+      revealThreshold: mapping.revealThreshold,
+      assemblyDepth: mapping.assemblyDepth,
       originalMaterials,
       sourceMeshes: meshes,
       nativeAnimated: true,
@@ -307,7 +346,7 @@ function processGLTFMeshes(
     registerMesh(
       root,
       mesh,
-      findMeshMapping(config, semanticName),
+      findMeshMapping(config, semanticName, originalName),
       componentMap,
       index,
       meshes.length,
@@ -402,7 +441,7 @@ function addPenEngineeringInternals(
       position: [-2.55, 0, 0],
       scale: 0.95,
       explodeVector: [-1.35, -0.4, 0],
-      start: 0.52,
+      start: 0.32,
       end: 0.96,
     },
   ];
@@ -644,12 +683,18 @@ export async function load3DModelForObject(
   const center = new THREE.Vector3();
   bbox.getCenter(center);
 
-  rootGroup.position.sub(center);
+  // Center all child meshes/groups inside rootGroup so (0,0,0) is the true geometric center
+  rootGroup.children.forEach((child) => {
+    child.position.sub(center);
+  });
+  rootGroup.position.set(0, 0, 0);
 
   const maxDim = Math.max(size.x, size.y, size.z) || 1;
   const targetDim = config?.targetMaxDimension || 4.5;
   const normalizationScale = targetDim / maxDim;
-  rootGroup.scale.multiplyScalar(normalizationScale);
+  rootGroup.scale.setScalar(normalizationScale);
+
+  rootGroup.updateWorldMatrix(true, true);
 
   // Native animated assets already contain their own exact exploded transforms.
   // Do not compensate or rewrite their component transforms; the mixer owns them.
@@ -660,6 +705,17 @@ export async function load3DModelForObject(
       info.baseScale.copy(info.mesh.scale);
       info.mesh.position.copy(info.basePosition);
       info.mesh.rotation.copy(info.baseRotation);
+
+      // Re-derive explosion vectors for unmapped meshes using the newly centered geometry
+      const mapping = config ? findMeshMapping(config, info.mesh.name) : undefined;
+      if (!mapping?.explodeVector) {
+        const dir = info.basePosition.clone();
+        if (dir.lengthSq() > 1e-4) {
+          info.explodeVector.copy(dir.normalize().multiplyScalar(2.2));
+        } else {
+          info.explodeVector.set(0, 0, 1.8);
+        }
+      }
     });
   }
 

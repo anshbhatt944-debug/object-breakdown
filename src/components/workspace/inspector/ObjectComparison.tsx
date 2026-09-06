@@ -66,7 +66,7 @@ export const ObjectComparison: React.FC<ObjectComparisonProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md select-none animate-in fade-in duration-200">
-      <div className="relative w-full max-w-4xl max-h-[90vh] rounded-2xl glass-panel-accent bg-[#0d111a]/95 border border-white/10 shadow-2xl flex flex-col overflow-hidden">
+      <div className="modal-compare-dialog relative w-full max-w-4xl max-h-[90vh] rounded-2xl glass-panel-accent bg-[#0d111a]/95 border border-white/10 shadow-2xl flex flex-col overflow-hidden">
         {/* Modal Header */}
         <div className="p-5 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
