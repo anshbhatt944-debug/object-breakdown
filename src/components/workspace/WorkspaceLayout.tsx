@@ -30,6 +30,7 @@ interface WorkspaceLayoutProps {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   uploadedModel?: { url: string; fileName: string } | null;
+  uploadedObject?: ObjectBreakdownData | null;
   onUploadModel?: (file: File) => void;
 }
 
@@ -42,6 +43,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   theme,
   onToggleTheme,
   uploadedModel = null,
+  uploadedObject = null,
   onUploadModel,
 }) => {
   // 3D Viewport state
@@ -167,6 +169,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           setIsolatedComponentId(null);
           setHiddenComponentIds(new Set());
         }}
+        uploadedObject={uploadedObject}
         depthLevel={depthLevel}
         onDepthChange={onDepthChange}
         onOpenCompare={() => setIsCompareOpen(true)}
@@ -224,7 +227,16 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               isolatedComponentId={isolatedComponentId}
               hiddenComponentIds={hiddenComponentIds}
               showLeaderLines={showLeaderLines}
-              uploadedModel={uploadedModel}
+              uploadedModel={
+                Boolean(
+                  uploadedModel &&
+                  (currentObject.id.startsWith('uploaded-') ||
+                    (currentObject as unknown as { isUploaded?: boolean }).isUploaded ||
+                    (uploadedObject && currentObject.id === uploadedObject.id))
+                )
+                  ? uploadedModel
+                  : null
+              }
               theme={theme}
             />
           )}

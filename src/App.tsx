@@ -45,6 +45,8 @@ export const App: React.FC = () => {
     fileName: string;
   } | null>(null);
 
+  const [uploadedObjectData, setUploadedObjectData] = useState<ObjectBreakdownData | null>(null);
+
   const [depthLevel, setDepthLevel] =
     useState<DepthLevel>('detailed');
 
@@ -125,7 +127,16 @@ export const App: React.FC = () => {
         );
       }
 
+      if (uploadedModel?.url) {
+        try {
+          URL.revokeObjectURL(uploadedModel.url);
+        } catch {
+          // ignore
+        }
+      }
+
       setCurrentObject(analyzed);
+      setUploadedObjectData(analyzed);
       setUploadedModel({
         url,
         fileName: file.name,
@@ -228,6 +239,13 @@ export const App: React.FC = () => {
 
   // Workspace view
   if (currentView === 'workspace') {
+    const isCurrentUploaded = Boolean(
+      uploadedModel &&
+      (currentObject.id.startsWith('uploaded-') ||
+        (currentObject as unknown as { isUploaded?: boolean }).isUploaded ||
+        (uploadedObjectData && currentObject.id === uploadedObjectData.id))
+    );
+
     return (
       <>
         <CustomCursor theme={theme} />
@@ -243,7 +261,8 @@ export const App: React.FC = () => {
               value === 'dark' ? 'light' : 'dark'
             )
           }
-          uploadedModel={uploadedModel}
+          uploadedModel={isCurrentUploaded ? uploadedModel : null}
+          uploadedObject={uploadedObjectData}
           onUploadModel={handleUploadModel}
         />
 

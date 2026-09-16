@@ -6,6 +6,7 @@ import { ChevronLeft, Scale, Sun, Moon, Box, Activity, Sparkles, Layers, Upload 
 interface WorkspaceHeaderProps {
   currentObject: ObjectBreakdownData;
   onSelectObject: (obj: ObjectBreakdownData) => void;
+  uploadedObject?: ObjectBreakdownData | null;
   depthLevel: DepthLevel;
   onDepthChange: (depth: DepthLevel) => void;
   onOpenCompare: () => void;
@@ -18,6 +19,7 @@ interface WorkspaceHeaderProps {
 export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   currentObject,
   onSelectObject,
+  uploadedObject = null,
   depthLevel,
   onDepthChange,
   onOpenCompare,
@@ -69,14 +71,30 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
               <select
                 value={currentObject.id}
                 onChange={(e) => {
-                  const selected = ALL_OBJECTS.find((o) => o.id === e.target.value);
+                  const val = e.target.value;
+                  if (uploadedObject && val === uploadedObject.id) {
+                    onSelectObject(uploadedObject);
+                    return;
+                  }
+                  if (val === currentObject.id) {
+                    return;
+                  }
+                  const selected = ALL_OBJECTS.find((o) => o.id === val);
                   if (selected) onSelectObject(selected);
                 }}
                 className={`bg-transparent text-sm font-bold focus:outline-none cursor-pointer uppercase tracking-wider font-mono-cad border-b border-dashed pb-0.5 hover:border-[#00f2ad] transition-colors ${
                   isLight ? 'text-slate-900 border-slate-300' : 'text-slate-100 border-white/20'
                 }`}
               >
-                {!ALL_OBJECTS.some((o) => o.id === currentObject.id) && (
+                {uploadedObject && (
+                  <option
+                    value={uploadedObject.id}
+                    className={isLight ? 'bg-white text-blue-600 font-bold' : 'bg-[#0a0d14] text-[#00f2ad] font-bold'}
+                  >
+                    ★ {uploadedObject.name.toUpperCase()} (UPLOADED)
+                  </option>
+                )}
+                {!uploadedObject && !ALL_OBJECTS.some((o) => o.id === currentObject.id) && (
                   <option
                     value={currentObject.id}
                     className={isLight ? 'bg-white text-blue-600 font-bold' : 'bg-[#0a0d14] text-[#00f2ad] font-bold'}

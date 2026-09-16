@@ -1,11 +1,22 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
-import { ObjectBreakdownData, ViewMode3D } from '../../../types/objectData';
+import { ObjectBreakdownData, ViewMode3D, ComponentNode } from '../../../types/objectData';
 import { load3DModelForObject, loadUploaded3DModel, applyViewModeToModel, LoadedComponentMeshInfo } from './ModelLoader';
 import { fitCameraToObject, computeModelFramingSet, CameraFramingResult } from './cameraUtils';
 import { Box } from 'lucide-react';
 import { iphone14ProReferenceAnnotations } from '../../../data/smartphoneReference';
 import { solveAnnotationLayout, AnnotationItem } from '../../../utils/annotationSolver';
+
+function findComponentNodeInTree(nodes: ComponentNode[], id: string): ComponentNode | null {
+  for (const n of nodes) {
+    if (n.id === id) return n;
+    if (n.children && n.children.length > 0) {
+      const found = findComponentNodeInTree(n.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 interface ThreeCanvasProps {
   objectData: ObjectBreakdownData;
@@ -527,6 +538,9 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   const objectDataRef = useRef(objectData);
   objectDataRef.current = objectData;
 
+  const uploadedModelRef = useRef(uploadedModel);
+  uploadedModelRef.current = uploadedModel;
+
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -733,7 +747,14 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     progressiveSubpartsRef.current.clear();
     activeHoverIdRef.current = null;
 
-    const loadPromise = uploadedModel ? loadUploaded3DModel(uploadedModel.url, objectData, viewMode) : load3DModelForObject(objectData, viewMode);
+    const isUploadedModel = Boolean(
+      uploadedModel &&
+      (objectData.id.startsWith('uploaded-') || (objectData as unknown as { isUploaded?: boolean }).isUploaded)
+    );
+
+    const loadPromise = isUploadedModel && uploadedModel
+      ? loadUploaded3DModel(uploadedModel.url, objectData, viewMode)
+      : load3DModelForObject(objectData, viewMode);
     loadPromise.then((result) => {
       if (!isMounted || loadGeneration !== modelGenerationRef.current) {
         disposeObjectTree(result.rootGroup);
@@ -748,7 +769,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
       // calculating the explosion layout so the same viewer works for arbitrary assets.
       let uploadedPresentationBounds: ReturnType<typeof normalizeAndCenterUploadedModel> = null;
 
-      if (uploadedModel) {
+      if (isUploadedModel) {
         uploadedPresentationBounds = normalizeAndCenterUploadedModel(
           result.rootGroup
         );
@@ -797,7 +818,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
       const camera = cameraRef.current;
       const container = containerRef.current;
 
-      if (uploadedModel && camera && container && uploadedPresentationBounds) {
+      if (isUploadedModel && camera && container && uploadedPresentationBounds) {
         const aspect =
           container.clientWidth / Math.max(container.clientHeight, 1);
 
@@ -1159,15 +1180,30 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
           }
         } else {
           const selectedId = selectedComponentIdRef.current;
+          const currentObj = objectDataRef.current;
           const entries = Array.from(componentMapRef.current.entries());
           const targets = entries.filter(([id, info]) => {
             if (!info.mesh.visible) return false;
             if (selectedId && id === selectedId) return true;
-            const threshold = uploadedModel ? 0.0 : (info.revealThreshold ?? (
-              info.assemblyDepth !== undefined
-                ? (info.assemblyDepth <= 0 ? 0.0 : info.assemblyDepth === 1 ? 0.25 : info.assemblyDepth === 2 ? 0.45 : 0.65)
-                : 0.0
-            ));
+
+            let threshold = info.revealThreshold;
+            if (threshold === undefined && info.assemblyDepth !== undefined) {
+              threshold = info.assemblyDepth <= 0 ? 0.0 : info.assemblyDepth === 1 ? 0.25 : info.assemblyDepth === 2 ? 0.45 : 0.65;
+            }
+            if (threshold === undefined && currentObj?.rootComponents) {
+              const node = findComponentNodeInTree(currentObj.rootComponents, id);
+              if (node) {
+                if (typeof node.revealThreshold === 'number') {
+                  threshold = node.revealThreshold;
+                } else if (typeof node.assemblyDepth === 'number') {
+                  threshold = node.assemblyDepth <= 0 ? 0.0 : node.assemblyDepth === 1 ? 0.25 : node.assemblyDepth === 2 ? 0.45 : 0.65;
+                }
+              }
+            }
+            if (threshold === undefined) {
+              threshold = typeof info.explodeStart === 'number' && info.explodeStart > 0 ? info.explodeStart : 0.0;
+            }
+
             return explode >= threshold;
           });
 

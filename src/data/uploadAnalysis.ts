@@ -1230,6 +1230,9 @@ function buildObjectData(
     thumbnail:
       '',
 
+    isUploaded:
+      true,
+
     complexityScore: {
       overall:
         Math.min(

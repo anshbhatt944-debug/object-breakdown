@@ -201,6 +201,10 @@ function registerUploadedGroup(
   // Keep each AI semantic assembly intact. Its final exploded pose is planned
   // after every group has been registered, using the whole model geometry.
   const explodeStart = Math.min(0.55, sequenceIndex * (0.48 / Math.max(sequenceCount - 1, 1)));
+  const depth = component.assemblyDepth ?? (sequenceIndex === 0 ? 0 : sequenceIndex < 3 ? 1 : 2);
+  const threshold = component.revealThreshold ?? (
+    depth <= 0 ? 0.0 : depth === 1 ? 0.25 : depth === 2 ? 0.45 : 0.65
+  );
   componentMap.set(component.id, {
     mesh: group,
     componentId: component.id,
@@ -213,8 +217,8 @@ function registerUploadedGroup(
     explodedRotation: group.rotation.clone(),
     explodeStart,
     explodeEnd: Math.min(1, explodeStart + 0.52),
-    revealThreshold: 0.0,
-    assemblyDepth: 0,
+    revealThreshold: threshold,
+    assemblyDepth: depth,
     originalMaterials: originalMats,
   });
 }
@@ -292,6 +296,10 @@ function planUploadedExplodedView(
     const stagger = records.length > 1 ? index / (records.length - 1) : 0;
     record.info.explodeStart = Math.min(0.58, baseStart + stagger * 0.22);
     record.info.explodeEnd = Math.min(1, record.info.explodeStart + 0.62);
+    if (!isCore && index > 0 && (record.info.revealThreshold === undefined || record.info.revealThreshold === 0.0)) {
+      record.info.revealThreshold = Math.max(0.18, record.info.explodeStart);
+      record.info.assemblyDepth = isFront || isRear ? 1 : 2;
+    }
   });
 }
 
@@ -330,6 +338,7 @@ export async function loadUploaded3DModel(
     const id = `upload-raw-${meshId}`;
     const displayName = isMeaningfulComponentName(mesh.name) ? mesh.name : `Auxiliary Subsystem ${index + 1}`;
     prepareUploadedMeshMaterials(mesh, displayName, index);
+    const rawThreshold = Math.min(0.75, 0.25 + (index / Math.max(meshes.length, 1)) * 0.50);
     registerMesh(
       rootGroup,
       mesh,
@@ -339,8 +348,8 @@ export async function loadUploaded3DModel(
         category: 'Auxiliary Mechanical Assembly',
         explodeVector: [0, 1, 0],
         color: '#94a3b8',
-        revealThreshold: 0.0,
-        assemblyDepth: 0,
+        revealThreshold: rawThreshold,
+        assemblyDepth: 2,
       },
       componentMap,
       componentMap.size,

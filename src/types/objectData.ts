@@ -284,6 +284,7 @@ export interface ObjectBreakdownData {
   subtitle: string;
   heroTagline: string;
   thumbnail: string;
+  isUploaded?: boolean;
 
   complexityScore: {
     overall: number;
