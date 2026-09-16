@@ -9,7 +9,7 @@ Add this server-side environment variable in Vercel:
 - `GROQ_API_KEY` = your Groq API key
 
 Optional:
-- `GROQ_MODEL` = `qwen/qwen3.6-27b`
+- `GROQ_MODEL` = `qwen/qwen3.8-27b`
 
 Do not expose the Groq key in any `VITE_*` variable.
 
