@@ -556,9 +556,10 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
     if (window.matchMedia('(pointer: coarse)').matches) return;
 
     const lenis = new Lenis({
-      lerp: 0.10,            // Snappy, continuous damping without floaty delay
-      wheelMultiplier: 0.85, // Controlled wheel travel (prevents 20%+ jumps on single notch)
-      touchMultiplier: 1.5,
+      lerp: 0.08,            // Balanced silky smooth momentum without runaway glide
+      wheelMultiplier: 0.95, // Steady, controlled travel per wheel notch (prevents rushing)
+      touchMultiplier: 1.2,  // Balanced response for trackpads
+      smoothWheel: true,     // Silky sub-pixel interpolation
       infinite: false,
     });
     lenisRef.current = lenis;
@@ -2149,7 +2150,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
   return (
     <div
       ref={containerRef}
-      style={{ height: '2800vh' }}
+      style={{ height: '1800vh' }}
       className={`relative ${
         isLight ? 'bg-[#f4f6f9] text-[#0f172a] selection:bg-[#2563eb]/20' : 'bg-[#020408] text-white selection:bg-[#3b82f6]/30'
       } overflow-x-clip select-none transition-colors duration-300`}

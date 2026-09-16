@@ -28,7 +28,7 @@ Mesh & geometry extraction (Three.js)
       ↓
 Geometry compacted into token-efficient metadata
       ↓
-Groq API → Qwen (qwen/qwen3.6-27b)
+Groq API → Qwen (qwen/qwen3.8-27b)
       ↓
 Semantic grouping into real-world assemblies
       ↓
@@ -61,7 +61,7 @@ That last row matters: AI-generated engineering claims are treated as *explorato
 |---|---|
 | Frontend | React, TypeScript, Vite, Three.js, Tailwind CSS, Lucide React |
 | Backend | Node.js, server-side API routes |
-| AI | Groq API, Qwen (`qwen/qwen3.6-27b`) |
+| AI | Groq API, Qwen (`qwen/qwen3.8-27b`) |
 | Deployment | Vercel |
 
 ## Project structure
@@ -98,7 +98,7 @@ Create a `.env` in the project root (and make sure it's in `.gitignore`):
 
 ```env
 GROQ_API_KEY=your_groq_api_key
-GROQ_MODEL=qwen/qwen3.6-27b
+GROQ_MODEL=qwen/qwen3.8-27b
 PORT=8787
 ```
 
