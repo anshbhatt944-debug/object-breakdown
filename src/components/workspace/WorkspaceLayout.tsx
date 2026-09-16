@@ -59,7 +59,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   const [showCalipers, setShowCalipers] = useState<boolean>(false);
 
   // Inspector state
-  const [activeInspectorTab, setActiveInspectorTab] = useState<InspectorTabType>('component');
+  const [activeInspectorTab, setActiveInspectorTab] = useState<InspectorTabType>('overview');
   const [isCompareOpen, setIsCompareOpen] = useState<boolean>(false);
   const [inspectorWidth, setInspectorWidth] = useState<number>(() => {
     const saved = Number(window.localStorage.getItem('object-breakdown-inspector-width'));
@@ -75,6 +75,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     setHiddenComponentIds(new Set());
     setExplodeAmount(0.0);
     setIsPlayingMechanism(true);
+    setActiveInspectorTab('overview');
   }, [currentObject.id]);
 
   useEffect(() => {

@@ -1,8 +1,8 @@
 import React from 'react';
 
 export type InspectorTabType =
-  | 'component'
   | 'overview'
+  | 'component'
   | 'materials'
   | 'kinematics'
   | 'equations'
@@ -29,8 +29,8 @@ export const InspectorTabs: React.FC<InspectorTabsProps> = ({
   theme = 'dark',
 }) => {
   const tabs = [
-    { id: 'component' as InspectorTabType, label: 'Component' },
     { id: 'overview' as InspectorTabType, label: 'Overview' },
+    { id: 'component' as InspectorTabType, label: 'Component' },
     { id: 'materials' as InspectorTabType, label: 'Materials' },
     { id: 'kinematics' as InspectorTabType, label: 'How It Works' },
     { id: 'equations' as InspectorTabType, label: 'Equations' },
