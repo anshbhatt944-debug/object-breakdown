@@ -38,87 +38,94 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   const isLight = theme === 'light';
 
   return (
-    <header className={`workspace-header h-[70px] px-6 flex items-center justify-between border-b ${
-      isLight ? 'border-slate-200 bg-white/95 text-slate-800 shadow-sm' : 'border-white/10 bg-[#080b11]/90 text-white'
-    } backdrop-blur-xl select-none z-30`}>
-      {/* Left: Exit Studio + Object Switcher */}
-      <div className="flex items-center gap-6">
+    <header
+      className={`workspace-header h-12 px-4 flex items-center justify-between border-b text-xs font-mono-cad select-none z-30 transition-colors ${
+        isLight
+          ? 'border-slate-200 bg-white text-slate-800 shadow-sm'
+          : 'border-[#262832] bg-[#111318] text-[#f3f4f8]'
+      }`}
+    >
+      {/* Left: Exit Studio + Breadcrumb Navigation + Asset Switcher */}
+      <div className="flex items-center gap-4">
         <button
           onClick={onReturnHome}
-          className={`flex items-center gap-2 text-xs font-mono-cad uppercase tracking-wider px-3 py-1.5 rounded-lg border transition-all ${
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded transition-colors border ${
             isLight
               ? 'text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 border-slate-200'
-              : 'text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border-white/10'
+              : 'text-[#c5c7d0] hover:text-white bg-[#1a1b21] hover:bg-[#37393f]/40 border-[#262832]'
           }`}
           data-cursor="EXIT"
+          title="Return to Landing Page"
         >
-          <ChevronLeft className="w-4 h-4 text-[#00f2ad]" />
-          <span>Exit Studio</span>
+          <ChevronLeft className="w-3.5 h-3.5 text-[#e27228]" />
+          <span className="text-[11px] uppercase tracking-wider">EXIT</span>
         </button>
 
-        <div className={`h-6 w-px ${isLight ? 'bg-slate-200' : 'bg-white/10'} hidden sm:block`} />
+        <div className={`h-4 w-px ${isLight ? 'bg-slate-200' : 'bg-[#262832]'} hidden sm:block`} />
 
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#00f2ad]/10 border border-[#00f2ad]/30 flex items-center justify-center text-[#00f2ad] shrink-0">
-            <Box className="w-4 h-4" />
+        {/* CAD Breadcrumb & Target Selector */}
+        <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-1 text-[11px] tracking-wider text-[#6b7082]">
+            <span>OBJECT BREAKDOWN</span>
+            <span>/</span>
+            <span className="text-[#22d3ee] font-medium">{currentObject.category?.toUpperCase() || 'CAD'}</span>
+            <span>/</span>
           </div>
 
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono-cad text-[#00f2ad] uppercase tracking-widest font-bold">
-                TARGET ASSET //
-              </span>
-              <select
-                value={currentObject.id}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (uploadedObject && val === uploadedObject.id) {
-                    onSelectObject(uploadedObject);
-                    return;
-                  }
-                  if (val === currentObject.id) {
-                    return;
-                  }
-                  const selected = ALL_OBJECTS.find((o) => o.id === val);
-                  if (selected) onSelectObject(selected);
-                }}
-                className={`bg-transparent text-sm font-bold focus:outline-none cursor-pointer uppercase tracking-wider font-mono-cad border-b border-dashed pb-0.5 hover:border-[#00f2ad] transition-colors ${
-                  isLight ? 'text-slate-900 border-slate-300' : 'text-slate-100 border-white/20'
-                }`}
-              >
-                {uploadedObject && (
-                  <option
-                    value={uploadedObject.id}
-                    className={isLight ? 'bg-white text-blue-600 font-bold' : 'bg-[#0a0d14] text-[#00f2ad] font-bold'}
-                  >
-                    ★ {uploadedObject.name.toUpperCase()} (UPLOADED)
-                  </option>
-                )}
-                {!uploadedObject && !ALL_OBJECTS.some((o) => o.id === currentObject.id) && (
-                  <option
-                    value={currentObject.id}
-                    className={isLight ? 'bg-white text-blue-600 font-bold' : 'bg-[#0a0d14] text-[#00f2ad] font-bold'}
-                  >
-                    ★ {currentObject.name.toUpperCase()} (UPLOADED)
-                  </option>
-                )}
-                {ALL_OBJECTS.map((obj) => (
-                  <option key={obj.id} value={obj.id} className={isLight ? 'bg-white text-slate-900' : 'bg-[#0a0d14] text-slate-200'}>
-                    {obj.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <span className={`text-[10px] font-mono-cad ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>
-              {currentObject.category} • {currentObject.stats.componentCount} Components
+          <div className="flex items-center gap-2">
+            <select
+              value={currentObject.id}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (uploadedObject && val === uploadedObject.id) {
+                  onSelectObject(uploadedObject);
+                  return;
+                }
+                if (val === currentObject.id) {
+                  return;
+                }
+                const selected = ALL_OBJECTS.find((o) => o.id === val);
+                if (selected) onSelectObject(selected);
+              }}
+              className={`bg-transparent text-[11px] font-bold focus:outline-none cursor-pointer uppercase tracking-wider font-mono-cad border-b border-dashed pb-0.5 hover:border-[#e27228] transition-colors ${
+                isLight ? 'text-slate-900 border-slate-300' : 'text-[#f3f4f8] border-[#262832]'
+              }`}
+            >
+              {uploadedObject && (
+                <option
+                  value={uploadedObject.id}
+                  className={isLight ? 'bg-white text-blue-600 font-bold' : 'bg-[#111318] text-[#e27228] font-bold'}
+                >
+                  ★ {uploadedObject.name.toUpperCase()} (UPLOADED)
+                </option>
+              )}
+              {!uploadedObject && !ALL_OBJECTS.some((o) => o.id === currentObject.id) && (
+                <option
+                  value={currentObject.id}
+                  className={isLight ? 'bg-white text-blue-600 font-bold' : 'bg-[#111318] text-[#e27228] font-bold'}
+                >
+                  ★ {currentObject.name.toUpperCase()} (UPLOADED)
+                </option>
+              )}
+              {ALL_OBJECTS.map((obj) => (
+                <option key={obj.id} value={obj.id} className={isLight ? 'bg-white text-slate-900' : 'bg-[#111318] text-[#c5c7d0]'}>
+                  {obj.name}
+                </option>
+              ))}
+            </select>
+
+            <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+              isLight ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-[#1a1b21] border-[#262832] text-[#6b7082]'
+            }`}>
+              {currentObject.stats.componentCount} PARTS
             </span>
           </div>
         </div>
       </div>
 
-      {/* Middle: Depth Mode Selector Pill */}
-      <div className={`hidden lg:flex items-center gap-1 p-1 rounded-xl border ${
-        isLight ? 'bg-slate-100 border-slate-200' : 'bg-black/50 border-white/10'
+      {/* Middle: Segmented Depth Mode Switcher */}
+      <div className={`hidden lg:flex items-center gap-1 p-0.5 rounded border ${
+        isLight ? 'bg-slate-100 border-slate-200' : 'bg-[#1a1b21] border-[#262832]'
       }`}>
         {depthModes.map((dm) => {
           const isSelected = depthLevel === dm.id;
@@ -126,18 +133,22 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
             <button
               key={dm.id}
               onClick={() => onDepthChange(dm.id)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-mono-cad uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded text-[11px] font-mono-cad uppercase tracking-wider transition-all flex items-center gap-1.5 ${
                 isSelected
-                  ? 'bg-[#00f2ad] text-[#050608] font-bold shadow-[0_0_15px_rgba(0,242,173,0.3)]'
+                  ? isLight
+                    ? 'bg-white text-[#c2410c] font-bold shadow-sm border border-slate-200'
+                    : 'bg-[#16181f] text-[#f3f4f8] font-bold border border-[rgba(226,114,40,0.6)] shadow-[0_0_10px_rgba(226,114,40,0.2)]'
                   : isLight
-                  ? 'text-slate-600 hover:text-slate-900 hover:bg-white'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                  : 'text-[#6b7082] hover:text-[#c5c7d0] hover:bg-[#37393f]/30'
               }`}
             >
               <span>{dm.label}</span>
               <span
-                className={`text-[9px] px-1.5 py-0.2 rounded font-normal ${
-                  isSelected ? 'bg-black/20 text-black' : isLight ? 'bg-slate-200 text-slate-600' : 'bg-white/10 text-slate-400'
+                className={`text-[9px] px-1 py-0.2 rounded font-normal ${
+                  isSelected
+                    ? (isLight ? 'bg-orange-50 text-[#c2410c]' : 'bg-[rgba(226,114,40,0.2)] text-[#e27228]')
+                    : (isLight ? 'bg-slate-200 text-slate-600' : 'bg-[#0c0e13] text-[#525666]')
                 }`}
               >
                 {dm.badge}
@@ -148,18 +159,18 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
       </div>
 
       {/* Right: Upload + Compare + Theme Toggle */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {onUploadModel && (
           <label
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-mono-cad uppercase tracking-wider transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded border text-[11px] font-mono-cad uppercase tracking-wider transition-all cursor-pointer ${
               isLight
-                ? 'bg-blue-50 hover:bg-blue-100 text-[#2563eb] border-blue-200'
-                : 'bg-white/5 hover:bg-[#38bdf8]/15 text-slate-300 hover:text-[#38bdf8] border-white/10 hover:border-[#38bdf8]/40'
+                ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                : 'bg-[#1a1b21] hover:bg-[#37393f]/40 text-[#c5c7d0] hover:text-white border-[#262832]'
             }`}
             data-cursor="UPLOAD"
             title="Upload GLB or GLTF 3D model"
           >
-            <Upload className="w-3.5 h-3.5 text-[#38bdf8]" />
+            <Upload className="w-3.5 h-3.5 text-[#22d3ee]" />
             <span className="hidden sm:inline">Upload</span>
             <input
               type="file"
@@ -178,27 +189,27 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
 
         <button
           onClick={onOpenCompare}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-mono-cad uppercase tracking-wider transition-all ${
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded border text-[11px] font-mono-cad uppercase tracking-wider transition-all ${
             isLight
-              ? 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 border-slate-200'
-              : 'bg-white/5 hover:bg-[#00f2ad]/10 text-slate-300 hover:text-[#00f2ad] border-white/10 hover:border-[#00f2ad]/30'
+              ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+              : 'bg-[#1a1b21] hover:bg-[#37393f]/40 text-[#c5c7d0] hover:text-white border-[#262832]'
           }`}
           data-cursor="COMPARE"
         >
-          <Scale className="w-3.5 h-3.5 text-[#00f2ad]" />
+          <Scale className="w-3.5 h-3.5 text-[#e27228]" />
           <span className="hidden sm:inline">Compare</span>
         </button>
 
         <button
           onClick={onToggleTheme}
           title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
+          className={`w-7 h-7 rounded border flex items-center justify-center transition-all ${
             isLight
-              ? 'bg-slate-100 hover:bg-slate-200/80 border-slate-200 text-slate-700'
-              : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white'
+              ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
+              : 'bg-[#1a1b21] hover:bg-[#37393f]/40 border-[#262832] text-[#c5c7d0] hover:text-white'
           }`}
         >
-          {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-slate-700" />}
+          {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-700" />}
         </button>
       </div>
     </header>

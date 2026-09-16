@@ -86,41 +86,46 @@ export const ComponentTree: React.FC<ComponentTreeProps> = ({
             onClick={() => onSelectComponent(isSelected ? null : node.id)}
             onMouseEnter={() => onHoverComponent(node.id)}
             onMouseLeave={() => onHoverComponent(null)}
-            style={{ paddingLeft: `${depth * 14 + 10}px` }}
-            className={`group relative flex items-center justify-between py-2.5 pr-3 cursor-pointer transition-all border ${
+            style={{ paddingLeft: `${depth * 12 + 8}px` }}
+            className={`group relative flex items-center justify-between py-1.5 pr-2 my-0.5 rounded cursor-pointer transition-all border text-xs font-mono-cad ${
               isSelected
                 ? theme === 'light'
-                  ? 'bg-blue-50 text-[#0284c7] border-blue-200 shadow-sm'
-                  : 'bg-[#00f2ad]/10 text-[#00f2ad] border-[#00f2ad]/30 shadow-[0_0_15px_rgba(0,242,173,0.1)]'
+                  ? 'bg-orange-50 text-[#c2410c] border-[rgba(226,114,40,0.5)] font-semibold shadow-sm'
+                  : 'bg-[rgba(226,114,40,0.15)] text-white border-[rgba(226,114,40,0.7)] font-medium shadow-[0_0_12px_rgba(226,114,40,0.15)]'
                 : isHovered
                 ? theme === 'light'
                   ? 'bg-slate-100 text-slate-900 border-slate-200'
-                  : 'bg-white/5 text-slate-100 border-white/10'
+                  : 'bg-[#1a1b21] text-[#f3f4f8] border-[#262832]'
                 : theme === 'light'
                 ? 'text-slate-700 hover:bg-slate-50 border-transparent'
-                : 'text-slate-400 hover:bg-white/5 border-transparent'
+                : 'text-[#c5c7d0] hover:bg-[#1a1b21]/60 border-transparent'
             }`}
           >
-            <div className="flex items-center gap-2 overflow-hidden mr-2">
+            <div className="flex items-center gap-1.5 overflow-hidden mr-2">
               {hasChildren ? (
                 <button
                   onClick={(e) => toggleExpand(node.id, e)}
-                  className={`p-1 rounded transition-all shrink-0 ${
-                    theme === 'light' ? 'hover:bg-slate-200 text-slate-500 hover:text-slate-900' : 'hover:bg-white/10 text-slate-500 hover:text-white'
+                  className={`p-0.5 rounded transition-all shrink-0 ${
+                    theme === 'light' ? 'hover:bg-slate-200 text-slate-500' : 'hover:bg-[#37393f]/40 text-[#6b7082] hover:text-white'
                   }`}
                 >
                   {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                 </button>
               ) : (
                 <div className="w-3.5 shrink-0 flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: node.defaultColor || (theme === 'light' ? '#0284c7' : '#00f2ad') }} />
+                  <div
+                    className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                      isSelected ? 'bg-[#e27228]' : ''
+                    }`}
+                    style={{ backgroundColor: isSelected ? '#e27228' : (node.defaultColor || (theme === 'light' ? '#0284c7' : '#6b7082')) }}
+                  />
                 </div>
               )}
 
               <div className="flex flex-col min-w-0">
-                <span className="text-xs font-medium truncate">{node.name}</span>
-                <span className={`text-[9px] font-mono-cad truncate ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
-                  {node.cadId} • {node.material.name.split(' ')[0]}
+                <span className="text-[11px] truncate leading-tight">{node.name}</span>
+                <span className={`text-[9px] font-mono-cad truncate ${theme === 'light' ? 'text-slate-400' : 'text-[#6b7082]'}`}>
+                  {node.cadId || node.id} • {node.material.name.split(' ')[0]}
                 </span>
               </div>
             </div>
@@ -128,24 +133,26 @@ export const ComponentTree: React.FC<ComponentTreeProps> = ({
             <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={(e) => { e.stopPropagation(); onToggleIsolate(node.id); }}
-                className={`p-1.5 rounded ${
+                title={isIsolated ? 'Show all parts' : 'Isolate this part'}
+                className={`p-1 rounded ${
                   isIsolated
-                    ? 'bg-[#00f2ad] text-black'
+                    ? 'bg-[#e27228] text-white'
                     : theme === 'light'
                     ? 'text-slate-400 hover:text-slate-900 hover:bg-slate-200'
-                    : 'text-slate-400 hover:text-white hover:bg-white/10'
+                    : 'text-[#6b7082] hover:text-white hover:bg-[#37393f]/40'
                 }`}
               >
                 <Focus className="w-3 h-3" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onToggleHide(node.id); }}
-                className={`p-1.5 rounded ${
+                title={isHidden ? 'Show part' : 'Hide part'}
+                className={`p-1 rounded ${
                   isHidden
-                    ? 'text-rose-400'
+                    ? 'text-[#ef4444]'
                     : theme === 'light'
                     ? 'text-slate-400 hover:text-slate-900 hover:bg-slate-200'
-                    : 'text-slate-400 hover:text-white hover:bg-white/10'
+                    : 'text-[#6b7082] hover:text-white hover:bg-[#37393f]/40'
                 }`}
               >
                 {isHidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
@@ -160,7 +167,7 @@ export const ComponentTree: React.FC<ComponentTreeProps> = ({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className={`border-l ml-5 ${theme === 'light' ? 'border-slate-200' : 'border-white/10'}`}
+              className={`border-l ml-3.5 pl-0.5 ${theme === 'light' ? 'border-slate-200' : 'border-[#262832]'}`}
             >
               {node.children!.map((child) => renderNode(child, depth + 1))}
             </motion.div>
@@ -171,44 +178,54 @@ export const ComponentTree: React.FC<ComponentTreeProps> = ({
   };
 
   return (
-    <div className={`workspace-sidebar flex flex-col h-full backdrop-blur-xl border-r select-none overflow-hidden ${
-      theme === 'light' ? 'bg-white/95 border-slate-200 text-slate-800 shadow-sm' : 'bg-[#0a0d14]/90 border-white/10 text-white'
+    <div className={`workspace-sidebar flex flex-col h-full select-none overflow-hidden ${
+      theme === 'light' ? 'bg-white text-slate-800' : 'bg-[#111318] text-[#f3f4f8]'
     }`}>
-      <div className={`p-5 border-b flex flex-col gap-4 ${theme === 'light' ? 'border-slate-200' : 'border-white/10'}`}>
+      {/* Search & Assembly Explorer Header */}
+      <div className={`p-3 border-b flex flex-col gap-2.5 ${theme === 'light' ? 'border-slate-200' : 'border-[#262832]'}`}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Layers className="w-4 h-4 text-[#00f2ad]" />
-            <h3 className={`text-xs font-mono-cad uppercase tracking-wider font-bold ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>
-              Assembly Hierarchy
+          <div className="flex items-center gap-2">
+            <Layers className="w-3.5 h-3.5 text-[#e27228]" />
+            <h3 className={`text-[11px] font-mono-cad uppercase tracking-wider font-semibold ${theme === 'light' ? 'text-slate-900' : 'text-[#f3f4f8]'}`}>
+              Assembly Explorer
             </h3>
           </div>
+          <span className={`text-[9px] font-mono-cad px-1.5 py-0.5 rounded border ${
+            theme === 'light' ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-[#1a1b21] border-[#262832] text-[#6b7082]'
+          }`}>
+            {rootComponents.length} GROUPS
+          </span>
         </div>
 
         <div className="relative">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6b7082]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search parts by name/ID..."
-            className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs font-mono-cad border transition-all ${
+            placeholder="Filter components (name / ID)..."
+            className={`w-full pl-8 pr-2.5 py-1.5 rounded text-[11px] font-mono-cad border transition-all focus:outline-none ${
               theme === 'light'
-                ? 'bg-slate-100 border-slate-200 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-blue-500'
-                : 'bg-black/40 border-white/10 text-slate-200 placeholder-slate-600 focus:bg-black/60 focus:border-[#00f2ad]/50'
+                ? 'bg-slate-100 border-slate-200 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#e27228]'
+                : 'bg-[#1a1b21] border-[#262832] text-[#f3f4f8] placeholder-[#525666] focus:border-[rgba(226,114,40,0.6)]'
             }`}
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 overflow-y-auto p-1.5">
         {rootComponents.map((node) => renderNode(node, 0))}
       </div>
 
-      <div className={`p-4 border-t flex items-center gap-2.5 text-[10px] font-mono-cad uppercase tracking-widest ${
-        theme === 'light' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-white/10 bg-black/30 text-slate-500'
+      {/* Bottom Sync Status */}
+      <div className={`px-3 py-2 border-t flex items-center justify-between text-[10px] font-mono-cad uppercase tracking-wider ${
+        theme === 'light' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-[#262832] bg-[#0c0e13] text-[#6b7082]'
       }`}>
-        <CheckCircle2 className="w-3.5 h-3.5 text-[#00f2ad]" />
-        <span>Live Datum Synchronized</span>
+        <div className="flex items-center gap-1.5">
+          <CheckCircle2 className="w-3 h-3 text-[#10b981]" />
+          <span>WCS SYNCED</span>
+        </div>
+        <span className="text-[9px] text-[#525666]">v4.2 CAD</span>
       </div>
     </div>
   );

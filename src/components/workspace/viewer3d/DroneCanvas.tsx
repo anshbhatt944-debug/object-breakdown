@@ -117,12 +117,12 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
 
-  // Dynamic Theme Lighting Refs
   const ambientLightRef = useRef<THREE.AmbientLight | null>(null);
   const keyLightRef = useRef<THREE.DirectionalLight | null>(null);
   const fillLightRef = useRef<THREE.DirectionalLight | null>(null);
-  const blueRimLightRef = useRef<THREE.DirectionalLight | null>(null);
-  const cyanRimLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const rimLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const bounceLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const hemiLightRef = useRef<THREE.HemisphereLight | null>(null);
 
   const activeRootGroupRef = useRef<THREE.Group | null>(null);
   const componentMapRef = useRef<Map<string, LoadedComponentMeshInfo>>(new Map());
@@ -193,7 +193,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     const isLight = theme === 'light';
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(isLight ? 0xf1f4f8 : 0x020408);
+    scene.background = null;
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 100);
@@ -203,7 +203,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
       antialias: true,
-      alpha: false,
+      alpha: true,
       powerPreference: 'high-performance',
       stencil: false,
     });
@@ -211,38 +211,41 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.shadowMap.enabled = false;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = isLight ? 1.15 : 1.35;
+    renderer.toneMappingExposure = isLight ? 1.15 : 1.25;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     rendererRef.current = renderer;
 
-    // Precision Studio CAD Lighting Rig
-    const ambientLight = new THREE.AmbientLight(0xffffff, isLight ? 0.90 : 0.45);
+    // Precision Studio CAD Neutral Lighting Rig
+    const ambientLight = new THREE.AmbientLight(0xffffff, isLight ? 0.75 : 0.45);
     ambientLightRef.current = ambientLight;
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, isLight ? 2.2 : 2.5);
+    const keyLight = new THREE.DirectionalLight(0xffffff, isLight ? 2.0 : 2.2);
     keyLight.position.set(6, 12, 8);
     keyLightRef.current = keyLight;
     scene.add(keyLight);
 
-    const fillLight = new THREE.DirectionalLight(isLight ? 0x94a3b8 : 0x1e293b, isLight ? 1.4 : 1.0);
+    const fillLight = new THREE.DirectionalLight(isLight ? 0x94a3b8 : 0x475569, isLight ? 1.0 : 0.8);
     fillLight.position.set(-8, -4, -6);
     fillLightRef.current = fillLight;
     scene.add(fillLight);
 
-    // Electric Blue & Cool Cyan Rim Lights
-    const blueRimLight = new THREE.DirectionalLight(isLight ? 0x2563eb : 0x3b82f6, isLight ? 1.35 : 1.8);
-    blueRimLight.position.set(-4, 4, -8);
-    blueRimLightRef.current = blueRimLight;
-    scene.add(blueRimLight);
+    const rimLight = new THREE.DirectionalLight(0xf1f5f9, isLight ? 0.8 : 1.1);
+    rimLight.position.set(-4, 4, -8);
+    rimLightRef.current = rimLight;
+    scene.add(rimLight);
 
-    const cyanRimLight = new THREE.DirectionalLight(isLight ? 0x0284c7 : 0x38bdf8, isLight ? 0.85 : 1.1);
-    cyanRimLight.position.set(6, -2, -6);
-    cyanRimLightRef.current = cyanRimLight;
-    scene.add(cyanRimLight);
+    const bounceLight = new THREE.DirectionalLight(isLight ? 0xe2e8f0 : 0x334155, isLight ? 0.5 : 0.4);
+    bounceLight.position.set(4, -4, -4);
+    bounceLightRef.current = bounceLight;
+    scene.add(bounceLight);
+
+    const hemiLight = new THREE.HemisphereLight(0xf8fafc, 0x1e293b, isLight ? 0.45 : 0.3);
+    hemiLightRef.current = hemiLight;
+    scene.add(hemiLight);
 
     // Subtle CAD Floor Grid
-    const gridHelper = new THREE.GridHelper(18, 36, isLight ? 0x2563eb : 0x3b82f6, isLight ? 0xcbd5e1 : 0x1e293b);
+    const gridHelper = new THREE.GridHelper(18, 36, isLight ? 0x94a3b8 : 0x475569, isLight ? 0xcbd5e1 : 0x262b35);
     gridHelper.position.y = -2.8;
     (gridHelper.material as THREE.Material).transparent = true;
     (gridHelper.material as THREE.Material).opacity = isLight ? 0.35 : 0.22;
@@ -269,29 +272,28 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
   // Dynamically respond to Light / Dark Mode toggles
   useEffect(() => {
     const isLight = theme === 'light';
-    if (sceneRef.current) {
-      sceneRef.current.background = new THREE.Color(isLight ? 0xf1f4f8 : 0x020408);
-    }
     if (ambientLightRef.current) {
-      ambientLightRef.current.intensity = isLight ? 0.90 : 0.45;
+      ambientLightRef.current.intensity = isLight ? 0.75 : 0.45;
     }
     if (keyLightRef.current) {
-      keyLightRef.current.intensity = isLight ? 2.2 : 2.5;
+      keyLightRef.current.intensity = isLight ? 2.0 : 2.2;
     }
     if (fillLightRef.current) {
-      fillLightRef.current.color.setHex(isLight ? 0x94a3b8 : 0x1e293b);
-      fillLightRef.current.intensity = isLight ? 1.4 : 1.0;
+      fillLightRef.current.color.setHex(isLight ? 0x94a3b8 : 0x475569);
+      fillLightRef.current.intensity = isLight ? 1.0 : 0.8;
     }
-    if (blueRimLightRef.current) {
-      blueRimLightRef.current.color.setHex(isLight ? 0x2563eb : 0x3b82f6);
-      blueRimLightRef.current.intensity = isLight ? 1.35 : 1.8;
+    if (rimLightRef.current) {
+      rimLightRef.current.intensity = isLight ? 0.8 : 1.1;
     }
-    if (cyanRimLightRef.current) {
-      cyanRimLightRef.current.color.setHex(isLight ? 0x0284c7 : 0x38bdf8);
-      cyanRimLightRef.current.intensity = isLight ? 0.85 : 1.1;
+    if (bounceLightRef.current) {
+      bounceLightRef.current.color.setHex(isLight ? 0xe2e8f0 : 0x334155);
+      bounceLightRef.current.intensity = isLight ? 0.5 : 0.4;
+    }
+    if (hemiLightRef.current) {
+      hemiLightRef.current.intensity = isLight ? 0.45 : 0.3;
     }
     if (rendererRef.current) {
-      rendererRef.current.toneMappingExposure = isLight ? 1.15 : 1.35;
+      rendererRef.current.toneMappingExposure = isLight ? 1.15 : 1.25;
     }
   }, [theme]);
 

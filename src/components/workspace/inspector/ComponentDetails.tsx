@@ -47,19 +47,19 @@ const DataCard = ({
 }) => {
   const { isLight } = React.useContext(ComponentThemeContext);
   return (
-    <section className={`rounded-xl border p-4 sm:p-5 space-y-3.5 shadow-sm transition-all ${
+    <section className={`rounded border p-3.5 space-y-2.5 transition-all ${
       isLight
-        ? 'border-slate-200 bg-slate-50/90 shadow-sm hover:border-slate-300'
-        : 'border-white/10 bg-[#0a0d14]/75 hover:border-white/20'
+        ? 'border-slate-200 bg-white shadow-sm'
+        : 'border-[#262832] bg-[#16181f]'
     }`}>
       <div className="flex items-center justify-between">
-        <div className={`flex items-center gap-2 text-[10px] font-mono-cad font-bold uppercase tracking-widest ${colorClass}`}>
-          <Icon className="w-4 h-4 shrink-0" />
+        <div className={`flex items-center gap-1.5 text-[10px] font-mono-cad font-semibold uppercase tracking-wider ${colorClass}`}>
+          <Icon className="w-3.5 h-3.5 shrink-0" />
           <span>{title}</span>
         </div>
         {badge && (
-          <span className={`text-[9px] font-mono-cad px-2 py-0.5 rounded border uppercase tracking-wider ${
-            isLight ? 'bg-slate-200/70 border-slate-300 text-slate-700' : 'bg-white/5 border-white/10 text-slate-400'
+          <span className={`text-[9px] font-mono-cad px-1.5 py-0.2 rounded border uppercase tracking-wider ${
+            isLight ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-[#1a1b21] border-[#262832] text-[#6b7082]'
           }`}>
             {badge}
           </span>
@@ -83,14 +83,14 @@ const Metric = ({
 }) => {
   const { isLight } = React.useContext(ComponentThemeContext);
   return (
-    <div className={`flex flex-col gap-0.5 min-w-0 border rounded-lg p-2.5 ${
-      isLight ? 'bg-white border-slate-200' : 'bg-white/[0.02] border border-white/5'
+    <div className={`flex flex-col gap-0.5 min-w-0 border rounded p-2 transition-colors ${
+      isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#1a1b21] border-[#262832]'
     }`}>
-      <div className={`text-[9px] uppercase tracking-wider font-mono-cad ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{label}</div>
-      <div className={`text-xs font-semibold truncate ${
-        highlight ? (isLight ? 'text-emerald-600' : 'text-[#00f2ad]') : (isLight ? 'text-slate-900' : 'text-slate-100')
+      <div className={`text-[9px] uppercase tracking-wider font-mono-cad ${isLight ? 'text-slate-500' : 'text-[#6b7082]'}`}>{label}</div>
+      <div className={`text-[11px] font-mono-cad font-medium truncate ${
+        highlight ? (isLight ? 'text-[#c2410c]' : 'text-[#e27228]') : (isLight ? 'text-slate-900' : 'text-[#f3f4f8]')
       }`}>
-        {value} {unit && <span className={`text-[10px] font-mono-cad font-normal ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{unit}</span>}
+        {value} {unit && <span className={`text-[9px] font-mono-cad font-normal ${isLight ? 'text-slate-400' : 'text-[#525666]'}`}>{unit}</span>}
       </div>
     </div>
   );
@@ -258,41 +258,41 @@ export const ComponentDetails: React.FC<ComponentDetailsProps> = ({
 
   return (
     <ComponentThemeContext.Provider value={{ isLight }}>
-      <div className={`p-5 sm:p-6 space-y-5 overflow-y-auto h-full font-sans ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
+      <div className={`p-4 sm:p-5 space-y-4 overflow-y-auto h-full font-sans ${isLight ? 'text-slate-700' : 'text-[#c5c7d0]'}`}>
         {/* CAD Header */}
-        <div className={`space-y-3 pb-5 border-b ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
+        <div className={`space-y-2.5 pb-4 border-b ${isLight ? 'border-slate-200' : 'border-[#262832]'}`}>
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <span className="text-[10px] font-mono-cad px-2.5 py-1 rounded-full bg-[#00f2ad]/10 border border-[#00f2ad]/30 text-[#00f2ad] font-bold tracking-widest">
+            <span className="text-[10px] font-mono-cad px-2 py-0.5 rounded border bg-[rgba(226,114,40,0.15)] border-[rgba(226,114,40,0.5)] text-[#e27228] font-bold tracking-wider">
               {component.cadId || 'PART-01'}
             </span>
             <div
               title={confidence.desc}
-              className={`flex items-center gap-1.5 text-[9px] font-mono-cad px-2.5 py-1 rounded-md border font-semibold tracking-wider cursor-help ${confidence.classes}`}
+              className={`flex items-center gap-1.5 text-[9px] font-mono-cad px-2 py-0.5 rounded border font-semibold tracking-wider cursor-help ${confidence.classes}`}
             >
-              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+              <ShieldCheck className="w-3 h-3 shrink-0" />
               <span>CONFIDENCE: {confidence.label}</span>
             </div>
           </div>
 
           <div>
-            <h2 className={`text-xl sm:text-2xl font-bold font-heading tracking-tight leading-snug ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            <h2 className={`text-lg sm:text-xl font-bold tracking-tight leading-snug ${isLight ? 'text-slate-900' : 'text-[#f3f4f8]'}`}>
               {component.name}
             </h2>
-            <div className={`flex items-center gap-2 mt-1.5 text-[10px] font-mono-cad uppercase tracking-widest ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>
-              <Layers className="w-3.5 h-3.5 shrink-0" />
+            <div className={`flex items-center gap-1.5 mt-1 text-[10px] font-mono-cad uppercase tracking-wider ${isLight ? 'text-[#0284c7]' : 'text-[#22d3ee]'}`}>
+              <Layers className="w-3 h-3 shrink-0" />
               <span>{component.category}</span>
             </div>
           </div>
 
           {/* Current Depth Indicator Banner */}
-          <div className={`flex items-center justify-between text-[9px] font-mono-cad px-3 py-1.5 rounded-lg border ${
-            isLight ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white/[0.03] border-white/5 text-slate-400'
+          <div className={`flex items-center justify-between text-[9px] font-mono-cad px-2.5 py-1 rounded border ${
+            isLight ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-[#1a1b21] border-[#262832] text-[#6b7082]'
           }`}>
-            <span className="uppercase tracking-widest flex items-center gap-1.5">
-              <Activity className="w-3 h-3 text-[#00f2ad]" />
+            <span className="uppercase tracking-wider flex items-center gap-1.5">
+              <Activity className="w-3 h-3 text-[#e27228]" />
               Active Layer:
             </span>
-            <span className={`font-semibold uppercase tracking-wider ${isLight ? 'text-slate-900' : 'text-slate-200'}`}>
+            <span className={`font-semibold uppercase tracking-wider ${isLight ? 'text-slate-900' : 'text-[#f3f4f8]'}`}>
               {isQuick && 'QUICK INSPECTION (1/4)'}
               {depthLevel === 'detailed' && 'DETAILED BREAKDOWN (2/4)'}
               {depthLevel === 'engineering' && 'ENGINEERING ANALYSIS (3/4)'}
@@ -304,23 +304,23 @@ export const ComponentDetails: React.FC<ComponentDetailsProps> = ({
         {/* ========================================================================= */}
         {/* 1. QUICK MODE CONTENT: Primary Function & One-Sentence Essence           */}
         {/* ========================================================================= */}
-        <DataCard icon={FileText} title="Primary Function" colorClass={isLight ? 'text-emerald-600' : 'text-[#00f2ad]'} badge="Core Role">
-          <p className={`text-xs sm:text-sm leading-relaxed font-normal ${isLight ? 'text-slate-800' : 'text-slate-100'}`}>
+        <DataCard icon={FileText} title="Primary Function" colorClass={isLight ? 'text-slate-800' : 'text-[#f3f4f8]'} badge="Core Role">
+          <p className={`text-xs sm:text-sm leading-relaxed font-normal ${isLight ? 'text-slate-800' : 'text-[#c5c7d0]'}`}>
             {component.function}
           </p>
         </DataCard>
 
         {/* One-Sentence Engineering Rationale Essence */}
-        <div className={`p-4 sm:p-5 rounded-xl border space-y-2 ${
+        <div className={`p-3.5 rounded border space-y-1.5 ${
           isLight
-            ? 'bg-blue-50/70 border-blue-200 text-slate-800 shadow-sm'
-            : 'bg-gradient-to-r from-[#00f2ad]/10 via-[#38bdf8]/5 to-transparent border-[#00f2ad]/30 shadow-[0_0_20px_rgba(0,242,173,0.05)]'
+            ? 'bg-orange-50/60 border-orange-200 text-slate-800 shadow-sm'
+            : 'bg-[#16181f] border-[#262832]'
         }`}>
-          <div className={`flex items-center gap-2 text-[10px] font-mono-cad font-bold uppercase tracking-widest ${isLight ? 'text-[#0284c7]' : 'text-[#00f2ad]'}`}>
-            <Lightbulb className="w-4 h-4 shrink-0" />
+          <div className={`flex items-center gap-1.5 text-[10px] font-mono-cad font-semibold uppercase tracking-wider ${isLight ? 'text-[#c2410c]' : 'text-[#e27228]'}`}>
+            <Lightbulb className="w-3.5 h-3.5 shrink-0" />
             <span>Engineering Essence</span>
           </div>
-          <p className={`text-xs sm:text-sm leading-relaxed font-medium italic ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
+          <p className={`text-xs leading-relaxed font-normal italic ${isLight ? 'text-slate-800' : 'text-[#c5c7d0]'}`}>
             “{component.engineeringReason || component.function}”
           </p>
         </div>

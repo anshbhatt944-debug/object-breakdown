@@ -552,8 +552,9 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   const ambientLightRef = useRef<THREE.AmbientLight | null>(null);
   const keyLightRef = useRef<THREE.DirectionalLight | null>(null);
   const fillLightRef = useRef<THREE.DirectionalLight | null>(null);
-  const blueRimLightRef = useRef<THREE.DirectionalLight | null>(null);
-  const cyanRimLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const rimLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const bounceLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const hemiLightRef = useRef<THREE.HemisphereLight | null>(null);
 
   const activeRootGroupRef = useRef<THREE.Group | null>(null);
   const componentMapRef = useRef<Map<string, LoadedComponentMeshInfo>>(new Map());
@@ -615,7 +616,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     const isLight = theme === 'light';
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(isLight ? 0xf1f4f8 : 0x020408);
+    scene.background = null;
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 100);
@@ -625,7 +626,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
       antialias: true,
-      alpha: false,
+      alpha: true,
       powerPreference: 'high-performance',
       stencil: false,
     });
@@ -636,16 +637,17 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     // filtered map; the visual difference is negligible at this viewer scale.
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = isLight ? 1.15 : 1.35;
+    renderer.toneMappingExposure = isLight ? 1.15 : 1.25;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     rendererRef.current = renderer;
 
-    // Professional Studio CAD Lighting Rig
-    const ambientLight = new THREE.AmbientLight(0xffffff, isLight ? 0.90 : 0.45);
+    // Professional Studio CAD Neutral Lighting Rig
+    const ambientLight = new THREE.AmbientLight(0xffffff, isLight ? 0.75 : 0.45);
     ambientLightRef.current = ambientLight;
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, isLight ? 2.2 : 2.5);
+    // Clean neutral white key light (5500K)
+    const keyLight = new THREE.DirectionalLight(0xffffff, isLight ? 2.0 : 2.2);
     keyLight.position.set(6, 12, 8);
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.width = 1024;
@@ -654,23 +656,31 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     keyLightRef.current = keyLight;
     scene.add(keyLight);
 
-    const fillLight = new THREE.DirectionalLight(isLight ? 0x94a3b8 : 0x1e293b, isLight ? 1.4 : 1.0);
+    // Neutral cool gray fill light
+    const fillLight = new THREE.DirectionalLight(isLight ? 0x94a3b8 : 0x475569, isLight ? 1.0 : 0.8);
     fillLight.position.set(-8, -4, -6);
     fillLightRef.current = fillLight;
     scene.add(fillLight);
 
-    const blueRimLight = new THREE.DirectionalLight(isLight ? 0x2563eb : 0x3b82f6, isLight ? 1.35 : 1.8);
-    blueRimLight.position.set(-4, 4, -8);
-    blueRimLightRef.current = blueRimLight;
-    scene.add(blueRimLight);
+    // Subtle neutral silver contour/rim light
+    const rimLight = new THREE.DirectionalLight(0xf1f5f9, isLight ? 0.8 : 1.1);
+    rimLight.position.set(-4, 4, -8);
+    rimLightRef.current = rimLight;
+    scene.add(rimLight);
 
-    const cyanRimLight = new THREE.DirectionalLight(isLight ? 0x0284c7 : 0x38bdf8, isLight ? 0.85 : 1.1);
-    cyanRimLight.position.set(6, -2, -6);
-    cyanRimLightRef.current = cyanRimLight;
-    scene.add(cyanRimLight);
+    // Soft neutral ground bounce
+    const bounceLight = new THREE.DirectionalLight(isLight ? 0xe2e8f0 : 0x334155, isLight ? 0.5 : 0.4);
+    bounceLight.position.set(4, -4, -4);
+    bounceLightRef.current = bounceLight;
+    scene.add(bounceLight);
+
+    // Hemisphere light for natural ambient gradation
+    const hemiLight = new THREE.HemisphereLight(0xf8fafc, 0x1e293b, isLight ? 0.45 : 0.3);
+    hemiLightRef.current = hemiLight;
+    scene.add(hemiLight);
 
     // Floor Reference Grid
-    const gridHelper = new THREE.GridHelper(18, 36, isLight ? 0x2563eb : 0x3b82f6, isLight ? 0xcbd5e1 : 0x1e293b);
+    const gridHelper = new THREE.GridHelper(18, 36, isLight ? 0x94a3b8 : 0x475569, isLight ? 0xcbd5e1 : 0x262b35);
     gridHelper.position.y = -2.8;
     (gridHelper.material as THREE.Material).transparent = true;
     (gridHelper.material as THREE.Material).opacity = isLight ? 0.35 : 0.22;
@@ -697,29 +707,28 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   // Dynamically respond to Light / Dark Mode toggles
   useEffect(() => {
     const isLight = theme === 'light';
-    if (sceneRef.current) {
-      sceneRef.current.background = new THREE.Color(isLight ? 0xf1f4f8 : 0x020408);
-    }
     if (ambientLightRef.current) {
-      ambientLightRef.current.intensity = isLight ? 0.90 : 0.45;
+      ambientLightRef.current.intensity = isLight ? 0.75 : 0.45;
     }
     if (keyLightRef.current) {
-      keyLightRef.current.intensity = isLight ? 2.2 : 2.5;
+      keyLightRef.current.intensity = isLight ? 2.0 : 2.2;
     }
     if (fillLightRef.current) {
-      fillLightRef.current.color.setHex(isLight ? 0x94a3b8 : 0x1e293b);
-      fillLightRef.current.intensity = isLight ? 1.4 : 1.0;
+      fillLightRef.current.color.setHex(isLight ? 0x94a3b8 : 0x475569);
+      fillLightRef.current.intensity = isLight ? 1.0 : 0.8;
     }
-    if (blueRimLightRef.current) {
-      blueRimLightRef.current.color.setHex(isLight ? 0x2563eb : 0x3b82f6);
-      blueRimLightRef.current.intensity = isLight ? 1.35 : 1.8;
+    if (rimLightRef.current) {
+      rimLightRef.current.intensity = isLight ? 0.8 : 1.1;
     }
-    if (cyanRimLightRef.current) {
-      cyanRimLightRef.current.color.setHex(isLight ? 0x0284c7 : 0x38bdf8);
-      cyanRimLightRef.current.intensity = isLight ? 0.85 : 1.1;
+    if (bounceLightRef.current) {
+      bounceLightRef.current.color.setHex(isLight ? 0xe2e8f0 : 0x334155);
+      bounceLightRef.current.intensity = isLight ? 0.5 : 0.4;
+    }
+    if (hemiLightRef.current) {
+      hemiLightRef.current.intensity = isLight ? 0.45 : 0.3;
     }
     if (rendererRef.current) {
-      rendererRef.current.toneMappingExposure = isLight ? 1.15 : 1.35;
+      rendererRef.current.toneMappingExposure = isLight ? 1.15 : 1.25;
     }
   }, [theme]);
 
@@ -949,11 +958,11 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
             if ((mat as THREE.MeshStandardMaterial).emissive) {
               const stdMat = mat as THREE.MeshStandardMaterial;
               if (isSelected) {
-                stdMat.emissive.set('#38bdf8');
+                stdMat.emissive.set('#e27228');
                 stdMat.emissiveIntensity = 0.14;
               } else if (isHovered) {
-                stdMat.emissive.set('#38bdf8');
-                stdMat.emissiveIntensity = 0.07;
+                stdMat.emissive.set('#e27228');
+                stdMat.emissiveIntensity = 0.06;
               } else {
                 stdMat.emissive.set('#000000');
                 stdMat.emissiveIntensity = 0.0;
@@ -1324,8 +1333,8 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
             const mat = (child as THREE.Mesh).material;
             const targetMat = Array.isArray(mat) ? mat[0] : mat;
             if ((targetMat as THREE.MeshStandardMaterial)?.emissive) {
-              (targetMat as THREE.MeshStandardMaterial).emissive.set('#38bdf8');
-              (targetMat as THREE.MeshStandardMaterial).emissiveIntensity = 0.07;
+              (targetMat as THREE.MeshStandardMaterial).emissive.set('#e27228');
+              (targetMat as THREE.MeshStandardMaterial).emissiveIntensity = 0.06;
             }
           }
         });
@@ -1444,7 +1453,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full select-none overflow-hidden cursor-grab active:cursor-grabbing touch-none bg-[#020408]"
+      className="relative w-full h-full select-none overflow-hidden cursor-grab active:cursor-grabbing touch-none bg-transparent"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -1502,16 +1511,16 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
                   <path
                     d={ann.pathD}
                     fill="none"
-                    stroke={active ? (theme === 'light' ? '#0284c7' : '#38bdf8') : (theme === 'light' ? '#2563eb' : '#3b82f6')}
-                    strokeOpacity={active ? 1 : 0.65}
-                    strokeWidth={active ? 2 : 1.2}
-                    strokeDasharray={active ? undefined : '3 3'}
+                    stroke={active ? (theme === 'light' ? '#c2410c' : '#e27228') : (theme === 'light' ? '#94a3b8' : 'rgba(240, 244, 250, 0.65)')}
+                    strokeOpacity={active ? 1 : 0.75}
+                    strokeWidth={active ? 1.5 : 1}
+                    strokeDasharray={active ? undefined : '2 2'}
                   />
                   <circle
                     cx={ann.anchorX}
                     cy={ann.anchorY}
-                    r={active ? 4.5 : 3}
-                    fill={active ? (theme === 'light' ? '#0284c7' : '#38bdf8') : (theme === 'light' ? '#2563eb' : '#3b82f6')}
+                    r={active ? 3.5 : 2}
+                    fill={active ? (theme === 'light' ? '#c2410c' : '#e27228') : (theme === 'light' ? '#94a3b8' : 'rgba(240, 244, 250, 0.65)')}
                   />
                 </g>
               );

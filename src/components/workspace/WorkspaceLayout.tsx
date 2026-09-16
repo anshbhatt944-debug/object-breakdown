@@ -19,6 +19,7 @@ import { WhatIfSimulator } from './inspector/WhatIfSimulator';
 import { AskEngineer } from './inspector/AskEngineer';
 import { DesignInsights } from './inspector/DesignInsights';
 import { ObjectComparison } from './inspector/ObjectComparison';
+import { StatusBar } from './StatusBar';
 import { resolveModelComponentNode, buildGenericModelComponentNode } from '../../data/modelComponentResolver';
 
 interface WorkspaceLayoutProps {
@@ -180,9 +181,11 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
       />
 
       {/* Main 3-Column Engineering Studio */}
-      <div className="workspace-main flex-1 flex overflow-hidden relative gap-3 p-3">
+      <div className={`workspace-main flex-1 flex overflow-hidden relative ${theme === 'light' ? 'bg-[#f1f4f8]' : 'bg-[#0c0e13]'}`}>
         {/* LEFT PANEL: Assembly Hierarchy & Component Tree (Hidden on mobile, 260-320px on desktop) */}
-        <div className="workspace-sidebar hidden md:block w-72 lg:w-80 shrink-0 h-full">
+        <div className={`workspace-sidebar hidden md:flex flex-col w-72 lg:w-80 shrink-0 h-full border-r ${
+          theme === 'light' ? 'border-slate-200 bg-white' : 'border-[#262832] bg-[#111318]'
+        }`}>
           <ComponentTree
             rootComponents={currentObject.rootComponents}
             selectedComponentId={selectedComponentId}
@@ -198,7 +201,14 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         </div>
 
         {/* CENTER PANEL: Interactive 3D WebGL Workbench */}
-        <div className={`workspace-viewport flex-1 h-full relative ${theme === 'light' ? 'bg-[#f1f4f8]' : 'bg-[#020408]'} cad-grid overflow-hidden`}>
+        <div
+          className="workspace-viewport flex-1 h-full relative overflow-hidden flex flex-col select-none"
+          style={{
+            background: theme === 'light'
+              ? 'radial-gradient(circle at 50% 48%, #ffffff 0%, #edf1f7 60%, #e2e7ef 100%)'
+              : 'radial-gradient(circle at 50% 42%, #787e8c 0%, #5e6473 48%, #444955 100%)',
+          }}
+        >
           {currentObject.id === 'drone' ? (
             <DroneCanvas
               objectData={currentObject}
@@ -268,9 +278,9 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
         {/* RIGHT PANEL: Engineering Inspector & Analysis Studio (drag to resize) */}
         <div
-          className={`workspace-inspector hidden md:flex shrink-0 h-full relative flex-col ${
-            theme === 'light' ? 'bg-white/95 border-slate-200 shadow-sm' : 'bg-[#0d111a]/95 border-white/10'
-          } backdrop-blur-2xl border-l z-20 min-w-0`}
+          className={`workspace-inspector hidden md:flex shrink-0 h-full relative flex-col border-l z-20 min-w-0 ${
+            theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#111318] border-[#262832]'
+          }`}
           style={{ width: inspectorWidth }}
         >
           <div
@@ -279,12 +289,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             aria-label="Resize engineering inspector"
             title="Drag to resize inspector"
             onPointerDown={startInspectorResize}
-            className="absolute -left-1.5 top-0 bottom-0 w-3 cursor-col-resize z-40 group"
-          >
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-20 w-1 rounded-full bg-white/10 group-hover:bg-[#00f2ad]/70 transition-colors" />
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden group-hover:flex items-center justify-center h-10 w-8 -ml-3 rounded-lg bg-[#0d111a] border border-[#00f2ad]/30 shadow-[0_0_20px_rgba(0,242,173,0.12)] text-[#00f2ad] text-[10px]">↔</div>
-          </div>
-          <div className="absolute top-2 right-3 z-30 hidden xl:block text-[9px] font-mono-cad tracking-widest uppercase text-slate-600 pointer-events-none">drag edge to resize</div>
+            className="absolute -left-1 top-0 bottom-0 w-2 cursor-col-resize z-40 hover:bg-[rgba(226,114,40,0.5)] transition-colors"
+          />
           <InspectorTabs
             activeTab={activeInspectorTab}
             onTabChange={setActiveInspectorTab}
@@ -368,6 +374,13 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           </div>
         </div>
       </div>
+
+      {/* CAD Telemetry Status Bar */}
+      <StatusBar
+        selectedComponent={selectedNode}
+        objectName={currentObject.name}
+        theme={theme}
+      />
 
       {/* Side-by-Side Object Comparison Modal */}
       {isCompareOpen && (

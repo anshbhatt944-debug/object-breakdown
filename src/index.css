@@ -2,23 +2,67 @@
 
 @layer base {
   :root {
-    /* Deep Obsidian / Precision Engineering Navy Palette */
-    --c-bg: #020408;
-    --c-bg-subtle: #050b14;
-    --c-surface: #080f1d;
-    --c-surface-hover: #0f1c33;
-    --c-border: rgba(255, 255, 255, 0.07);
-    --c-border-hover: rgba(59, 130, 246, 0.3);
-    --c-border-accent: rgba(59, 130, 246, 0.5);
+    /* Studio CAD Precision Engineering Palette */
+    --studio-bg-dim: #0c0e13;
+    --studio-bg-surface: #111318;
+    --studio-bg-panel: #1a1b21;
+    --studio-bg-card: #16181f;
+    --studio-bg-bright: #37393f;
 
-    --c-text: #f8fafc;
-    --c-text-muted: #94a3b8;
-    --c-text-faint: #475569;
+    /* 3D Viewport Backdrop - Precision Light Space Grey Studio */
+    --viewport-gradient-top: #787e8c;
+    --viewport-gradient-mid: #5e6473;
+    --viewport-gradient-bottom: #444955;
+    --viewport-floor-ring: rgba(115, 115, 115, 0.3);
+    --viewport-datum-axis: rgba(160, 160, 160, 0.25);
 
-    --c-accent-primary: #3b82f6; /* Electric Blue */
+    /* Border & Divider Tokens */
+    --studio-border-primary: #262832;
+    --studio-border-subtle: #1f212a;
+    --studio-border-focus: rgba(226, 114, 40, 0.6);
+
+    /* Typography Colors */
+    --studio-text-primary: #f3f4f8;
+    --studio-text-secondary: #c5c7d0;
+    --studio-text-muted: #6b7082;
+    --studio-text-inverse: #0c0e13;
+
+    /* Accent & Semantic Tokens */
+    --studio-accent-primary: #e27228;
+    --studio-accent-hover: #f08236;
+    --studio-accent-dim: rgba(226, 114, 40, 0.15);
+    --studio-accent-border: rgba(226, 114, 40, 0.7);
+
+    --studio-cyan-datum: #22d3ee;
+    --studio-cyan-bg: rgba(34, 211, 238, 0.1);
+    --studio-emerald-valid: #10b981;
+    --studio-amber-warning: #f59e0b;
+    --studio-red-error: #ef4444;
+
+    /* Layout Constants */
+    --studio-header-height: 48px;
+    --studio-toolbar-height: 48px;
+    --studio-statusbar-height: 24px;
+    --studio-radius-sm: 2px;
+    --studio-radius-md: 4px;
+
+    /* Legacy compatibility tokens */
+    --c-bg: #0c0e13;
+    --c-bg-subtle: #111318;
+    --c-surface: #111318;
+    --c-surface-hover: #1a1b21;
+    --c-border: #262832;
+    --c-border-hover: rgba(226, 114, 40, 0.4);
+    --c-border-accent: rgba(226, 114, 40, 0.6);
+
+    --c-text: #f3f4f8;
+    --c-text-muted: #c5c7d0;
+    --c-text-faint: #6b7082;
+
+    --c-accent-primary: #e27228;
     --c-accent-blue: #2563eb;
-    --c-accent-cyan: #38bdf8; /* Cool Cyan */
-    --c-accent-glow: rgba(59, 130, 246, 0.35);
+    --c-accent-cyan: #22d3ee;
+    --c-accent-glow: rgba(226, 114, 40, 0.25);
 
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -26,22 +70,40 @@
   }
 
   [data-theme="light"] {
+    --studio-bg-dim: #f1f4f8;
+    --studio-bg-surface: #ffffff;
+    --studio-bg-panel: #f8fafc;
+    --studio-bg-card: #ffffff;
+    --studio-bg-bright: #e2e8f0;
+
+    --viewport-gradient-top: #ffffff;
+    --viewport-gradient-mid: #edf1f7;
+    --viewport-gradient-bottom: #e2e7ef;
+
+    --studio-border-primary: #e2e8f0;
+    --studio-border-subtle: #cbd5e1;
+    --studio-border-focus: rgba(226, 114, 40, 0.6);
+
+    --studio-text-primary: #0f172a;
+    --studio-text-secondary: #334155;
+    --studio-text-muted: #64748b;
+
     --c-bg: #f4f6f9;
     --c-bg-subtle: #eaedf2;
     --c-surface: #ffffff;
     --c-surface-hover: #f1f4f8;
-    --c-border: rgba(15, 23, 42, 0.08);
-    --c-border-hover: rgba(37, 99, 235, 0.28);
-    --c-border-accent: rgba(37, 99, 235, 0.45);
+    --c-border: #e2e8f0;
+    --c-border-hover: rgba(226, 114, 40, 0.35);
+    --c-border-accent: rgba(226, 114, 40, 0.5);
 
     --c-text: #0f172a;
     --c-text-muted: #334155;
     --c-text-faint: #64748b;
 
-    --c-accent-primary: #2563eb;
+    --c-accent-primary: #e27228;
     --c-accent-blue: #1d4ed8;
     --c-accent-cyan: #0284c7;
-    --c-accent-glow: rgba(37, 99, 235, 0.18);
+    --c-accent-glow: rgba(226, 114, 40, 0.15);
   }
 
   * {
@@ -120,32 +182,33 @@
   letter-spacing: -0.04em;
 }
 
-/* Glassmorphism & High-tech Panels */
+/* Precision Industrial CAD Panels */
 .glass-panel {
-  background: var(--c-surface);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--c-border);
+  background: var(--studio-bg-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--studio-border-primary);
 }
 
 .glass-panel-hover {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .glass-panel-hover:hover {
-  background: var(--c-surface-hover);
-  border-color: var(--c-border-hover);
+  background: var(--studio-bg-panel);
+  border-color: var(--studio-border-primary);
 }
 
 .glass-card {
-  background: rgba(8, 15, 29, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--studio-bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--studio-border-primary);
+  border-radius: var(--studio-radius-md);
 }
 
 [data-theme="light"] .glass-card {
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  border: 1px solid var(--studio-border-primary);
 }
 
 /* Precision Subtle Grid */
@@ -384,53 +447,53 @@
 
 /* 3D Viewport Leader Line Labels */
 .three-label {
-  border-radius: 8px !important;
-  background: rgba(8, 15, 29, 0.92) !important;
+  border-radius: 4px !important;
+  background: rgba(22, 24, 31, 0.95) !important;
   backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+  border: 1px solid #262832 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-theme="light"] .three-label {
-  background: rgba(255, 255, 255, 0.94) !important;
-  border: 1px solid rgba(15, 23, 42, 0.12) !important;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08) !important;
 }
 
 .three-label-default {
-  color: #e2e8f0;
-  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #c5c7d0;
+  border-color: #262832 !important;
 }
 
 [data-theme="light"] .three-label-default {
   color: #0f172a;
-  border-color: rgba(15, 23, 42, 0.12) !important;
+  border-color: #e2e8f0 !important;
 }
 
 .three-label-hovered {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3) !important;
+  border-color: #37393f !important;
+  background: #1a1b21 !important;
   color: #fff;
-  transform: scale(1.02);
 }
 
 [data-theme="light"] .three-label-hovered {
-  border-color: #2563eb !important;
-  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.2) !important;
+  border-color: #cbd5e1 !important;
+  background: #f8fafc !important;
   color: #0f172a;
 }
 
 .three-label-selected {
-  border-color: #38bdf8 !important;
-  box-shadow: 0 0 25px rgba(56, 189, 248, 0.35) !important;
+  border-color: #e27228 !important;
+  background: rgba(226, 114, 40, 0.15) !important;
+  box-shadow: 0 0 16px rgba(226, 114, 40, 0.25) !important;
   color: #fff;
-  transform: scale(1.03);
 }
 
 [data-theme="light"] .three-label-selected {
-  border-color: #0284c7 !important;
-  box-shadow: 0 4px 24px rgba(2, 132, 199, 0.25) !important;
+  border-color: #c2410c !important;
+  background: #fff7ed !important;
+  box-shadow: 0 4px 16px rgba(194, 65, 12, 0.15) !important;
   color: #0f172a;
 }
 
@@ -447,10 +510,10 @@
 }
 
 .three-label-meta {
-  color: #94a3b8;
+  color: #6b7082;
   font-family: var(--font-mono, monospace);
   font-size: 9px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
 }
 
 [data-theme="light"] .three-label-meta {
@@ -458,28 +521,29 @@
 }
 
 .annotation-index {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #94a3b8;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #262832;
+  color: #6b7082;
+  border-radius: 2px;
 }
 
 [data-theme="light"] .annotation-index {
   background: rgba(15, 23, 42, 0.05);
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  border: 1px solid #e2e8f0;
   color: #475569;
 }
 
 .annotation-index-active {
-  background: #38bdf8;
-  border-color: #38bdf8;
-  color: #020408;
+  background: #e27228 !important;
+  border-color: #e27228 !important;
+  color: #0c0e13 !important;
+  font-weight: 700;
 }
 
 [data-theme="light"] .annotation-index-active {
-  background: #0284c7;
-  border-color: #0284c7;
-  color: #ffffff;
+  background: #c2410c !important;
+  border-color: #c2410c !important;
+  color: #ffffff !important;
 }
 
 /* ==========================================================================
