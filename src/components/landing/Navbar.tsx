@@ -38,7 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const isLight = theme === 'light';
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 pointer-events-none select-none transition-colors duration-300">
+    <header className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-3 sm:py-4 pointer-events-none select-none transition-colors duration-300 pt-[env(safe-area-inset-top)]">
       <div className="flex items-center justify-between max-w-[1700px] mx-auto">
         {/* Minimal Brand */}
         <div className="pointer-events-auto">
@@ -136,10 +136,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         {/* Minimal Actions */}
-        <div className="flex items-center gap-3 pointer-events-auto">
+        <div className="flex items-center gap-1.5 sm:gap-3 pointer-events-auto">
           <button
             onClick={onOpenSearch}
-            className={`p-2 transition-all rounded-lg ${
+            className={`p-2 transition-all rounded-lg touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center ${
               isLight
                 ? 'text-slate-500 hover:text-[#0f172a] hover:bg-slate-900/5'
                 : 'text-white/40 hover:text-white hover:bg-white/5'
@@ -151,7 +151,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={onToggleTheme}
-            className={`p-2 transition-all rounded-lg relative overflow-hidden group ${
+            className={`p-2 transition-all rounded-lg relative overflow-hidden group touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center ${
               isLight
                 ? 'text-slate-600 hover:text-[#2563eb] hover:bg-slate-900/5'
                 : 'text-white/50 hover:text-white hover:bg-white/5'
@@ -170,7 +170,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={onLaunchWorkspace}
-            className={`px-3.5 py-1.5 text-xs font-mono tracking-widest transition-all rounded-lg flex items-center gap-1.5 ${
+            className={`px-3 sm:px-3.5 py-1.5 text-xs font-mono tracking-widest transition-all rounded-lg flex items-center gap-1.5 touch-manipulation min-h-[36px] ${
               isLight
                 ? 'text-[#0f172a] border border-slate-300 hover:border-[#2563eb] hover:text-[#2563eb] hover:bg-blue-50/70'
                 : 'text-white border border-white/20 hover:border-[#3b82f6] hover:text-[#3b82f6] hover:bg-[#3b82f6]/10'

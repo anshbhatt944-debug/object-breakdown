@@ -81,14 +81,17 @@ export function solveAnnotationLayout(
   if (width <= 0 || height <= 0 || items.length === 0) return [];
 
   const activeModelId = options.activeModelId;
-  const leftMargin = options.leftMargin ?? 24; // Strict margin from left Assembly Hierarchy panel
-  const rightMargin = options.rightMargin ?? 24; // Strict margin from right Inspector panel
-  const maxCardWidthAllowed = Math.max(140, Math.floor((width - leftMargin - rightMargin - 28) / 2));
+  const isMobile = width < 768;
+  const leftMargin = options.leftMargin ?? (isMobile ? 12 : 24); // Strict margin from left
+  const rightMargin = options.rightMargin ?? (isMobile ? 12 : 24); // Strict margin from right
+  const maxCardWidthAllowed = isMobile
+    ? Math.max(90, Math.floor((width - leftMargin - rightMargin - 16) / 2))
+    : Math.max(140, Math.floor((width - leftMargin - rightMargin - 28) / 2));
   const cardWidth = Math.min(options.cardWidth ?? 210, maxCardWidthAllowed);
-  const cardHeight = options.cardHeight ?? 46;
-  const verticalGap = options.verticalGap ?? 10;
-  const topMargin = options.topMargin ?? 76; // Safely below top nav, badges & mode selector
-  const bottomMargin = options.bottomMargin ?? 144; // Safely above bottom explode toolbar & view modes
+  const cardHeight = isMobile ? Math.min(options.cardHeight ?? 46, 38) : (options.cardHeight ?? 46);
+  const verticalGap = options.verticalGap ?? (isMobile ? 6 : 10);
+  const topMargin = options.topMargin ?? (isMobile ? 54 : 76); // Safely below top nav, badges & mode selector
+  const bottomMargin = options.bottomMargin ?? (isMobile ? 120 : 144); // Safely above bottom explode toolbar & view modes
 
   const minY = topMargin;
   const maxY = Math.max(minY + cardHeight, height - bottomMargin - cardHeight);

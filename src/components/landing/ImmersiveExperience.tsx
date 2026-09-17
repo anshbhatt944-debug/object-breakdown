@@ -2261,16 +2261,16 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       {/* -------------------------------------------------------------------- */}
       {/* Sticky Top-0 Viewport: Holds All Dynamic Editorial Chapters */}
       {/* -------------------------------------------------------------------- */}
-      <div className="sticky top-0 h-screen w-full flex flex-col justify-between p-8 sm:p-14 z-20 pointer-events-none">
+      <div className="sticky top-0 h-screen h-[100dvh] w-full flex flex-col justify-between p-4 sm:p-8 md:p-14 z-20 pointer-events-none">
         {/* Top Telemetry */}
         <div className={`flex justify-between items-center text-[10px] font-mono tracking-widest uppercase ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-          <div className="flex items-center gap-3">
-            <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className={`w-1.5 h-1.5 rounded-full animate-pulse shrink-0 ${
               isMotionPaused ? 'bg-amber-400' : isLight ? 'bg-[#2563eb]' : 'bg-[#3b82f6]'
             }`} />
             <span className={isLight ? 'text-slate-800' : 'text-white/70'}>CINEMATIC 3D ATLAS</span>
             <span>•</span>
-            <span className={isLight ? 'text-slate-500' : 'text-white/40'}>
+            <span className={`truncate max-w-[120px] xs:max-w-none ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
               {isMotionPaused ? 'KINEMATICS: PAUSED' : 'DETERMINISTIC KINEMATICS'}
             </span>
           </div>
@@ -2830,7 +2830,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                     onSearchCustom(searchQuery.trim());
                   }
                 }}
-                className={`rounded-2xl border p-2 sm:p-2.5 flex items-center gap-2.5 transition-all ${
+                className={`rounded-2xl border p-2 sm:p-2.5 flex items-center gap-2.5 transition-all w-full max-w-full ${
                   isLight
                     ? 'bg-white border-slate-200 shadow-sm focus-within:border-[#2563eb]'
                     : 'bg-[#060b17]/95 border-white/15 shadow-lg focus-within:border-[#38bdf8]'
@@ -2847,7 +2847,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Or enter mechanism: e.g. Mechanical Escapement, V8 Crankshaft..."
-                  className={`flex-1 bg-transparent px-2 py-1.5 text-xs sm:text-sm focus:outline-none font-mono ${
+                  className={`flex-1 min-w-0 bg-transparent px-2 py-1.5 text-xs sm:text-sm focus:outline-none font-mono ${
                     isLight ? 'text-[#0f172a] placeholder-slate-400' : 'text-white placeholder-white/35'
                   }`}
                 />
@@ -2855,7 +2855,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                 <button
                   type="submit"
                   disabled={!searchQuery.trim()}
-                  className={`px-4 py-2 rounded-xl font-mono text-xs tracking-wider transition-all flex items-center gap-2 shrink-0 ${
+                  className={`px-3.5 sm:px-4 py-2 rounded-xl font-mono text-xs tracking-wider transition-all flex items-center gap-1.5 sm:gap-2 shrink-0 touch-manipulation ${
                     searchQuery.trim()
                       ? isLight
                         ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] shadow-sm cursor-pointer'
@@ -2937,21 +2937,21 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         </div>
 
         {/* Bottom Sequence Indicators */}
-        <div className={`flex justify-between items-end text-[11px] font-mono tracking-wider ${
+        <div className={`flex flex-col sm:flex-row gap-2.5 justify-between items-start sm:items-end text-[11px] font-mono tracking-wider pb-[env(safe-area-inset-bottom)] ${
           isLight ? 'text-slate-500' : 'text-white/50'
         }`}>
           <div className="space-y-1">
             <div className={`text-[9px] uppercase tracking-widest ${isLight ? 'text-[#2563eb]' : 'text-[#3b82f6]'}`}>Exploration Sequence</div>
-            <div className={`font-semibold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>01 HOROLOGY → 02 AEROSPACE → 03 KINEMATICS</div>
+            <div className={`font-semibold text-[10px] sm:text-[11px] truncate max-w-[280px] xs:max-w-none ${isLight ? 'text-slate-800' : 'text-white/80'}`}>01 HOROLOGY → 02 AEROSPACE → 03 KINEMATICS</div>
           </div>
 
-          <div className="flex items-center gap-3 pointer-events-auto">
+          <div className="flex items-center gap-2 sm:gap-3 pointer-events-auto flex-wrap">
             {/* Motion Pause / Resume Control */}
             <button
               onClick={toggleMotionPause}
               title={isMotionPaused ? "Resume mechanical micro-motion (Space)" : "Pause mechanical micro-motion (Space)"}
               aria-label={isMotionPaused ? "Resume mechanical micro-motion" : "Pause mechanical micro-motion"}
-              className={`px-3 py-2 rounded-lg text-xs font-mono transition-all flex items-center gap-2 cursor-pointer select-none ${
+              className={`px-3 py-2 rounded-lg text-xs font-mono transition-all flex items-center gap-2 cursor-pointer select-none touch-manipulation ${
                 isLight
                   ? isMotionPaused
                     ? 'bg-amber-50 border border-amber-300 text-amber-800 shadow-sm'
@@ -2976,7 +2976,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
 
             <button
               onClick={() => onSelectObject(activeObjectRef.current || objects[0])}
-              className={`px-4 py-2 rounded-lg text-xs font-mono transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-4 py-2 rounded-lg text-xs font-mono transition-all flex items-center gap-2 cursor-pointer touch-manipulation ${
                 isLight
                   ? 'bg-white hover:bg-blue-50 border border-slate-200 text-slate-800 shadow-sm'
                   : 'bg-white/5 hover:bg-[#3b82f6]/20 border border-white/10 text-white'

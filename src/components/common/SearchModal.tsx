@@ -58,7 +58,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className={`fixed inset-0 z-[100] flex items-start justify-center pt-24 p-4 ${
+      <div className={`fixed inset-0 z-[100] flex items-start justify-center pt-10 sm:pt-24 p-2.5 sm:p-4 ${
         isLight ? 'bg-slate-900/40' : 'bg-black/85'
       } backdrop-blur-xl select-none`}>
         <motion.div
@@ -70,34 +70,34 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             isLight
               ? 'bg-white border border-slate-200 shadow-[0_20px_60px_rgba(15,23,42,0.18)]'
               : 'bg-[#0b0e14] border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.8)]'
-          } overflow-hidden flex flex-col`}
+          } overflow-hidden flex flex-col max-h-[85dvh] sm:max-h-[80vh]`}
         >
           {/* Search Input Box */}
           <form
             onSubmit={handleSubmit}
-            className={`flex items-center p-5 border-b ${
+            className={`flex items-center p-3.5 sm:p-5 border-b ${
               isLight ? 'border-slate-200' : 'border-white/10'
-            } gap-3 relative`}
+            } gap-2.5 sm:gap-3 relative`}
           >
-            <Search className={`w-5 h-5 ${isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'} shrink-0`} />
+            <Search className={`w-4.5 h-4.5 sm:w-5 sm:h-5 ${isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'} shrink-0`} />
             <input
               type="text"
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search catalog or type custom object to synthesize..."
-              className={`flex-1 bg-transparent text-base ${
+              placeholder="Search catalog or type custom object..."
+              className={`flex-1 bg-transparent text-sm sm:text-base ${
                 isLight ? 'text-slate-900 placeholder-slate-400' : 'text-slate-100 placeholder-slate-500'
-              } focus:outline-none font-mono-cad`}
+              } focus:outline-none font-mono-cad min-w-0`}
             />
             <button
               type="button"
               onClick={onClose}
-              className={`p-2 rounded-lg ${
+              className={`p-2 rounded-lg touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center shrink-0 ${
                 isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : 'text-slate-400 hover:text-white hover:bg-white/10'
               } transition-colors`}
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </form>
 

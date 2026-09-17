@@ -151,6 +151,12 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
   // Smooth Orbit & Camera State
   const isDraggingRef = useRef(false);
   const previousMousePositionRef = useRef({ x: 0, y: 0 });
+  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchStartDistRef = useRef<number | null>(null);
+  const pinchStartCamDistRef = useRef<number>(7.0);
+  const pointerDownPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const pointerDownTimeRef = useRef<number>(0);
+  const lastTapTimeRef = useRef<number>(0);
   const cameraRotationRef = useRef({
     spherical: new THREE.Spherical(7.0, Math.PI / 2.6, Math.PI / 4),
     target: new THREE.Vector3(0, 0, 0),
@@ -765,15 +771,73 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     }, 20);
   };
 
-  // Pointer Interaction Handlers
+  // Raycast helper for both clean touch tap and mouse click selection
+  const performRaycastSelect = (clientX: number, clientY: number) => {
+    if (!containerRef.current || !cameraRef.current || !sceneRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const mouse = mouseRef.current.set(
+      ((clientX - rect.left) / rect.width) * 2 - 1,
+      -((clientY - rect.top) / rect.height) * 2 + 1
+    );
+
+    const raycaster = raycasterRef.current;
+    raycaster.setFromCamera(mouse, cameraRef.current);
+
+    const root = activeRootGroupRef.current;
+    if (!root) return;
+
+    const intersects = raycaster.intersectObjects(root.children, true);
+    if (intersects.length > 0) {
+      let hitMesh: THREE.Object3D | null = intersects[0].object;
+      while (hitMesh && hitMesh !== sceneRef.current) {
+        const componentId = hitMesh.userData?.componentId || (componentMapRef.current.has(hitMesh.name) ? hitMesh.name : null);
+        if (componentId && componentMapRef.current.has(componentId)) {
+          onSelectComponent(componentId === selectedComponentIdRef.current ? null : componentId);
+          return;
+        }
+        hitMesh = hitMesh.parent;
+      }
+    }
+  };
+
+  // Pointer Interaction Handlers with Full Mobile Multi-Touch (Rotate + Pinch-to-Zoom + Tap)
   const handlePointerDown = (e: React.PointerEvent) => {
-    isDraggingRef.current = true;
-    previousMousePositionRef.current = { x: e.clientX, y: e.clientY };
+    activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    pointerDownPosRef.current = { x: e.clientX, y: e.clientY };
+    pointerDownTimeRef.current = performance.now();
+
+    if (activePointersRef.current.size === 1) {
+      isDraggingRef.current = true;
+      previousMousePositionRef.current = { x: e.clientX, y: e.clientY };
+    } else if (activePointersRef.current.size === 2) {
+      // 2-finger touch: start pinch zoom
+      isDraggingRef.current = false;
+      const pts = Array.from(activePointersRef.current.values());
+      pinchStartDistRef.current = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      pinchStartCamDistRef.current = targetCameraDistanceRef.current;
+    }
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (isDraggingRef.current) {
+    if (activePointersRef.current.has(e.pointerId)) {
+      activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+
+    // Two-finger pinch zoom for mobile touch
+    if (activePointersRef.current.size === 2 && pinchStartDistRef.current !== null) {
+      const pts = Array.from(activePointersRef.current.values());
+      const currentDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      if (pinchStartDistRef.current > 0) {
+        const scale = pinchStartDistRef.current / Math.max(currentDist, 10);
+        const newDistance = pinchStartCamDistRef.current * scale;
+        targetCameraDistanceRef.current = Math.max(3.5, Math.min(28.0, newDistance));
+      }
+      return;
+    }
+
+    // Single-pointer rotation
+    if (isDraggingRef.current && activePointersRef.current.size === 1) {
       const deltaX = e.clientX - previousMousePositionRef.current.x;
       const deltaY = e.clientY - previousMousePositionRef.current.y;
 
@@ -784,6 +848,9 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
       previousMousePositionRef.current = { x: e.clientX, y: e.clientY };
       return;
     }
+
+    // Desktop hover detection (only when pointerType !== 'touch')
+    if (e.pointerType === 'touch') return;
 
     // Instant raycast hover detection against pre-cached interactive meshes
     if (!containerRef.current || !cameraRef.current || !sceneRef.current) return;
@@ -819,36 +886,40 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
-    isDraggingRef.current = false;
+    const wasPointerInMap = activePointersRef.current.has(e.pointerId);
+    activePointersRef.current.delete(e.pointerId);
+
+    if (activePointersRef.current.size < 2) {
+      pinchStartDistRef.current = null;
+    }
+    if (activePointersRef.current.size === 0) {
+      isDraggingRef.current = false;
+    } else if (activePointersRef.current.size === 1) {
+      const remaining = Array.from(activePointersRef.current.values())[0];
+      previousMousePositionRef.current = { x: remaining.x, y: remaining.y };
+      isDraggingRef.current = true;
+    }
+
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+
+    // Tap-to-select detection for touch devices
+    if (wasPointerInMap) {
+      const moveDist = Math.hypot(
+        e.clientX - pointerDownPosRef.current.x,
+        e.clientY - pointerDownPosRef.current.y
+      );
+      const duration = performance.now() - pointerDownTimeRef.current;
+      if (moveDist < 8 && duration < 350) {
+        lastTapTimeRef.current = performance.now();
+        performRaycastSelect(e.clientX, e.clientY);
+      }
+    }
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    if (!containerRef.current || !cameraRef.current || !sceneRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const mouse = mouseRef.current.set(
-      ((e.clientX - rect.left) / rect.width) * 2 - 1,
-      -((e.clientY - rect.top) / rect.height) * 2 + 1
-    );
-
-    const raycaster = raycasterRef.current;
-    raycaster.setFromCamera(mouse, cameraRef.current);
-
-    const root = activeRootGroupRef.current;
-    if (!root) return;
-
-    const intersects = raycaster.intersectObjects(root.children, true);
-    if (intersects.length > 0) {
-      let hitMesh: THREE.Object3D | null = intersects[0].object;
-      while (hitMesh && hitMesh !== sceneRef.current) {
-        const componentId = hitMesh.userData?.componentId || (componentMapRef.current.has(hitMesh.name) ? hitMesh.name : null);
-        if (componentId && componentMapRef.current.has(componentId)) {
-          onSelectComponent(componentId === selectedComponentId ? null : componentId);
-          return;
-        }
-        hitMesh = hitMesh.parent;
-      }
-    }
+    // Avoid double firing if pointerup already handled the tap
+    if (performance.now() - lastTapTimeRef.current < 300) return;
+    performRaycastSelect(e.clientX, e.clientY);
   };
 
   const handleWheel = (e: React.WheelEvent) => {

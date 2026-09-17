@@ -39,17 +39,17 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
 
   return (
     <header
-      className={`workspace-header h-12 px-4 flex items-center justify-between border-b text-xs font-mono-cad select-none z-30 transition-colors ${
+      className={`workspace-header min-h-[48px] h-[calc(3rem+env(safe-area-inset-top))] md:h-12 px-2 sm:px-4 flex items-center justify-between border-b text-xs font-mono-cad select-none z-30 transition-colors pt-[env(safe-area-inset-top)] md:pt-0 ${
         isLight
           ? 'border-slate-200 bg-white text-slate-800 shadow-sm'
           : 'border-[#262832] bg-[#111318] text-[#f3f4f8]'
       }`}
     >
       {/* Left: Exit Studio + Breadcrumb Navigation + Asset Switcher */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         <button
           onClick={onReturnHome}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded transition-colors border ${
+          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-1 rounded transition-colors border touch-manipulation min-h-[36px] sm:min-h-0 shrink-0 ${
             isLight
               ? 'text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 border-slate-200'
               : 'text-[#c5c7d0] hover:text-white bg-[#1a1b21] hover:bg-[#37393f]/40 border-[#262832]'
@@ -64,15 +64,15 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
         <div className={`h-4 w-px ${isLight ? 'bg-slate-200' : 'bg-[#262832]'} hidden sm:block`} />
 
         {/* CAD Breadcrumb & Target Selector */}
-        <div className="flex items-center gap-2">
-          <div className="hidden md:flex items-center gap-1 text-[11px] tracking-wider text-[#6b7082]">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <div className="hidden md:flex items-center gap-1 text-[11px] tracking-wider text-[#6b7082] shrink-0">
             <span>OBJECT BREAKDOWN</span>
             <span>/</span>
             <span className="text-[#22d3ee] font-medium">{currentObject.category?.toUpperCase() || 'CAD'}</span>
             <span>/</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
             <select
               value={currentObject.id}
               onChange={(e) => {
@@ -87,7 +87,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                 const selected = ALL_OBJECTS.find((o) => o.id === val);
                 if (selected) onSelectObject(selected);
               }}
-              className={`bg-transparent text-[11px] font-bold focus:outline-none cursor-pointer uppercase tracking-wider font-mono-cad border-b border-dashed pb-0.5 hover:border-[#e27228] transition-colors ${
+              className={`bg-transparent text-[11px] font-bold focus:outline-none cursor-pointer uppercase tracking-wider font-mono-cad border-b border-dashed pb-0.5 hover:border-[#e27228] transition-colors max-w-[110px] xs:max-w-[150px] sm:max-w-none truncate ${
                 isLight ? 'text-slate-900 border-slate-300' : 'text-[#f3f4f8] border-[#262832]'
               }`}
             >
@@ -114,7 +114,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
               ))}
             </select>
 
-            <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+            <span className={`hidden xs:inline text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${
               isLight ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-[#1a1b21] border-[#262832] text-[#6b7082]'
             }`}>
               {currentObject.stats.componentCount} PARTS
@@ -159,10 +159,10 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
       </div>
 
       {/* Right: Upload + Compare + Theme Toggle */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {onUploadModel && (
           <label
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded border text-[11px] font-mono-cad uppercase tracking-wider transition-all cursor-pointer ${
+            className={`flex items-center justify-center gap-1 sm:gap-1.5 p-2 sm:px-2.5 sm:py-1 rounded border text-[11px] font-mono-cad uppercase tracking-wider transition-all cursor-pointer touch-manipulation min-h-[36px] sm:min-h-0 min-w-[36px] sm:min-w-0 ${
               isLight
                 ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                 : 'bg-[#1a1b21] hover:bg-[#37393f]/40 text-[#c5c7d0] hover:text-white border-[#262832]'
@@ -189,12 +189,13 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
 
         <button
           onClick={onOpenCompare}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded border text-[11px] font-mono-cad uppercase tracking-wider transition-all ${
+          className={`flex items-center justify-center gap-1 sm:gap-1.5 p-2 sm:px-2.5 sm:py-1 rounded border text-[11px] font-mono-cad uppercase tracking-wider transition-all touch-manipulation min-h-[36px] sm:min-h-0 min-w-[36px] sm:min-w-0 ${
             isLight
               ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
               : 'bg-[#1a1b21] hover:bg-[#37393f]/40 text-[#c5c7d0] hover:text-white border-[#262832]'
           }`}
           data-cursor="COMPARE"
+          title="Compare with other CAD mechanisms"
         >
           <Scale className="w-3.5 h-3.5 text-[#e27228]" />
           <span className="hidden sm:inline">Compare</span>
@@ -203,7 +204,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
         <button
           onClick={onToggleTheme}
           title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          className={`w-7 h-7 rounded border flex items-center justify-center transition-all ${
+          className={`w-9 h-9 sm:w-7 sm:h-7 rounded border flex items-center justify-center transition-all touch-manipulation ${
             isLight
               ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
               : 'bg-[#1a1b21] hover:bg-[#37393f]/40 border-[#262832] text-[#c5c7d0] hover:text-white'
