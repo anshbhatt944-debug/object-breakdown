@@ -12,8 +12,8 @@ interface CustomCursorProps {
 
 export const CustomCursor: React.FC<CustomCursorProps> = ({ theme = 'dark' }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const dotRef = useRef<HTMLDivElement>(null);
-  const ringRef = useRef<HTMLDivElement>(null);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const cursorInnerRef = useRef<HTMLDivElement>(null);
   const badgeRef = useRef<HTMLDivElement>(null);
   const badgeCatRef = useRef<HTMLDivElement>(null);
   const badgeNameRef = useRef<HTMLDivElement>(null);
@@ -22,13 +22,8 @@ export const CustomCursor: React.FC<CustomCursorProps> = ({ theme = 'dark' }) =>
   const isLight = theme === 'light';
 
   const mousePosRef = useRef({ x: -200, y: -200 });
-  const ringPosRef = useRef({ x: -200, y: -200 });
-  const isClickableRef = useRef(false);
-  const isCanvasRef = useRef(false);
   const isUploadHoveredRef = useRef(false);
   const isFileDraggingRef = useRef(false);
-  const isComponentHoveredRef = useRef(false);
-  const isMouseDownRef = useRef(false);
   const modelHoverDetailRef = useRef<ComponentHoverDetail | null>(null);
 
   useEffect(() => {
@@ -41,9 +36,22 @@ export const CustomCursor: React.FC<CustomCursorProps> = ({ theme = 'dark' }) =>
     let animId: number;
     let fileDragDepth = 0;
 
+    // High refresh rate (144Hz / 240Hz / 360Hz) direct GPU-accelerated update
+    const updateCursorPosition = (clientX: number, clientY: number) => {
+      mousePosRef.current.x = clientX;
+      mousePosRef.current.y = clientY;
+
+      // 0-latency direct hardware transform (hotspot at arrow tip: x - 2px, y - 2px)
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = `translate3d(${clientX - 2}px, ${clientY - 2}px, 0)`;
+        if (cursorRef.current.style.opacity !== '1') {
+          cursorRef.current.style.opacity = '1';
+        }
+      }
+    };
+
     const handlePointerMove = (e: PointerEvent) => {
-      mousePosRef.current.x = e.clientX;
-      mousePosRef.current.y = e.clientY;
+      updateCursorPosition(e.clientX, e.clientY);
 
       // Expose normalized window mouse position for atmospheric lighting canvas (0ms latency, 0 React state)
       const w = window.innerWidth || 1920;
@@ -73,20 +81,19 @@ export const CustomCursor: React.FC<CustomCursorProps> = ({ theme = 'dark' }) =>
         } else {
           isUploadHoveredRef.current = false;
         }
-
-        isClickableRef.current =
-          !isUploadHoveredRef.current &&
-          !!target.closest('button, a, input, select, textarea, [role="button"], .cursor-pointer, .three-label');
-        isCanvasRef.current = target.tagName === 'CANVAS' || !!target.closest('canvas');
       }
     };
 
     const handlePointerDown = () => {
-      isMouseDownRef.current = true;
+      if (cursorInnerRef.current) {
+        cursorInnerRef.current.style.transform = 'scale(0.9)';
+      }
     };
 
     const handlePointerUp = () => {
-      isMouseDownRef.current = false;
+      if (cursorInnerRef.current) {
+        cursorInnerRef.current.style.transform = 'scale(1)';
+      }
     };
 
     const handleMouseLeave = () => {
@@ -125,59 +132,19 @@ export const CustomCursor: React.FC<CustomCursorProps> = ({ theme = 'dark' }) =>
       isFileDraggingRef.current = false;
     };
 
-    // 144Hz render loop: exactly 1 GPU transform per vsync frame, zero input lag
-    const updateRing = () => {
+    // Animation frame loop: handles badge following and inspection state machine
+    const renderLoop = () => {
       const targetX = mousePosRef.current.x;
       const targetY = mousePosRef.current.y;
 
-      // 1. Primary dot: direct 1:1 hardware-accelerated transform, zero lerp, 0 ms delay
-      if (dotRef.current) {
-        dotRef.current.style.transform = `translate3d(${targetX - 4}px, ${targetY - 4}px, 0)`;
-        dotRef.current.style.opacity = targetX > 0 ? '1' : '0';
+      // Update badge position (smoothly attached near cursor tip)
+      if (badgeRef.current && targetX > 0) {
+        badgeRef.current.style.transform = `translate3d(${targetX + 20}px, ${targetY + 8}px, 0)`;
       }
-
-      // Update badge position
-      if (badgeRef.current) {
-        badgeRef.current.style.transform = `translate3d(${targetX + 16}px, ${targetY - 12}px, 0)`;
-      }
-
-      // 2. Secondary CAD follower ring (subtle smoothing, tight low-damping lerp)
-      ringPosRef.current.x += (targetX - ringPosRef.current.x) * 0.38;
-      ringPosRef.current.y += (targetY - ringPosRef.current.y) * 0.38;
 
       const isDragging = isFileDraggingRef.current;
       const isUploadHover = !isDragging && isUploadHoveredRef.current;
       const modelDetail = !isDragging && !isUploadHover ? modelHoverDetailRef.current : null;
-
-      if (ringRef.current) {
-        let scale = 1.0;
-        let borderColor = isLight ? 'rgba(37, 99, 235, 0.55)' : 'rgba(59, 130, 246, 0.45)';
-        let bgColor = 'transparent';
-
-        if (isMouseDownRef.current) {
-          scale = 0.82;
-          borderColor = isLight ? '#2563eb' : '#38bdf8';
-        } else if (isDragging || isUploadHover) {
-          scale = 1.65;
-          borderColor = isLight ? '#2563eb' : '#00f2ad';
-          bgColor = isLight ? 'rgba(37, 99, 235, 0.12)' : 'rgba(0, 242, 173, 0.14)';
-        } else if (modelDetail) {
-          scale = 1.35;
-          borderColor = isLight ? '#2563eb' : '#38bdf8';
-          bgColor = isLight ? 'rgba(37, 99, 235, 0.12)' : 'rgba(56, 189, 248, 0.10)';
-        } else if (isClickableRef.current) {
-          scale = 1.45;
-          borderColor = isLight ? 'rgba(15, 23, 42, 0.75)' : 'rgba(255, 255, 255, 0.80)';
-          bgColor = isLight ? 'rgba(15, 23, 42, 0.05)' : 'rgba(255, 255, 255, 0.06)';
-        } else if (isCanvasRef.current) {
-          scale = 1.15;
-          borderColor = isLight ? 'rgba(37, 99, 235, 0.70)' : 'rgba(59, 130, 246, 0.65)';
-        }
-
-        ringRef.current.style.transform = `translate3d(${ringPosRef.current.x - 18}px, ${ringPosRef.current.y - 18}px, 0) scale(${scale})`;
-        ringRef.current.style.borderColor = borderColor;
-        ringRef.current.style.backgroundColor = bgColor;
-      }
 
       // Update badge according to strict 5-state machine
       if (badgeRef.current && badgeCatRef.current && badgeNameRef.current && badgeActionRef.current) {
@@ -205,16 +172,20 @@ export const CustomCursor: React.FC<CustomCursorProps> = ({ theme = 'dark' }) =>
         }
       }
 
-      animId = requestAnimationFrame(updateRing);
+      animId = requestAnimationFrame(renderLoop);
     };
 
     // 3. Component hover event listener from 3D canvases (Direct DOM, 0 React re-renders)
     const handleComponentHover = (e: Event) => {
       const customEvent = e as CustomEvent<ComponentHoverDetail | null>;
       modelHoverDetailRef.current = customEvent.detail || null;
-      isComponentHoveredRef.current = Boolean(customEvent.detail);
     };
 
+    // Use pointerrawupdate for lowest-latency hardware mouse polling on high-refresh monitors (Chromium)
+    const hasRawUpdate = 'onpointerrawupdate' in window;
+    if (hasRawUpdate) {
+      window.addEventListener('pointerrawupdate', handlePointerMove as EventListener, { passive: true });
+    }
     window.addEventListener('pointermove', handlePointerMove, { passive: true });
     window.addEventListener('pointerdown', handlePointerDown, { passive: true });
     window.addEventListener('pointerup', handlePointerUp, { passive: true });
@@ -226,9 +197,12 @@ export const CustomCursor: React.FC<CustomCursorProps> = ({ theme = 'dark' }) =>
     window.addEventListener('dragleave', handleDragLeave);
     window.addEventListener('drop', handleDrop);
 
-    animId = requestAnimationFrame(updateRing);
+    animId = requestAnimationFrame(renderLoop);
 
     return () => {
+      if (hasRawUpdate) {
+        window.removeEventListener('pointerrawupdate', handlePointerMove as EventListener);
+      }
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('pointerup', handlePointerUp);
@@ -248,29 +222,38 @@ export const CustomCursor: React.FC<CustomCursorProps> = ({ theme = 'dark' }) =>
       ref={containerRef}
       className="fixed inset-0 pointer-events-none z-[999999] overflow-hidden transition-opacity duration-150"
     >
-      {/* Precision Primary Dot (0-latency direct transform, physically attached to mouse) */}
+      {/* Precision Arrow Cursor (0-latency hardware transform, buttery smooth on high refresh rate) */}
       <div
-        ref={dotRef}
-        style={{ willChange: 'transform' }}
-        className={`custom-cursor-dot fixed top-0 left-0 w-2 h-2 rounded-full pointer-events-none opacity-0 ${
-          isLight
-            ? 'bg-[#2563eb] shadow-[0_0_8px_rgba(37,99,235,0.6)]'
-            : 'bg-[#3b82f6] shadow-[0_0_8px_#3b82f6]'
-        }`}
-      />
-
-      {/* Secondary CAD Reticle Follower Ring (smooth tight lerp) */}
-      <div
-        ref={ringRef}
-        style={{ willChange: 'transform' }}
-        className={`custom-cursor-ring fixed top-0 left-0 w-9 h-9 rounded-full border pointer-events-none transition-[border-color,background-color] duration-150 ${
-          isLight ? 'border-[#2563eb]/45' : 'border-[#3b82f6]/45'
-        }`}
+        ref={cursorRef}
+        style={{
+          willChange: 'transform',
+          transform: 'translate3d(-100px, -100px, 0)',
+        }}
+        className="fixed top-0 left-0 pointer-events-none z-[999999] opacity-0 select-none"
       >
-        <div className={`absolute -top-1 left-1/2 w-0.5 h-1 -translate-x-1/2 ${isLight ? 'bg-[#2563eb]/70' : 'bg-[#3b82f6]/70'}`} />
-        <div className={`absolute -bottom-1 left-1/2 w-0.5 h-1 -translate-x-1/2 ${isLight ? 'bg-[#2563eb]/70' : 'bg-[#3b82f6]/70'}`} />
-        <div className={`absolute top-1/2 -left-1 w-1 h-0.5 -translate-y-1/2 ${isLight ? 'bg-[#2563eb]/70' : 'bg-[#3b82f6]/70'}`} />
-        <div className={`absolute top-1/2 -right-1 w-1 h-0.5 -translate-y-1/2 ${isLight ? 'bg-[#2563eb]/70' : 'bg-[#3b82f6]/70'}`} />
+        <div
+          ref={cursorInnerRef}
+          className="transition-transform duration-75 ease-out origin-top-left"
+          style={{ willChange: 'transform' }}
+        >
+          <svg
+            width="25"
+            height="32"
+            viewBox="0 0 26 34"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="drop-shadow-[0_2px_5px_rgba(0,0,0,0.35)]"
+          >
+            <path
+              d="M 2.5 2.5 L 2.5 30.5 L 11.8 23.2 L 22.8 21.8 Z"
+              fill="#1d89e4"
+              stroke="#1e1e20"
+              strokeWidth="2.4"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
       </div>
 
       {/* Floating 3D Component Inspection Badge (Direct DOM updates) */}

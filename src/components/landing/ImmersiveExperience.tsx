@@ -1889,7 +1889,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           lastPickModelRef.current = activeModel;
 
           let bestComponent: LoadedComponentMeshInfo | null = null;
-          let broadHit = false;
+          let modelMeshHit = false;
 
           if (activeModel) {
             raycasterRef.current.setFromCamera(mouseRef.current, camera);
@@ -1898,25 +1898,32 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             const modelRoot = activeModel.rootGroup;
             let modelBounds = modelRoot.userData.modelBounds as THREE.Box3 | undefined;
             if (!modelBounds) {
-              modelBounds = new THREE.Box3().setFromObject(modelRoot).expandByScalar(0.75);
+              modelBounds = new THREE.Box3().setFromObject(modelRoot);
               modelRoot.userData.modelBounds = modelBounds;
             }
 
-            broadHit = raycasterRef.current.ray.intersectsBox(modelBounds);
+            const broadHit = raycasterRef.current.ray.intersectsBox(modelBounds);
 
-            // STAGE 2 — COMPONENT PHASE: Test only flat interactive meshes (closest candidate wins)
+            // STAGE 2 — COMPONENT / MESH PHASE: Strictly test actual visible geometry
             if (broadHit) {
               const interactiveMeshes: THREE.Mesh[] = modelRoot.userData.interactiveList || [];
+              let intersects: THREE.Intersection[] = [];
+
               if (interactiveMeshes.length > 0) {
-                const intersects = raycasterRef.current.intersectObjects(interactiveMeshes, false);
-                if (intersects.length > 0) {
-                  // Three.js sorts by distance ascending: select the closest visible valid component
-                  for (const hit of intersects) {
-                    const mesh = hit.object as THREE.Mesh;
-                    if (mesh.visible !== false && mesh.userData?.componentInfo) {
-                      const info = mesh.userData.componentInfo as LoadedComponentMeshInfo;
-                      if (mesh.userData.supplemental && !mesh.visible) continue;
-                      bestComponent = info;
+                intersects = raycasterRef.current.intersectObjects(interactiveMeshes, false);
+              }
+              if (intersects.length === 0) {
+                intersects = raycasterRef.current.intersectObjects(modelRoot.children, true);
+              }
+
+              if (intersects.length > 0) {
+                for (const hit of intersects) {
+                  const mesh = hit.object as THREE.Mesh;
+                  if (mesh.visible !== false) {
+                    if (mesh.userData?.supplemental && !mesh.visible) continue;
+                    modelMeshHit = true;
+                    if (mesh.userData?.componentInfo) {
+                      bestComponent = mesh.userData.componentInfo as LoadedComponentMeshInfo;
                       break; // Front-most valid component
                     }
                   }
@@ -1928,7 +1935,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           // Emit hover event ONLY when the target component actually changes (0 React Re-renders)
           const nextHoverKey = bestComponent
             ? bestComponent.componentId
-            : (broadHit ? 'model-body' : null);
+            : (modelMeshHit ? 'model-body' : null);
 
           if (nextHoverKey !== currentHoverKeyRef.current) {
             currentHoverKeyRef.current = nextHoverKey;
@@ -1944,7 +1951,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                   },
                 })
               );
-            } else if (broadHit && activeObjectRef.current) {
+            } else if (modelMeshHit && activeObjectRef.current) {
               hoveredMeshInfoRef.current = { info: null };
               window.dispatchEvent(
                 new CustomEvent('component-hover', {
