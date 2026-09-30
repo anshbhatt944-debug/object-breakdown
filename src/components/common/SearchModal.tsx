@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { ALL_OBJECTS } from '../../data/objectRegistry';
-import { ObjectBreakdownData } from '../../types/objectData';
-import { Search, X, ArrowRight, Sparkles, Box, ShieldCheck, Upload } from 'lucide-react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Search, X, Box, ArrowRight, Sparkles, Upload } from 'lucide-react';
+import { ObjectBreakdownData } from '../../types/objectData';
+import { ALL_OBJECTS } from '../../data/objectRegistry';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -18,31 +18,16 @@ export const SearchModal: React.FC<SearchModalProps> = ({
   onClose,
   onSelectObject,
   onSearchCustom,
-  theme = 'dark',
   onUploadModel,
 }) => {
-  const isLight = theme === 'light';
   const [query, setQuery] = useState('');
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
 
   if (!isOpen) return null;
 
-  const filteredObjects = ALL_OBJECTS.filter(
-    (obj) =>
-      obj.name.toLowerCase().includes(query.toLowerCase()) ||
-      obj.category.toLowerCase().includes(query.toLowerCase()) ||
-      obj.subtitle.toLowerCase().includes(query.toLowerCase())
+  const filteredObjects = ALL_OBJECTS.filter((obj: ObjectBreakdownData) =>
+    obj.name.toLowerCase().includes(query.toLowerCase()) ||
+    obj.category.toLowerCase().includes(query.toLowerCase()) ||
+    obj.subtitle.toLowerCase().includes(query.toLowerCase())
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -58,53 +43,41 @@ export const SearchModal: React.FC<SearchModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className={`fixed inset-0 z-[100] flex items-start justify-center pt-10 sm:pt-24 p-2.5 sm:p-4 ${
-        isLight ? 'bg-slate-900/40' : 'bg-black/85'
-      } backdrop-blur-xl select-none`}>
+      <div className="fixed inset-0 z-[100] flex items-start justify-center pt-10 sm:pt-24 p-2.5 sm:p-4 bg-black/80 select-none">
         <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: -10 }}
+          initial={{ opacity: 0, scale: 0.98, y: -8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: -10 }}
-          transition={{ duration: 0.2 }}
-          className={`w-full max-w-2xl rounded-2xl ${
-            isLight
-              ? 'bg-white border border-slate-200 shadow-[0_20px_60px_rgba(15,23,42,0.18)]'
-              : 'bg-[#0b0e14] border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.8)]'
-          } overflow-hidden flex flex-col max-h-[85dvh] sm:max-h-[80vh]`}
+          exit={{ opacity: 0, scale: 0.98, y: -8 }}
+          transition={{ duration: 0.16 }}
+          className="w-full max-w-2xl rounded-[2px] bg-[var(--carbon)] border border-[var(--line)] overflow-hidden flex flex-col max-h-[85dvh] sm:max-h-[80vh] text-[var(--text)]"
         >
           {/* Search Input Box */}
           <form
             onSubmit={handleSubmit}
-            className={`flex items-center p-3.5 sm:p-5 border-b ${
-              isLight ? 'border-slate-200' : 'border-white/10'
-            } gap-2.5 sm:gap-3 relative`}
+            className="flex items-center p-3.5 sm:p-5 border-b border-[var(--line)] gap-3 relative"
           >
-            <Search className={`w-4.5 h-4.5 sm:w-5 sm:h-5 ${isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'} shrink-0`} />
+            <Search className="w-4 h-4 text-[var(--muted)] shrink-0" />
             <input
               type="text"
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search catalog or type custom object..."
-              className={`flex-1 bg-transparent text-sm sm:text-base ${
-                isLight ? 'text-slate-900 placeholder-slate-400' : 'text-slate-100 placeholder-slate-500'
-              } focus:outline-none font-mono-cad min-w-0`}
+              className="flex-1 bg-transparent text-sm sm:text-base text-[var(--text)] placeholder-[var(--muted)] focus:outline-none font-sans min-w-0"
             />
             <button
               type="button"
               onClick={onClose}
-              className={`p-2 rounded-lg touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center shrink-0 ${
-                isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : 'text-slate-400 hover:text-white hover:bg-white/10'
-              } transition-colors`}
+              className="p-1.5 rounded-[2px] border border-[var(--line)] flex items-center justify-center shrink-0 text-[var(--muted)] hover:text-[var(--text)] transition-colors"
             >
-              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+              <X className="w-4 h-4" />
             </button>
           </form>
 
           {/* Results List */}
-          <div className="max-h-96 overflow-y-auto p-3 space-y-1.5 font-mono-cad text-xs">
-            <div className={`px-3 py-1.5 text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-500'} uppercase tracking-wider font-semibold`}>
-              Verified 3D Objects ({filteredObjects.length})
+          <div className="max-h-96 overflow-y-auto p-3 space-y-1.5 font-sans text-xs">
+            <div className="px-3 py-1.5 text-[0.75rem] text-[var(--muted)] tabular-nums">
+              Verified 3D objects ({filteredObjects.length})
             </div>
 
             {filteredObjects.map((obj) => (
@@ -114,72 +87,56 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                   onSelectObject(obj);
                   onClose();
                 }}
-                className={`flex items-center justify-between p-3.5 rounded-xl ${
-                  isLight
-                    ? 'bg-slate-50/80 hover:bg-blue-50/80 border border-slate-200/60 hover:border-blue-300'
-                    : 'bg-white/[0.02] hover:bg-[#00f2ad]/10 border border-transparent hover:border-[#00f2ad]/30'
-                } cursor-pointer group transition-all`}
+                className="flex items-center justify-between p-3 rounded-[2px] border border-[var(--line)] hover:border-[var(--text)] cursor-pointer group transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-lg ${
-                    isLight
-                      ? 'bg-blue-100 text-[#2563eb] group-hover:bg-[#2563eb] group-hover:text-white'
-                      : 'bg-white/5 group-hover:bg-[#00f2ad]/20 text-[#00f2ad]'
-                  } flex items-center justify-center transition-colors`}>
+                  <div className="w-8 h-8 rounded-[2px] border border-[var(--line)] flex items-center justify-center text-[var(--text)]">
                     <Box className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className={`font-bold ${
-                      isLight ? 'text-slate-800 group-hover:text-blue-600' : 'text-slate-200 group-hover:text-white'
-                    } transition-colors`}>
+                    <h4 className="font-sans font-medium text-[var(--text)] leading-tight">
                       {obj.name}
                     </h4>
-                    <span className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{obj.category} • {obj.subtitle}</span>
+                    <span className="text-[0.75rem] font-serif text-[var(--muted)]">
+                      {obj.category} &bull; {obj.subtitle}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 text-slate-400">
-                  <span className={`text-[10px] px-2 py-0.5 rounded ${
-                    isLight ? 'bg-white border border-slate-200 text-slate-700' : 'bg-white/5 border border-white/10 text-slate-300'
-                  }`}>
+                <div className="flex items-center gap-3 text-[var(--muted)]">
+                  <span className="text-[0.75rem] tabular-nums">
                     {obj.stats.componentCount} parts
                   </span>
-                  <ArrowRight className={`w-4 h-4 group-hover:translate-x-1 transition-transform ${isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'}`} />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </div>
               </div>
             ))}
 
-            {/* AI Custom Generator Trigger Card */}
+            {/* Custom Generator Trigger Card */}
             {query.trim() && (
               <div
                 onClick={() => {
                   onSearchCustom(query.trim());
                   onClose();
                 }}
-                className={`p-4 rounded-xl ${
-                  isLight
-                    ? 'bg-blue-50 border border-blue-200 hover:bg-blue-100/70'
-                    : 'bg-[#00f2ad]/10 border border-[#00f2ad]/40 hover:bg-[#00f2ad]/20'
-                } cursor-pointer flex items-center justify-between group transition-all mt-3`}
+                className="p-3.5 rounded-[2px] border border-[var(--line)] hover:border-[var(--text)] cursor-pointer flex items-center justify-between group transition-colors mt-2"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-lg ${
-                    isLight ? 'bg-blue-100 text-[#2563eb]' : 'bg-[#00f2ad]/20 text-[#00f2ad]'
-                  } flex items-center justify-center`}>
-                    <Sparkles className={`w-5 h-5 ${isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'} animate-pulse`} />
+                  <div className="w-8 h-8 rounded-[2px] border border-[var(--line)] flex items-center justify-center text-[var(--text)]">
+                    <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-slate-100'} block text-sm`}>
-                      Synthesize AI Breakdown: "{query}"
+                    <span className="font-sans font-medium text-[var(--text)] block text-sm">
+                      Analyze mechanism: &ldquo;{query}&rdquo;
                     </span>
-                    <span className={`text-[10px] ${isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'}`}>
-                      Generate kinematics, metallurgy, DFMA equations & 3D nodes
+                    <span className="text-[0.75rem] font-serif text-[var(--muted)]">
+                      Generate kinematics, component hierarchy & 3D nodes
                     </span>
                   </div>
                 </div>
-                <div className={`flex items-center gap-1.5 text-xs ${isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'} font-bold`}>
-                  <span>GENERATE</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <div className="flex items-center gap-1.5 text-xs text-[var(--text)] font-sans font-medium">
+                  <span>Analyze</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </div>
               </div>
             )}
@@ -187,33 +144,23 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             {/* Direct Model Upload Card */}
             {onUploadModel && (
               <label
-                className={`p-3.5 rounded-xl border border-dashed cursor-pointer flex items-center justify-between group transition-all mt-2 ${
-                  isLight
-                    ? 'border-blue-300/80 bg-blue-50/40 hover:bg-blue-50 text-slate-800'
-                    : 'border-white/15 bg-white/[0.02] hover:bg-white/5 text-slate-200'
-                }`}
+                className="p-3.5 rounded-[2px] border border-dashed border-[var(--line)] hover:border-[var(--text)] cursor-pointer flex items-center justify-between group transition-colors mt-2 text-[var(--text)]"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                    isLight ? 'bg-blue-100 text-[#2563eb]' : 'bg-white/10 text-[#38bdf8]'
-                  }`}>
+                  <div className="w-8 h-8 rounded-[2px] border border-[var(--line)] flex items-center justify-center text-[var(--text)]">
                     <Upload className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="font-bold block text-xs">
-                      Upload Your Own 3D Model
+                    <span className="font-sans font-medium block text-xs">
+                      Upload 3D model
                     </span>
-                    <span className={`text-[10px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <span className="text-[0.75rem] font-serif text-[var(--muted)]">
                       Drop or browse .glb / .gltf files for interactive breakdown
                     </span>
                   </div>
                 </div>
-                <span className={`text-[10px] font-mono font-semibold px-2.5 py-1 rounded border transition-colors ${
-                  isLight
-                    ? 'border-blue-200 bg-white text-[#2563eb] group-hover:bg-[#2563eb] group-hover:text-white'
-                    : 'border-white/20 bg-white/5 text-[#38bdf8] group-hover:border-[#38bdf8]'
-                }`}>
-                  BROWSE
+                <span className="btn-plate text-[0.75rem]">
+                  Browse
                 </span>
                 <input
                   type="file"
@@ -232,15 +179,13 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           </div>
 
           {/* Keyboard Footer */}
-          <div className={`p-3 border-t ${
-            isLight ? 'border-slate-200 bg-slate-50 text-slate-500' : 'border-white/10 bg-black/40 text-slate-500'
-          } flex items-center justify-between text-[10px] font-mono-cad`}>
+          <div className="p-3 border-t border-[var(--line)] flex items-center justify-between text-[0.75rem] font-sans text-[var(--muted)]">
             <div className="flex items-center gap-2">
-              <kbd className={`px-1.5 py-0.5 rounded ${isLight ? 'bg-white border border-slate-200 text-slate-700' : 'bg-white/10 text-slate-300'}`}>ESC</kbd> to exit
-              <span className="mx-1">•</span>
-              <kbd className={`px-1.5 py-0.5 rounded ${isLight ? 'bg-white border border-slate-200 text-slate-700' : 'bg-white/10 text-slate-300'}`}>↵</kbd> to select
+              <kbd className="px-1.5 py-0.5 rounded-[2px] border border-[var(--line)] text-[var(--text)]">ESC</kbd> to exit
+              <span className="mx-1">&bull;</span>
+              <kbd className="px-1.5 py-0.5 rounded-[2px] border border-[var(--line)] text-[var(--text)]">Enter</kbd> to select
             </div>
-            <span className={isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'}>AI Procedural Engine Ready</span>
+            <span>Catalog ready</span>
           </div>
         </motion.div>
       </div>
