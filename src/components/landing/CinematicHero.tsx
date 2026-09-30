@@ -83,7 +83,7 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
     keyLight.castShadow = true;
     scene.add(keyLight);
 
-    const fillLight = new THREE.DirectionalLight(0xb8c5d6, 0.6);
+    const fillLight = new THREE.DirectionalLight(0xE9DCCB, 0.6);
     fillLight.position.set(-5, -3, -5);
     scene.add(fillLight);
 
