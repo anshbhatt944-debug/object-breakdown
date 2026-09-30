@@ -50,7 +50,7 @@ const DataCard = ({
     <section className={`rounded border p-3.5 space-y-2.5 transition-all ${
       isLight
         ? 'border-slate-200 bg-white shadow-sm'
-        : 'border-[#262832] bg-[#16181f]'
+        : 'border-[var(--line)] bg-[#211e1c]'
     }`}>
       <div className="flex items-center justify-between">
         <div className={`flex items-center gap-1.5 text-[10px] font-mono-cad font-semibold uppercase tracking-wider ${colorClass}`}>
@@ -59,7 +59,7 @@ const DataCard = ({
         </div>
         {badge && (
           <span className={`text-[9px] font-mono-cad px-1.5 py-0.2 rounded border uppercase tracking-wider ${
-            isLight ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-[#1a1b21] border-[#262832] text-[#6b7082]'
+            isLight ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-[#181513] border-[var(--line)] text-[#8c8278]'
           }`}>
             {badge}
           </span>
@@ -84,13 +84,13 @@ const Metric = ({
   const { isLight } = React.useContext(ComponentThemeContext);
   return (
     <div className={`flex flex-col gap-0.5 min-w-0 border rounded p-2 transition-colors ${
-      isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#1a1b21] border-[#262832]'
+      isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#1c1917] border-[var(--line)]'
     }`}>
-      <div className={`text-[9px] uppercase tracking-wider font-mono-cad ${isLight ? 'text-slate-500' : 'text-[#6b7082]'}`}>{label}</div>
+      <div className={`text-[9px] uppercase tracking-wider font-mono-cad ${isLight ? 'text-slate-500' : 'text-[#8c8278]'}`}>{label}</div>
       <div className={`text-[11px] font-mono-cad font-medium truncate ${
-        highlight ? (isLight ? 'text-[#c2410c]' : 'text-[#e27228]') : (isLight ? 'text-slate-900' : 'text-[#f3f4f8]')
+        highlight ? (isLight ? 'text-[#c2410c]' : 'text-[#e27228]') : (isLight ? 'text-slate-900' : 'text-[#EFEAE2]')
       }`}>
-        {value} {unit && <span className={`text-[9px] font-mono-cad font-normal ${isLight ? 'text-slate-400' : 'text-[#525666]'}`}>{unit}</span>}
+        {value} {unit && <span className={`text-[9px] font-mono-cad font-normal ${isLight ? 'text-slate-400' : 'text-[#8c8278]'}`}>{unit}</span>}
       </div>
     </div>
   );
@@ -258,9 +258,9 @@ export const ComponentDetails: React.FC<ComponentDetailsProps> = ({
 
   return (
     <ComponentThemeContext.Provider value={{ isLight }}>
-      <div className={`p-4 sm:p-5 space-y-4 overflow-y-auto h-full font-sans ${isLight ? 'text-slate-700' : 'text-[#c5c7d0]'}`}>
+      <div className={`p-4 sm:p-5 space-y-4 overflow-y-auto h-full font-sans ${isLight ? 'text-slate-700' : 'text-[#c5bdb5]'}`}>
         {/* CAD Header */}
-        <div className={`space-y-2.5 pb-4 border-b ${isLight ? 'border-slate-200' : 'border-[#262832]'}`}>
+        <div className={`space-y-2.5 pb-4 border-b ${isLight ? 'border-slate-200' : 'border-[var(--line)]'}`}>
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <span className="text-[10px] font-mono-cad px-2 py-0.5 rounded border bg-[rgba(226,114,40,0.15)] border-[rgba(226,114,40,0.5)] text-[#e27228] font-bold tracking-wider">
               {component.cadId || 'PART-01'}
@@ -275,10 +275,10 @@ export const ComponentDetails: React.FC<ComponentDetailsProps> = ({
           </div>
 
           <div>
-            <h2 className={`text-lg sm:text-xl font-bold tracking-tight leading-snug ${isLight ? 'text-slate-900' : 'text-[#f3f4f8]'}`}>
+            <h2 className={`text-lg sm:text-xl font-bold tracking-tight leading-snug ${isLight ? 'text-slate-900' : 'text-[#EFEAE2]'}`}>
               {component.name}
             </h2>
-            <div className={`flex items-center gap-1.5 mt-1 text-[10px] font-mono-cad uppercase tracking-wider ${isLight ? 'text-[#0284c7]' : 'text-[#22d3ee]'}`}>
+            <div className={`flex items-center gap-1.5 mt-1 text-[10px] font-mono-cad uppercase tracking-wider ${isLight ? 'text-[#c2410c]' : 'text-[#e27228]'}`}>
               <Layers className="w-3 h-3 shrink-0" />
               <span>{component.category}</span>
             </div>
@@ -286,13 +286,13 @@ export const ComponentDetails: React.FC<ComponentDetailsProps> = ({
 
           {/* Current Depth Indicator Banner */}
           <div className={`flex items-center justify-between text-[9px] font-mono-cad px-2.5 py-1 rounded border ${
-            isLight ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-[#1a1b21] border-[#262832] text-[#6b7082]'
+            isLight ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-[#1c1917] border-[var(--line)] text-[#8c8278]'
           }`}>
             <span className="uppercase tracking-wider flex items-center gap-1.5">
               <Activity className="w-3 h-3 text-[#e27228]" />
               Active Layer:
             </span>
-            <span className={`font-semibold uppercase tracking-wider ${isLight ? 'text-slate-900' : 'text-[#f3f4f8]'}`}>
+            <span className={`font-semibold uppercase tracking-wider ${isLight ? 'text-slate-900' : 'text-[#EFEAE2]'}`}>
               {isQuick && 'QUICK INSPECTION (1/4)'}
               {depthLevel === 'detailed' && 'DETAILED BREAKDOWN (2/4)'}
               {depthLevel === 'engineering' && 'ENGINEERING ANALYSIS (3/4)'}
@@ -304,8 +304,8 @@ export const ComponentDetails: React.FC<ComponentDetailsProps> = ({
         {/* ========================================================================= */}
         {/* 1. QUICK MODE CONTENT: Primary Function & One-Sentence Essence           */}
         {/* ========================================================================= */}
-        <DataCard icon={FileText} title="Primary Function" colorClass={isLight ? 'text-slate-800' : 'text-[#f3f4f8]'} badge="Core Role">
-          <p className={`text-xs sm:text-sm leading-relaxed font-normal ${isLight ? 'text-slate-800' : 'text-[#c5c7d0]'}`}>
+        <DataCard icon={FileText} title="Primary Function" colorClass={isLight ? 'text-slate-800' : 'text-[#EFEAE2]'} badge="Core Role">
+          <p className={`text-xs sm:text-sm leading-relaxed font-normal ${isLight ? 'text-slate-800' : 'text-[#c5bdb5]'}`}>
             {component.function}
           </p>
         </DataCard>
@@ -314,13 +314,13 @@ export const ComponentDetails: React.FC<ComponentDetailsProps> = ({
         <div className={`p-3.5 rounded border space-y-1.5 ${
           isLight
             ? 'bg-orange-50/60 border-orange-200 text-slate-800 shadow-sm'
-            : 'bg-[#16181f] border-[#262832]'
+            : 'bg-[#211e1c] border-[var(--line)]'
         }`}>
           <div className={`flex items-center gap-1.5 text-[10px] font-mono-cad font-semibold uppercase tracking-wider ${isLight ? 'text-[#c2410c]' : 'text-[#e27228]'}`}>
             <Lightbulb className="w-3.5 h-3.5 shrink-0" />
             <span>Engineering Essence</span>
           </div>
-          <p className={`text-xs leading-relaxed font-normal italic ${isLight ? 'text-slate-800' : 'text-[#c5c7d0]'}`}>
+          <p className={`text-xs leading-relaxed font-normal italic ${isLight ? 'text-slate-800' : 'text-[#c5bdb5]'}`}>
             “{component.engineeringReason || component.function}”
           </p>
         </div>
