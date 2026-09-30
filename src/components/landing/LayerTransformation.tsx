@@ -85,13 +85,13 @@ export const LayerTransformation: React.FC = () => {
     <section id="process" className="py-28 px-4 sm:px-8 max-w-[1800px] mx-auto border-t border-white/10">
       {/* Header */}
       <div className="mb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono-cad text-[#00f2ad] uppercase tracking-widest mb-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono-cad text-[var(--text)] uppercase tracking-widest mb-4">
           <Zap className="w-3.5 h-3.5" />
           <span>The 6-Stage Deconstruction Pipeline</span>
         </div>
-        <h2 className="text-[clamp(2.2rem,5vw,4.5rem)] font-light leading-[1] tracking-tighter text-slate-100 font-heading">
+        <h2 className="text-[clamp(2.2rem,5vw,4.5rem)] font-light leading-[1] tracking-tighter text-[var(--muted)] font-heading">
           HOW WE BREAK DOWN <br />
-          <span className="text-slate-400">PHYSICAL REALITY.</span>
+          <span className="text-[var(--muted)]">PHYSICAL REALITY.</span>
         </h2>
       </div>
 
@@ -105,20 +105,20 @@ export const LayerTransformation: React.FC = () => {
               onClick={() => setActiveStep(index)}
               className={`p-4 rounded-xl text-left transition-all border ${
                 isSelected
-                  ? 'bg-[#00f2ad]/10 border-[#00f2ad] shadow-[0_0_20px_rgba(0,242,173,0.15)]'
+                  ? 'bg-[var(--text)]/10 border-[var(--text)] shadow-[0_0_20px_var(--line)]'
                   : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/[0.08]'
               }`}
               data-cursor="STEP"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className={`text-xs font-mono-cad font-bold ${isSelected ? 'text-[#00f2ad]' : 'text-slate-500'}`}>
+                <span className={`text-xs font-mono-cad font-bold ${isSelected ? 'text-[var(--text)]' : 'text-[var(--muted)]'}`}>
                   {layer.step}
                 </span>
-                <span className={`text-[9px] font-mono-cad ${isSelected ? 'text-[#00f2ad]' : 'text-slate-500'}`}>
+                <span className={`text-[9px] font-mono-cad ${isSelected ? 'text-[var(--text)]' : 'text-[var(--muted)]'}`}>
                   {isSelected ? 'ACTIVE' : 'SELECT'}
                 </span>
               </div>
-              <div className={`text-xs font-medium truncate ${isSelected ? 'text-white font-bold' : 'text-slate-300'}`}>
+              <div className={`text-xs font-medium truncate ${isSelected ? 'text-white font-bold' : 'text-[var(--muted)]'}`}>
                 {layer.title.split(' ')[0]}
               </div>
             </button>
@@ -134,7 +134,7 @@ export const LayerTransformation: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -15 }}
           transition={{ duration: 0.3 }}
-          className="rounded-3xl bg-[#0a0d14] border border-white/15 p-8 sm:p-12 shadow-[0_20px_80px_rgba(0,0,0,0.6)] grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative overflow-hidden"
+          className="rounded-3xl bg-[var(--carbon)] border border-white/15 p-8 sm:p-12 shadow-[0_20px_80px_rgba(0,0,0,0.6)] grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative overflow-hidden"
         >
           {/* Background CAD Corner Accents */}
           <div className="cad-corner-tl" />
@@ -144,28 +144,28 @@ export const LayerTransformation: React.FC = () => {
 
           {/* Left Column: Description & Narrative */}
           <div className="lg:col-span-7 space-y-6">
-            <span className="text-[10px] font-mono-cad px-3 py-1 rounded-full bg-[#00f2ad]/10 border border-[#00f2ad]/30 text-[#00f2ad] uppercase tracking-widest font-bold">
+            <span className="text-[10px] font-mono-cad px-3 py-1 rounded-full bg-[var(--text)]/10 border border-[var(--text)]/30 text-[var(--text)] uppercase tracking-widest font-bold">
               {currentLayer.badge}
             </span>
 
             <div className="space-y-2">
-              <h3 className="text-3xl sm:text-4xl font-light text-slate-100 font-heading">
+              <h3 className="text-3xl sm:text-4xl font-light text-[var(--muted)] font-heading">
                 {currentLayer.title}
               </h3>
-              <p className="text-sm font-mono-cad text-[#38bdf8] uppercase tracking-widest">
+              <p className="text-sm font-mono-cad text-[var(--muted)] uppercase tracking-widest">
                 // {currentLayer.subtitle}
               </p>
             </div>
 
-            <p className="text-base sm:text-lg text-slate-300 font-light leading-relaxed">
+            <p className="text-base sm:text-lg text-[var(--muted)] font-light leading-relaxed">
               {currentLayer.desc}
             </p>
 
             {/* Sub-specifications List */}
             <div className="pt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-3">
               {currentLayer.specs.map((spec, i) => (
-                <div key={i} className="flex items-center gap-2.5 text-xs text-slate-300 font-mono-cad">
-                  <ShieldCheck className="w-4 h-4 text-[#00f2ad] shrink-0" />
+                <div key={i} className="flex items-center gap-2.5 text-xs text-[var(--muted)] font-mono-cad">
+                  <ShieldCheck className="w-4 h-4 text-[var(--text)] shrink-0" />
                   <span>{spec}</span>
                 </div>
               ))}
@@ -174,22 +174,22 @@ export const LayerTransformation: React.FC = () => {
 
           {/* Right Column: Visual HUD Schematic Graphic */}
           <div className="lg:col-span-5 h-72 sm:h-80 rounded-2xl bg-black/50 border border-white/10 p-6 flex flex-col justify-between relative overflow-hidden">
-            <div className="flex items-center justify-between text-[10px] font-mono-cad text-slate-500">
+            <div className="flex items-center justify-between text-[10px] font-mono-cad text-[var(--muted)]">
               <span>SCHEMATIC VIEWER // {currentLayer.id.toUpperCase()}</span>
-              <span className="text-[#00f2ad]">STATUS: ACTIVE</span>
+              <span className="text-[var(--text)]">STATUS: ACTIVE</span>
             </div>
 
             <div className="my-auto flex flex-col items-center justify-center text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#00f2ad]/10 border border-[#00f2ad]/30 flex items-center justify-center text-[#00f2ad] mb-4 shadow-[0_0_30px_rgba(0,242,173,0.2)]">
+              <div className="w-16 h-16 rounded-2xl bg-[var(--text)]/10 border border-[var(--text)]/30 flex items-center justify-center text-[var(--text)] mb-4 shadow-[0_0_30px_var(--line)]">
                 <Icon className="w-8 h-8" />
               </div>
               <div className="text-lg font-bold text-white font-heading">{currentLayer.title}</div>
-              <div className="text-xs text-slate-400 font-mono-cad mt-1">Calculated in real-time WebGL engine</div>
+              <div className="text-xs text-[var(--muted)] font-mono-cad mt-1">Calculated in real-time WebGL engine</div>
             </div>
 
-            <div className="flex items-center justify-between text-[10px] font-mono-cad text-slate-500 pt-3 border-t border-white/10">
+            <div className="flex items-center justify-between text-[10px] font-mono-cad text-[var(--muted)] pt-3 border-t border-white/10">
               <span>LATENCY: 0.4ms</span>
-              <span className="text-slate-300">CONFIDENCE: 99.8%</span>
+              <span className="text-[var(--muted)]">CONFIDENCE: 99.8%</span>
             </div>
           </div>
         </motion.div>
