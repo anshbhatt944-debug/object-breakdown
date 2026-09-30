@@ -72,7 +72,7 @@ export const ScrollDrivenHero: React.FC<ScrollDrivenHeroProps> = ({
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         {/* Ambient Background */}
         <div className="absolute inset-0 bg-[#050608]" />
-        <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-[#00f2ad]/8 rounded-full blur-[140px] animate-pulse" />
+        <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-[var(--text)]/8 rounded-full blur-[140px] animate-pulse" />
         <div className="absolute bottom-1/3 right-1/4 w-[700px] h-[700px] bg-[#ff5c35]/6 rounded-full blur-[160px]" />
 
         {/* Hero Content */}
@@ -94,8 +94,8 @@ export const ScrollDrivenHero: React.FC<ScrollDrivenHeroProps> = ({
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                   className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md"
                 >
-                  <div className="w-2 h-2 rounded-full bg-[#00f2ad] animate-ping" />
-                  <span className="text-[11px] font-mono-cad text-[#00f2ad] uppercase tracking-widest font-semibold">
+                  <div className="w-2 h-2 rounded-full bg-[var(--text)] animate-ping" />
+                  <span className="text-[11px] font-mono-cad text-[var(--text)] uppercase tracking-widest font-semibold">
                     AI 3D CAD Analysis Engine
                   </span>
                 </motion.div>
@@ -108,7 +108,7 @@ export const ScrollDrivenHero: React.FC<ScrollDrivenHeroProps> = ({
                   <h1 className="text-[clamp(3.5rem,10vw,8rem)] font-light leading-[0.95] tracking-tighter text-white font-heading mb-6">
                     DECONSTRUCT
                     <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00f2ad] via-[#00f2ad]/80 to-[#00f2ad]/40">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--text)] via-[var(--text)]/80 to-[var(--text)]/40">
                       THE INVISIBLE
                     </span>
                     <br />
@@ -120,7 +120,7 @@ export const ScrollDrivenHero: React.FC<ScrollDrivenHeroProps> = ({
                   initial={{ opacity: 0, y: 20 }}
                   animate={isFeatureVisible ? { opacity: 1, y: 0 } : {}}
                   transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-xl text-slate-400 font-light max-w-xl leading-relaxed"
+                  className="text-xl text-[var(--muted)] font-light max-w-xl leading-relaxed"
                 >
                   An interactive atlas for engineering analysis.
                   <br className="hidden sm:block" />
@@ -164,7 +164,7 @@ export const ScrollDrivenHero: React.FC<ScrollDrivenHeroProps> = ({
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={isFeatureVisible ? { opacity: 1, scale: 1 } : {}}
                 transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className="h-[500px] sm:h-[650px] relative rounded-3xl bg-gradient-to-br from-[#0a0d14]/90 to-[#050608]/80 backdrop-blur-2xl border border-white/10 overflow-hidden shadow-2xl"
+                className="h-[500px] sm:h-[650px] relative rounded-3xl bg-gradient-to-br from-[var(--carbon)]/90 to-[#050608]/80 backdrop-blur-2xl border border-white/10 overflow-hidden shadow-2xl"
               >
                 <div className="absolute inset-0">
                   {currentObject.id === 'drone' ? (
@@ -204,7 +204,7 @@ export const ScrollDrivenHero: React.FC<ScrollDrivenHeroProps> = ({
                     initial={{ opacity: 0, x: -20 }}
                     animate={isFeatureVisible ? { opacity: 1, x: 0 } : {}}
                     transition={{ duration: 0.6, delay: 0.8 }}
-                    className="text-[11px] font-mono-cad px-4 py-2 rounded-full bg-black/70 border border-[#00f2ad]/30 text-[#00f2ad] font-bold uppercase tracking-widest backdrop-blur-xl"
+                    className="text-[11px] font-mono-cad px-4 py-2 rounded-full bg-black/70 border border-[var(--text)]/30 text-[var(--text)] font-bold uppercase tracking-widest backdrop-blur-xl"
                   >
                     {currentObject.name.toUpperCase()}
                   </motion.span>
@@ -217,18 +217,18 @@ export const ScrollDrivenHero: React.FC<ScrollDrivenHeroProps> = ({
                   transition={{ duration: 0.6, delay: 1 }}
                   className="absolute bottom-6 right-6 z-20 font-mono-cad pointer-events-none"
                 >
-                  <div className="text-[9px] text-slate-500 uppercase tracking-widest mb-2">Deconstruction</div>
+                  <div className="text-[9px] text-[var(--muted)] uppercase tracking-widest mb-2">Deconstruction</div>
                   <div className="flex items-center gap-3">
                     <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden backdrop-blur-xl">
                       <motion.div
-                        className="h-full bg-gradient-to-r from-[#00f2ad] to-[#00f2ad]/60"
+                        className="h-full bg-gradient-to-r from-[var(--text)] to-[var(--text)]/60"
                         style={{
                           width: useTransform(scrollYProgress, [0, 1], ['0%', '100%']),
                         }}
                       />
                     </div>
                     <motion.span
-                      className="text-[#00f2ad] text-sm font-bold"
+                      className="text-[var(--text)] text-sm font-bold"
                       style={{
                         opacity: useTransform(scrollYProgress, [0, 0.1, 0.9, 1], [0.5, 1, 1, 0.5]),
                       }}
@@ -258,7 +258,7 @@ export const ScrollDrivenHero: React.FC<ScrollDrivenHeroProps> = ({
           <motion.div
             animate={{ y: [0, 12, 0] }}
             transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-            className="flex flex-col items-center gap-3 text-slate-500"
+            className="flex flex-col items-center gap-3 text-[var(--muted)]"
           >
             <span className="text-[10px] font-mono-cad uppercase tracking-widest">
               Scroll to Deconstruct
@@ -282,11 +282,11 @@ export const ScrollDrivenHero: React.FC<ScrollDrivenHeroProps> = ({
             >
               <h2 className="text-[clamp(2.5rem,6vw,5rem)] font-light leading-[1.1] tracking-tighter mb-6 font-heading">
                 CHOOSE YOUR{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00f2ad] to-[#38bdf8]">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--text)] to-[var(--muted)]">
                   ASSEMBLY
                 </span>
               </h2>
-              <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
+              <p className="text-[var(--muted)] text-lg max-w-2xl mx-auto leading-relaxed">
                 Select from our curated collection of mechanical assemblies,
                 or upload your own CAD files for instant AI-powered analysis.
               </p>
@@ -308,14 +308,14 @@ export const ScrollDrivenHero: React.FC<ScrollDrivenHeroProps> = ({
                     onClick={() => setCurrentObject(preset.data)}
                     className={`relative px-8 py-4 rounded-2xl text-sm font-mono-cad transition-all border backdrop-blur-xl ${
                       isActive
-                        ? 'bg-[#00f2ad]/15 border-[#00f2ad] text-[#00f2ad] font-bold shadow-lg shadow-[#00f2ad]/20'
-                        : 'bg-white/5 border-white/10 text-slate-300 hover:border-white/30 hover:bg-white/10'
+                        ? 'bg-[var(--text)]/15 border-[var(--text)] text-[var(--text)] font-bold shadow-lg shadow-[var(--text)]/20'
+                        : 'bg-white/5 border-white/10 text-[var(--muted)] hover:border-white/30 hover:bg-white/10'
                     }`}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="activePreset"
-                        className="absolute inset-0 bg-[#00f2ad]/10 rounded-2xl"
+                        className="absolute inset-0 bg-[var(--text)]/10 rounded-2xl"
                         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                       />
                     )}
@@ -354,13 +354,13 @@ export const ScrollDrivenHero: React.FC<ScrollDrivenHeroProps> = ({
                   viewport={{ once: true, amount: 0.3 }}
                   transition={{ duration: 0.6, delay: idx * 0.15, ease: [0.16, 1, 0.3, 1] }}
                   whileHover={{ y: -8, scale: 1.02 }}
-                  className="relative p-8 rounded-3xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 backdrop-blur-xl group hover:border-[#00f2ad]/30 transition-all"
+                  className="relative p-8 rounded-3xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 backdrop-blur-xl group hover:border-[var(--text)]/30 transition-all"
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-[#00f2ad]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <feature.icon className="w-7 h-7 text-[#00f2ad]" />
+                  <div className="w-14 h-14 rounded-2xl bg-[var(--text)]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <feature.icon className="w-7 h-7 text-[var(--text)]" />
                   </div>
                   <h3 className="text-xl font-semibold text-white mb-3 font-heading">{feature.title}</h3>
-                  <p className="text-slate-400 leading-relaxed">{feature.desc}</p>
+                  <p className="text-[var(--muted)] leading-relaxed">{feature.desc}</p>
                   <div className="cad-corner-tl opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="cad-corner-br opacity-0 group-hover:opacity-100 transition-opacity" />
                 </motion.div>
