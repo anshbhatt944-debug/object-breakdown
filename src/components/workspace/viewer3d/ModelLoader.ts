@@ -841,15 +841,78 @@ export function applyViewModeToModel(
             emissiveIntensity: 0.35,
           });
         } else if (viewMode === 'thermal') {
-          const isHot = /combust|turbo|chip|soc|motor|stator|battery|friction|ball|leaf|stem/i.test(info.componentId);
-          const color = isHot ? new THREE.Color('#f43f5e') : new THREE.Color('#38bdf8');
+          // Scientifically accurate thermodynamic temperature gradient (FLIR Ironbow / Heat Map telemetry)
+          const id = info.componentId.toLowerCase();
+          let hexColor = '#38bdf8';
+          let emissiveHex = '#0284c7';
+          let emissiveIntensity = 0.2;
+
+          // 1. Extreme Heat Zone: 1,600°C - 2,000°C (Core Combustion & HP Turbine)
+          if (/combust|diffuser|flame|ignit|heat-shield|spark/.test(id)) {
+            hexColor = '#ff3700'; // Blazing incandescent orange-red
+            emissiveHex = '#ff2200';
+            emissiveIntensity = 0.85;
+          } else if (/turbine|vane|nozzle-guide|hp-turbine|fins_0|exhaust-core/.test(id)) {
+            hexColor = '#ff1133'; // Fiery crimson glowing superalloy (1,650°C)
+            emissiveHex = '#e11d48';
+            emissiveIntensity = 0.75;
+          }
+          // 2. High Expansion & Exhaust Zone: 600°C - 1,100°C (LP Turbine, Exhaust Mixer, Tail Cone)
+          else if (/shaft|spool|drive-shaft|tube_0|piston|chra|rotor-bell/.test(id)) {
+            hexColor = '#ea580c'; // Deep thermal vermilion
+            emissiveHex = '#c2410c';
+            emissiveIntensity = 0.55;
+          } else if (/exhaust|mixer|tail-cone|nozzle|flaps|plates_back/.test(id)) {
+            hexColor = '#db2777'; // Thermal magenta/violet hot exhaust gas
+            emissiveHex = '#be185d';
+            emissiveIntensity = 0.45;
+          }
+          // 3. High-Pressure Compression & Bleed Air: 350°C - 600°C (HPC Casing, Bleed Manifolds)
+          else if (/compressor|bleed|manifold|vsv|stator-casing|stator-ring/.test(id)) {
+            hexColor = '#f59e0b'; // Radiant amber/gold
+            emissiveHex = '#d97706';
+            emissiveIntensity = 0.40;
+          } else if (/clamp|fastener|flange|bolt|hardware|bearing/.test(id)) {
+            hexColor = '#84cc16'; // Warm conductive soak (250°C)
+            emissiveHex = '#65a30d';
+            emissiveIntensity = 0.25;
+          }
+          // 4. Lubrication, Cooling & Electronics: 60°C - 150°C (AGB, FADEC, Oil Lines)
+          else if (/cool|tcc|intercooler|heat-sink|radiator/.test(id)) {
+            hexColor = '#06b6d4'; // Active cooling flow (120°C)
+            emissiveHex = '#0891b2';
+            emissiveIntensity = 0.28;
+          } else if (/gearbox|agb|lube|oil|scavenge|isolator|container/.test(id)) {
+            hexColor = '#10b981'; // Oil operating temperature (95°C)
+            emissiveHex = '#059669';
+            emissiveIntensity = 0.25;
+          } else if (/fadec|sensor|avionics|electronic|wire|cable|battery|esc|board|pcb/.test(id)) {
+            hexColor = '#0ea5e9'; // Controlled electronics ambient (70°C)
+            emissiveHex = '#0284c7';
+            emissiveIntensity = 0.22;
+          }
+          // 5. Bypass Air & Outer Casing: 20°C - 50°C (Fan Containment, Nacelle Strakes)
+          else if (/nacelle|hull|containment|strake|cowl-outer|casing/.test(id)) {
+            hexColor = '#38bdf8'; // Bypass stream air (30°C)
+            emissiveHex = '#0284c7';
+            emissiveIntensity = 0.16;
+          }
+          // 6. Ambient Cryogenic Freestream Intake: -50°C - +20°C (Inlet Cowl, Fan Blades, Bypass Grid)
+          else if (/inlet|cowl|fan|blade|grid|spinner|bullet|intake/.test(id)) {
+            hexColor = '#2563eb'; // Cryogenic / high-altitude ambient freestream (-40°C)
+            emissiveHex = '#1d4ed8';
+            emissiveIntensity = 0.18;
+          }
+
+          const color = new THREE.Color(hexColor);
+          const emissive = new THREE.Color(emissiveHex);
 
           mesh.material = new THREE.MeshStandardMaterial({
             color,
-            roughness: 0.3,
+            roughness: 0.35,
             metalness: 0.15,
-            emissive: color,
-            emissiveIntensity: 0.35,
+            emissive,
+            emissiveIntensity,
           });
         }
       }
