@@ -119,7 +119,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={plate.index}
                 onClick={() => handleScrollToFraction(plate.fraction)}
-                className="relative py-1 text-[0.8125rem] tracking-[0.01em] transition-colors cursor-pointer"
+                className="relative py-1 text-[0.8125rem] tracking-[0.01em] transition-colors cursor-pointer hover:text-[var(--text)]"
                 style={{
                   color: isActive ? 'var(--text)' : 'var(--muted)',
                   fontFamily: 'var(--sans)',
@@ -148,7 +148,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center gap-6 pointer-events-auto text-[0.8125rem] tracking-[0.01em]" style={{ fontFamily: 'var(--sans)' }}>
           <button
             onClick={() => handleScrollToFraction(0.96)}
-            className="transition-colors cursor-pointer hover:opacity-100"
+            className="transition-colors cursor-pointer hover:text-[var(--text)]"
             style={{ color: 'var(--muted)' }}
           >
             Upload
@@ -156,7 +156,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={handleThemeToggleWithTransition}
-            className="transition-colors cursor-pointer hover:opacity-100"
+            className="transition-colors cursor-pointer hover:text-[var(--text)]"
             style={{ color: 'var(--muted)' }}
             title={isNight ? 'Switch to Day theme' : 'Switch to Night theme'}
             aria-label="Toggle theme"
@@ -166,7 +166,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={onLaunchWorkspace}
-            className="transition-colors cursor-pointer hover:opacity-100"
+            className="transition-colors cursor-pointer hover:opacity-75 font-semibold"
             style={{ color: 'var(--text)' }}
           >
             Studio

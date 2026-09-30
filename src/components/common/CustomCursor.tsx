@@ -31,9 +31,24 @@ export const CustomCursor: React.FC<CustomCursorProps> = () => {
       const x = e.clientX;
       const y = e.clientY;
 
-      // 10px square with no lag (hotspot at center: x - 5, y - 5)
+      const target = (e.target as Element | null) || document.elementFromPoint(x, y);
+      const isInteractive = Boolean(
+        target && (
+          target.closest('button, a, input, select, textarea, [role="button"], .btn-plate, .cursor-pointer, [data-interactive]') ||
+          target.tagName === 'BUTTON' ||
+          target.tagName === 'A'
+        )
+      );
+
+      // Adaptive CAD reticle: 20px hollow frame over interactive elements (never covers text), 10px solid square otherwise
       if (cursorRef.current) {
-        cursorRef.current.style.transform = `translate3d(${x - 5}px, ${y - 5}px, 0)`;
+        if (isInteractive) {
+          cursorRef.current.style.transform = `translate3d(${x - 10}px, ${y - 10}px, 0)`;
+          cursorRef.current.classList.add('is-interactive');
+        } else {
+          cursorRef.current.style.transform = `translate3d(${x - 5}px, ${y - 5}px, 0)`;
+          cursorRef.current.classList.remove('is-interactive');
+        }
         cursorRef.current.style.opacity = '1';
       }
 
@@ -115,15 +130,10 @@ export const CustomCursor: React.FC<CustomCursorProps> = () => {
       ref={containerRef}
       className="fixed inset-0 pointer-events-none z-[999999] overflow-hidden"
     >
-      {/* 10px var(--text) square with no lag and no trailing ring */}
+      {/* Precision CAD cursor: 10px solid square over canvas, transforms to 20px hollow reticle over interactive elements */}
       <div
         ref={cursorRef}
-        className="fixed top-0 left-0 w-[10px] h-[10px] pointer-events-none z-[999999] opacity-0"
-        style={{
-          backgroundColor: 'var(--text)',
-          willChange: 'transform',
-          transform: 'translate3d(-100px, -100px, 0)',
-        }}
+        className="plate-cursor-square opacity-0"
       />
 
       {/* Inspect Callout (22px circle with 1px --text stroke + Newsreader italic name, no card, no shadow, no blur) */}

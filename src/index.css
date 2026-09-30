@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, .dark, .dark *));
+
 @layer base {
   :root,
   :root[data-theme="night"],
@@ -44,13 +46,13 @@
   :root[data-theme="day"],
   :root[data-theme="light"] {
     color-scheme: light;
-    --text: #1D1713;
-    --muted: color-mix(in srgb, var(--text) 66%, transparent);
-    --line:  color-mix(in srgb, var(--text) 40%, transparent);
-    --carbon: #EAE6E1;
-    --ruby:   #ECE4E2;
-    --plum:   #EAE4E7;
-    --copper: #ECE6DF;
+    --text: #161311;
+    --muted: #5e5750;
+    --line:  rgba(22, 19, 17, 0.16);
+    --carbon: #F7F5F0;
+    --ruby:   #F5EFEB;
+    --plum:   #F1EDF2;
+    --copper: #F5EFE6;
     --current-ground: var(--carbon);
 
     --sans: 'Archivo Variable', 'Archivo', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -60,23 +62,24 @@
     --ease-set:  cubic-bezier(0.16, 1, 0.3, 1);
     --ease-draw: linear;
 
-    --studio-bg-dim: #ded9d3;
-    --studio-bg-surface: #e7e4e0;
-    --studio-bg-panel: #f0ece8;
-    --studio-bg-card: #f7f5f2;
-    --studio-border-primary: var(--line);
-    --studio-border-subtle: color-mix(in srgb, var(--text) 20%, transparent);
-    --studio-text-primary: var(--text);
-    --studio-text-secondary: var(--muted);
-    --studio-text-muted: var(--muted);
-    --studio-accent-primary: #c2410c;
+    /* Archival Draftsman / Museum CAD Studio Palette */
+    --studio-bg-dim: #E8E2DA;
+    --studio-bg-surface: #F3EFE8;
+    --studio-bg-panel: #EBE5DC;
+    --studio-bg-card: #FFFFFF;
+    --studio-border-primary: #DDD6CB;
+    --studio-border-subtle: rgba(22, 19, 17, 0.08);
+    --studio-text-primary: #161311;
+    --studio-text-secondary: #5e5750;
+    --studio-text-muted: #786e64;
+    --studio-accent-primary: #C2410C;
 
     --c-bg: var(--carbon);
-    --c-surface: #f0ece8;
-    --c-border: var(--line);
-    --c-text: var(--text);
-    --c-text-muted: var(--muted);
-    --c-accent-primary: #c2410c;
+    --c-surface: #F3EFE8;
+    --c-border: #DDD6CB;
+    --c-text: #161311;
+    --c-text-muted: #5e5750;
+    --c-accent-primary: #C2410C;
   }
 
   * {
@@ -205,8 +208,10 @@
   overflow: hidden;
   cursor: pointer;
   text-decoration: none;
-  transition: color 160ms var(--ease-roll);
+  transition: color 160ms var(--ease-roll), border-color 160ms var(--ease-roll), box-shadow 160ms var(--ease-roll), transform 100ms ease;
   white-space: nowrap;
+  isolation: isolate;
+  user-select: none;
 }
 
 .btn-plate::before {
@@ -216,7 +221,8 @@
   background-color: var(--text);
   transform: translateY(100%);
   transition: transform 160ms var(--ease-roll);
-  z-index: 0;
+  z-index: -1;
+  pointer-events: none;
 }
 
 .btn-plate:hover::before {
@@ -225,11 +231,17 @@
 
 .btn-plate:hover {
   color: var(--current-ground, var(--carbon));
+  border-color: var(--text);
+}
+
+.btn-plate:active {
+  transform: scale(0.98);
 }
 
 .btn-plate > * {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  pointer-events: none;
 }
 
 /* Filled variant (Launch studio starts filled) */
@@ -242,6 +254,8 @@
 .btn-plate-filled::before {
   background-color: var(--current-ground, var(--carbon));
   transform: translateY(100%);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .btn-plate-filled:hover::before {
@@ -250,6 +264,11 @@
 
 .btn-plate-filled:hover {
   color: var(--text);
+  border-color: var(--text);
+}
+
+.btn-plate-filled:active {
+  transform: scale(0.98);
 }
 
 /* --------------------------------------------------------------------------
@@ -288,6 +307,8 @@
    -------------------------------------------------------------------------- */
 .plate-cursor-square {
   position: fixed;
+  top: 0;
+  left: 0;
   width: 10px;
   height: 10px;
   background-color: var(--text);
@@ -295,6 +316,20 @@
   z-index: 999999;
   transform: translate3d(-100px, -100px, 0);
   will-change: transform;
+  transition: width 130ms cubic-bezier(0.16, 1, 0.3, 1),
+              height 130ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 130ms ease,
+              border 130ms ease,
+              border-radius 130ms ease;
+}
+
+.plate-cursor-square.is-interactive {
+  width: 20px;
+  height: 20px;
+  background-color: transparent !important;
+  border: 1.5px solid #ffffff;
+  mix-blend-mode: difference;
+  border-radius: 2px;
 }
 
 /* --------------------------------------------------------------------------
@@ -397,4 +432,17 @@
   background-color: #e27228;
   color: #ffffff;
 }
+
+/* --------------------------------------------------------------------------
+   Scrollbar Utilities
+   -------------------------------------------------------------------------- */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 

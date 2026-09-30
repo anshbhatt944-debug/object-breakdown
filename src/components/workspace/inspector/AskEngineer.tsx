@@ -5,6 +5,7 @@ import { Bot, Send, Sparkles, User, CornerDownLeft, Lightbulb } from 'lucide-rea
 interface AskEngineerProps {
   objectData: ObjectBreakdownData;
   selectedComponent: ComponentNode | null;
+  theme?: 'light' | 'dark';
 }
 
 interface Message {
@@ -17,7 +18,10 @@ interface Message {
 export const AskEngineer: React.FC<AskEngineerProps> = ({
   objectData,
   selectedComponent,
+  theme = 'dark',
 }) => {
+  const isLight = theme === 'light';
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -88,36 +92,56 @@ export const AskEngineer: React.FC<AskEngineerProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#0d111a]/95 text-slate-300 font-sans select-none">
+    <div className={`flex flex-col h-full font-sans select-none transition-colors ${
+      isLight ? 'bg-[#F4EFE8] text-[#161311]' : 'bg-[#0d111a]/95 text-slate-300'
+    }`}>
       {/* Header */}
-      <div className="p-4 border-b border-white/10 flex items-center justify-between">
+      <div className={`p-4 border-b flex items-center justify-between ${
+        isLight ? 'border-[#DDD6CB] bg-white' : 'border-white/10'
+      }`}>
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-[#00f2ad]/10 border border-[#00f2ad]/30 flex items-center justify-center text-[#00f2ad]">
+          <div className={`w-7 h-7 rounded-[3px] border flex items-center justify-center ${
+            isLight
+              ? 'bg-orange-50 border-orange-200 text-[#C2410C]'
+              : 'bg-[#00f2ad]/10 border-[#00f2ad]/30 text-[#00f2ad]'
+          }`}>
             <Bot className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-mono-cad font-bold text-slate-100 uppercase tracking-wider">
+            <h3 className={`text-xs font-mono-cad font-bold uppercase tracking-wider ${
+              isLight ? 'text-[#161311]' : 'text-slate-100'
+            }`}>
               Ask the Engineer
             </h3>
-            <span className="text-[10px] text-slate-400 font-mono-cad">
+            <span className={`text-[10px] font-mono-cad ${isLight ? 'text-[#786e64]' : 'text-slate-400'}`}>
               Context: {objectData.name} {selectedComponent ? `→ ${selectedComponent.name}` : ''}
             </span>
           </div>
         </div>
 
-        <span className="text-[10px] font-mono-cad px-2 py-0.5 rounded-full bg-[#00f2ad]/10 text-[#00f2ad] border border-[#00f2ad]/30">
+        <span className={`text-[10px] font-mono-cad px-2 py-0.5 rounded-full border ${
+          isLight
+            ? 'bg-orange-50 text-[#C2410C] border-orange-200 font-bold'
+            : 'bg-[#00f2ad]/10 text-[#00f2ad] border-[#00f2ad]/30'
+        }`}>
           Staff AI Active
         </span>
       </div>
 
       {/* Suggested Question Chips */}
-      <div className="p-3 border-b border-white/5 bg-black/20 overflow-x-auto flex items-center gap-1.5 shrink-0">
-        <Lightbulb className="w-3.5 h-3.5 text-amber-400 shrink-0 mr-1" />
+      <div className={`p-3 border-b overflow-x-auto flex items-center gap-1.5 shrink-0 ${
+        isLight ? 'border-[#DDD6CB] bg-[#EAE4DC]' : 'border-white/5 bg-black/20'
+      }`}>
+        <Lightbulb className={`w-3.5 h-3.5 shrink-0 mr-1 ${isLight ? 'text-[#C2410C]' : 'text-amber-400'}`} />
         {objectData.aiSuggestedQuestions.slice(0, 3).map((prompt, i) => (
           <button
             key={i}
             onClick={() => handleSend(prompt)}
-            className="px-2.5 py-1 rounded-lg text-[11px] font-mono-cad bg-white/5 hover:bg-[#00f2ad]/20 hover:text-[#00f2ad] border border-white/10 text-slate-300 transition-all shrink-0 truncate max-w-xs text-left"
+            className={`px-2.5 py-1 rounded-[3px] text-[11px] font-mono-cad border transition-all shrink-0 truncate max-w-xs text-left cursor-pointer ${
+              isLight
+                ? 'bg-white hover:bg-orange-50 hover:text-[#C2410C] border-[#DDD6CB] text-[#161311] shadow-xs'
+                : 'bg-white/5 hover:bg-[#00f2ad]/20 hover:text-[#00f2ad] border-white/10 text-slate-300'
+            }`}
           >
             {prompt}
           </button>
@@ -134,28 +158,38 @@ export const AskEngineer: React.FC<AskEngineerProps> = ({
             <div
               className={`p-3.5 rounded-2xl max-w-[88%] leading-relaxed ${
                 msg.sender === 'user'
-                  ? 'bg-[#00f2ad]/20 text-[#00f2ad] border border-[#00f2ad]/40 rounded-br-none'
+                  ? isLight
+                    ? 'bg-[#C2410C] text-white border border-[#C2410C] rounded-br-none shadow-sm'
+                    : 'bg-[#00f2ad]/20 text-[#00f2ad] border border-[#00f2ad]/40 rounded-br-none'
+                  : isLight
+                  ? 'bg-white text-[#161311] border border-[#DDD6CB] rounded-bl-none shadow-sm'
                   : 'bg-black/50 text-slate-200 border border-white/10 rounded-bl-none shadow-md'
               }`}
             >
               <div className="whitespace-pre-line">{msg.text}</div>
             </div>
-            <span className="text-[9px] font-mono-cad text-slate-500 mt-1 px-1">
+            <span className={`text-[9px] font-mono-cad mt-1 px-1 ${isLight ? 'text-[#786e64]' : 'text-slate-500'}`}>
               {msg.timestamp}
             </span>
           </div>
         ))}
 
         {isTyping && (
-          <div className="flex items-center gap-1.5 p-3 rounded-2xl bg-black/40 border border-white/10 text-slate-400 text-xs w-28">
-            <Sparkles className="w-3.5 h-3.5 text-[#00f2ad] animate-spin" />
+          <div className={`flex items-center gap-1.5 p-3 rounded-2xl border text-xs w-28 ${
+            isLight
+              ? 'bg-white border-[#DDD6CB] text-[#5e5750] shadow-sm'
+              : 'bg-black/40 border-white/10 text-slate-400'
+          }`}>
+            <Sparkles className={`w-3.5 h-3.5 animate-spin ${isLight ? 'text-[#C2410C]' : 'text-[#00f2ad]'}`} />
             <span className="font-mono-cad">Analyzing...</span>
           </div>
         )}
       </div>
 
       {/* Input Form */}
-      <div className="p-3 border-t border-white/10 bg-black/40">
+      <div className={`p-3 border-t ${
+        isLight ? 'border-[#DDD6CB] bg-white' : 'border-white/10 bg-black/40'
+      }`}>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -168,12 +202,20 @@ export const AskEngineer: React.FC<AskEngineerProps> = ({
             value={inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}
             placeholder={`Ask anything about ${selectedComponent ? selectedComponent.name : objectData.name}...`}
-            className="flex-1 px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#00f2ad]/50 font-mono-cad"
+            className={`flex-1 px-3.5 py-2 rounded-xl border text-xs font-mono-cad focus:outline-none transition-all ${
+              isLight
+                ? 'bg-[#F4EFE8] border-[#DDD6CB] text-[#161311] placeholder-[#786e64] focus:border-[#C2410C] focus:bg-white'
+                : 'bg-black/60 border-white/10 text-slate-200 placeholder-slate-500 focus:border-[#00f2ad]/50'
+            }`}
           />
           <button
             type="submit"
             disabled={!inputQuery.trim()}
-            className="p-2 rounded-xl bg-[#00f2ad] text-slate-950 hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-[0_0_10px_#00f2ad]"
+            className={`p-2 rounded-xl transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${
+              isLight
+                ? 'bg-[#C2410C] text-white hover:brightness-105 shadow-sm'
+                : 'bg-[#00f2ad] text-slate-950 hover:brightness-110 shadow-[0_0_10px_#00f2ad]'
+            }`}
           >
             <Send className="w-4 h-4" />
           </button>

@@ -13,45 +13,55 @@ import {
 interface MaterialAnalysisProps {
   materials: MaterialItem[];
   depthLevel: DepthLevel;
+  theme?: 'light' | 'dark';
 }
 
-export const MaterialAnalysis: React.FC<MaterialAnalysisProps> = ({ materials, depthLevel }) => {
+export const MaterialAnalysis: React.FC<MaterialAnalysisProps> = ({ materials, depthLevel, theme = 'dark' }) => {
   const [selectedMaterialIndex, setSelectedMaterialIndex] = useState<number>(0);
   const activeMaterial = materials[selectedMaterialIndex] || materials[0];
+  const isLight = theme === 'light';
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full text-slate-300 font-sans">
+    <div className={`p-6 space-y-6 overflow-y-auto h-full font-sans transition-colors ${
+      isLight ? 'text-[#161311]' : 'text-slate-300'
+    }`}>
       {/* Header */}
-      <div className="space-y-1 pb-4 border-b border-white/10">
+      <div className={`space-y-1 pb-4 border-b ${isLight ? 'border-[#DDD6CB]' : 'border-[var(--line)]'}`}>
         <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-[#00f2ad]" />
-          <h3 className="text-xs font-mono-cad uppercase tracking-wider font-semibold text-slate-200">
+          <Layers className="w-4 h-4 text-[#C2410C] dark:text-[#00f2ad]" />
+          <h3 className={`text-xs font-mono-cad uppercase tracking-wider font-semibold ${
+            isLight ? 'text-[#161311]' : 'text-slate-200'
+          }`}>
             Material Composition & Metallurgy
           </h3>
         </div>
-        <p className="text-xs text-slate-400">
+        <p className={`text-xs ${isLight ? 'text-[#5e5750]' : 'text-[var(--muted)]'}`}>
           Visual mass distribution, mechanical properties, and engineering selection trade-offs.
         </p>
       </div>
 
       {/* Visual Composition Stacked Bar */}
       <div className="space-y-2">
-        <div className="flex justify-between text-xs font-mono-cad text-slate-400">
+        <div className={`flex justify-between text-xs font-mono-cad ${isLight ? 'text-[#786e64]' : 'text-slate-400'}`}>
           <span>Mass Breakdown</span>
           <span>100% Total Volume</span>
         </div>
-        <div className="flex h-4 rounded-lg overflow-hidden bg-black/40 border border-white/10 p-0.5 gap-0.5">
+        <div className={`flex h-4 rounded-lg overflow-hidden p-0.5 gap-0.5 ${
+          isLight ? 'bg-[#EAE4DC] border border-[#DDD6CB]' : 'bg-black/40 border border-white/10'
+        }`}>
           {materials.map((mat, idx) => (
             <div
               key={mat.name}
               onClick={() => setSelectedMaterialIndex(idx)}
               style={{
                 width: `${mat.percentage}%`,
-                backgroundColor: mat.color || '#38bdf8',
+                backgroundColor: mat.color || (isLight ? '#C2410C' : '#38bdf8'),
               }}
               title={`${mat.name}: ${mat.percentage}%`}
-              className={`h-full rounded-sm cursor-pointer transition-all hover:brightness-125 ${
-                selectedMaterialIndex === idx ? 'ring-2 ring-white shadow-lg' : 'opacity-85'
+              className={`h-full rounded-sm cursor-pointer transition-all hover:brightness-110 ${
+                selectedMaterialIndex === idx
+                  ? isLight ? 'ring-2 ring-[#C2410C] shadow-md' : 'ring-2 ring-white shadow-lg'
+                  : 'opacity-85'
               }`}
             />
           ))}
@@ -63,15 +73,19 @@ export const MaterialAnalysis: React.FC<MaterialAnalysisProps> = ({ materials, d
             <button
               key={mat.name}
               onClick={() => setSelectedMaterialIndex(idx)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono-cad transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] text-xs font-mono-cad transition-all cursor-pointer ${
                 selectedMaterialIndex === idx
-                  ? 'bg-white/15 text-white border border-white/30 font-semibold'
+                  ? isLight
+                    ? 'bg-white text-[#161311] border border-[#C2410C] font-semibold shadow-sm'
+                    : 'bg-white/15 text-white border border-white/30 font-semibold'
+                  : isLight
+                  ? 'bg-[#F4EFE8] text-[#5e5750] hover:text-[#161311] border border-[#DDD6CB]'
                   : 'bg-black/30 text-slate-400 hover:text-slate-200 border border-white/5'
               }`}
             >
               <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: mat.color }} />
               <span>{mat.name.split(' ')[0]}</span>
-              <span className="text-slate-500 font-normal">({mat.percentage}%)</span>
+              <span className={isLight ? 'text-[#786e64]' : 'text-slate-500'}>({mat.percentage}%)</span>
             </button>
           ))}
         </div>
@@ -79,29 +93,39 @@ export const MaterialAnalysis: React.FC<MaterialAnalysisProps> = ({ materials, d
 
       {/* Selected Material Deep Inspection Card */}
       {activeMaterial && (
-        <div className="p-5 rounded-2xl glass-card border border-white/10 space-y-4">
-          <div className="flex items-start justify-between pb-3 border-b border-white/5">
+        <div className={`p-5 rounded-[4px] border space-y-4 transition-colors ${
+          isLight
+            ? 'bg-white border-[#DDD6CB] shadow-[0_1px_3px_rgba(22,19,17,0.03)]'
+            : 'bg-[#211e1c] border-[var(--line)]'
+        }`}>
+          <div className={`flex items-start justify-between pb-3 border-b ${
+            isLight ? 'border-[#DDD6CB]' : 'border-[var(--line)]'
+          }`}>
             <div>
-              <span className="text-[10px] font-mono-cad text-[#00f2ad] uppercase tracking-wider block">
+              <span className="text-[10px] font-mono-cad text-[#C2410C] dark:text-[#00f2ad] uppercase tracking-wider block font-bold">
                 {activeMaterial.category}
               </span>
-              <h4 className="text-base font-bold text-slate-100 font-heading">
+              <h4 className={`text-base font-bold font-sans ${isLight ? 'text-[#161311]' : 'text-slate-100'}`}>
                 {activeMaterial.name}
               </h4>
             </div>
-            <span className="text-xl font-extrabold font-mono-cad text-[#38bdf8]">
+            <span className="text-xl font-extrabold font-mono-cad text-[#C2410C] dark:text-[#38bdf8]">
               {activeMaterial.percentage}%
             </span>
           </div>
 
           {/* Used in components */}
           <div className="space-y-1">
-            <span className="text-[10px] font-mono-cad text-slate-400 uppercase">Utilized In</span>
+            <span className={`text-[10px] font-mono-cad uppercase ${isLight ? 'text-[#786e64]' : 'text-slate-400'}`}>Utilized In</span>
             <div className="flex flex-wrap gap-1.5">
               {activeMaterial.usedIn.map((comp) => (
                 <span
                   key={comp}
-                  className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs font-mono-cad text-slate-300"
+                  className={`px-2 py-0.5 rounded-[2px] border text-xs font-mono-cad ${
+                    isLight
+                      ? 'bg-[#F4EFE8] border-[#DDD6CB] text-[#161311]'
+                      : 'bg-white/5 border-white/10 text-slate-300'
+                  }`}
                 >
                   {comp}
                 </span>
@@ -112,39 +136,58 @@ export const MaterialAnalysis: React.FC<MaterialAnalysisProps> = ({ materials, d
           {/* Properties Table */}
           <div className="grid grid-cols-2 gap-2 pt-1 font-mono-cad text-xs">
             {activeMaterial.properties.map((prop) => (
-              <div key={prop.key} className="p-2.5 rounded-lg bg-black/40 border border-white/5">
-                <span className="text-[10px] text-slate-500 block">{prop.key}</span>
-                <span className="text-slate-200 font-semibold">{prop.value}</span>
+              <div
+                key={prop.key}
+                className={`p-2.5 rounded-[3px] border ${
+                  isLight
+                    ? 'bg-[#F4EFE8] border-[#DDD6CB]'
+                    : 'bg-black/40 border-white/5'
+                }`}
+              >
+                <span className={`text-[10px] block ${isLight ? 'text-[#786e64]' : 'text-slate-500'}`}>{prop.key}</span>
+                <span className={`font-semibold ${isLight ? 'text-[#161311]' : 'text-slate-200'}`}>{prop.value}</span>
               </div>
             ))}
           </div>
 
           {/* Advantages vs Disadvantages */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            <div className="p-3 rounded-xl bg-emerald-500/[0.03] border border-emerald-500/20 space-y-1.5">
-              <span className="text-[11px] font-mono-cad text-emerald-400 font-semibold flex items-center gap-1.5">
-                <Check className="w-3.5 h-3.5" />
+            <div className={`p-3 rounded-[3px] border space-y-1.5 ${
+              isLight
+                ? 'bg-emerald-50/70 border-emerald-200/80'
+                : 'bg-emerald-500/[0.03] border-emerald-500/20'
+            }`}>
+              <span className={`text-[11px] font-mono-cad font-semibold flex items-center gap-1.5 ${
+                isLight ? 'text-emerald-800' : 'text-emerald-400'
+              }`}>
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
                 Advantages
               </span>
-              <ul className="space-y-1 text-xs text-slate-300">
+              <ul className={`space-y-1 text-xs ${isLight ? 'text-emerald-900' : 'text-slate-300'}`}>
                 {activeMaterial.advantages.map((adv, i) => (
                   <li key={i} className="flex items-start gap-1.5">
-                    <span className="text-emerald-400">•</span>
+                    <span className="text-emerald-600">•</span>
                     <span>{adv}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="p-3 rounded-xl bg-rose-500/[0.03] border border-rose-500/20 space-y-1.5">
-              <span className="text-[11px] font-mono-cad text-rose-400 font-semibold flex items-center gap-1.5">
-                <X className="w-3.5 h-3.5" />
+            <div className={`p-3 rounded-[3px] border space-y-1.5 ${
+              isLight
+                ? 'bg-rose-50/70 border-rose-200/80'
+                : 'bg-rose-500/[0.03] border-rose-500/20'
+            }`}>
+              <span className={`text-[11px] font-mono-cad font-semibold flex items-center gap-1.5 ${
+                isLight ? 'text-rose-800' : 'text-rose-400'
+              }`}>
+                <X className="w-3.5 h-3.5 text-rose-600" />
                 Trade-offs / Limitations
               </span>
-              <ul className="space-y-1 text-xs text-slate-300">
+              <ul className={`space-y-1 text-xs ${isLight ? 'text-rose-900' : 'text-slate-300'}`}>
                 {activeMaterial.disadvantages.map((dis, i) => (
                   <li key={i} className="flex items-start gap-1.5">
-                    <span className="text-rose-400">•</span>
+                    <span className="text-rose-600">•</span>
                     <span>{dis}</span>
                   </li>
                 ))}
@@ -153,22 +196,28 @@ export const MaterialAnalysis: React.FC<MaterialAnalysisProps> = ({ materials, d
           </div>
 
           {/* Engineering Selection Rationale */}
-          <div className="p-3.5 rounded-xl bg-black/40 border border-[#00f2ad]/30 space-y-1.5">
-            <span className="text-[11px] font-mono-cad text-[#00f2ad] font-semibold flex items-center gap-1.5">
+          <div className={`p-3.5 rounded-[3px] border space-y-1.5 ${
+            isLight
+              ? 'bg-[#F4EFE8] border-[#C2410C]/40 text-[#161311]'
+              : 'bg-black/40 border-[#00f2ad]/30 text-slate-300'
+          }`}>
+            <span className="text-[11px] font-mono-cad text-[#C2410C] dark:text-[#00f2ad] font-semibold flex items-center gap-1.5">
               <Info className="w-3.5 h-3.5" />
               Why Was This Material Selected?
             </span>
-            <p className="text-xs text-slate-300 leading-relaxed italic">
+            <p className={`text-xs leading-relaxed italic ${isLight ? 'text-[#5e5750]' : 'text-slate-300'}`}>
               "{activeMaterial.selectionRationale}"
             </p>
           </div>
 
           {/* Alternatives */}
           {activeMaterial.alternatives && activeMaterial.alternatives.length > 0 && (
-            <div className="flex items-center gap-2 text-xs font-mono-cad text-slate-400 pt-1">
-              <RefreshCw className="w-3.5 h-3.5 text-[#38bdf8]" />
+            <div className={`flex items-center gap-2 text-xs font-mono-cad pt-1 ${isLight ? 'text-[#786e64]' : 'text-slate-400'}`}>
+              <RefreshCw className="w-3.5 h-3.5 text-[#C2410C] dark:text-[#38bdf8]" />
               <span>Alternative Materials:</span>
-              <span className="text-slate-200">{activeMaterial.alternatives.join(', ')}</span>
+              <span className={isLight ? 'text-[#161311] font-semibold' : 'text-slate-200'}>
+                {activeMaterial.alternatives.join(', ')}
+              </span>
             </div>
           )}
         </div>

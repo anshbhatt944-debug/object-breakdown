@@ -42,10 +42,12 @@ export const InspectorTabs: React.FC<InspectorTabsProps> = ({
     { id: 'insights' as InspectorTabType, label: 'Insights' },
   ];
 
+  const isLight = theme === 'light';
+
   return (
     <div className={`flex border-b overflow-x-auto no-scrollbar transition-colors select-none shrink-0 ${
-      theme === 'light'
-        ? 'border-[#dfd8cf] bg-[#eae5de]'
+      isLight
+        ? 'border-[#DDD6CB] bg-[#EAE4DC]'
         : 'border-[var(--line)] bg-[#181513]'
     }`}>
       {tabs.map((tab) => {
@@ -54,16 +56,16 @@ export const InspectorTabs: React.FC<InspectorTabsProps> = ({
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className={`px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider whitespace-nowrap transition-colors border-r ${
-              theme === 'light'
-                ? `border-[#dfd8cf] ${
+            className={`px-3.5 py-2 text-[10px] font-mono uppercase tracking-wider whitespace-nowrap transition-all border-r cursor-pointer ${
+              isLight
+                ? `border-[#DDD6CB] ${
                     isActive
-                      ? 'text-[#1D1713] font-semibold border-b-2 border-[#e27228] bg-[#f4efe8]'
-                      : 'text-slate-500 hover:text-slate-900 hover:bg-[#ece7e0]'
+                      ? 'text-[#C2410C] font-bold border-b-2 border-b-[#C2410C] bg-white shadow-sm'
+                      : 'text-[#686058] hover:text-[#161311] hover:bg-[#F4EFE8]'
                   }`
                 : `border-[var(--line)] ${
                     isActive
-                      ? 'text-[#EFEAE2] font-semibold border-b-2 border-[#e27228] bg-[#211e1c]'
+                      ? 'text-[#EFEAE2] font-semibold border-b-2 border-b-[#e27228] bg-[#211e1c]'
                       : 'text-[var(--muted)] hover:text-[#EFEAE2] hover:bg-[#25201c]'
                   }`
             }`}

@@ -160,7 +160,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                   </div>
                 </div>
                 <span className="btn-plate text-[0.75rem]">
-                  Browse
+                  <span className="relative z-10 pointer-events-none">Browse</span>
                 </span>
                 <input
                   type="file"

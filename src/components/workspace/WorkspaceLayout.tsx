@@ -207,37 +207,39 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           />
         );
       case 'overview':
-        return <ObjectOverview objectData={currentObject} depthLevel={depthLevel} />;
+        return <ObjectOverview objectData={currentObject} depthLevel={depthLevel} theme={theme} />;
       case 'materials':
-        return <MaterialAnalysis materials={currentObject.materials} depthLevel={depthLevel} />;
+        return <MaterialAnalysis materials={currentObject.materials} depthLevel={depthLevel} theme={theme} />;
       case 'kinematics':
         return (
           <HowItWorks
             steps={currentObject.howItWorks}
             depthLevel={depthLevel}
             onSelectComponentById={handleSelectComponent}
+            theme={theme}
           />
         );
       case 'equations':
-        return <EngineeringAnalysis equations={currentObject.engineeringEquations} depthLevel={depthLevel} />;
+        return <EngineeringAnalysis equations={currentObject.engineeringEquations} depthLevel={depthLevel} theme={theme} />;
       case 'manufacturing':
-        return <ManufacturingProcess timeline={currentObject.manufacturingTimeline} depthLevel={depthLevel} />;
+        return <ManufacturingProcess timeline={currentObject.manufacturingTimeline} depthLevel={depthLevel} theme={theme} />;
       case 'relationships':
         return (
           <RelationshipMap
             relationships={currentObject.relationships}
             rootComponents={currentObject.rootComponents}
             onSelectComponentById={handleSelectComponent}
+            theme={theme}
           />
         );
       case 'failures':
-        return <FailureAnalysis rootComponents={currentObject.rootComponents} depthLevel={depthLevel} />;
+        return <FailureAnalysis rootComponents={currentObject.rootComponents} depthLevel={depthLevel} theme={theme} />;
       case 'whatif':
-        return <WhatIfSimulator parameters={currentObject.whatIfParameters} depthLevel={depthLevel} />;
+        return <WhatIfSimulator parameters={currentObject.whatIfParameters} depthLevel={depthLevel} theme={theme} />;
       case 'ai':
-        return <AskEngineer objectData={currentObject} selectedComponent={selectedNode} />;
+        return <AskEngineer objectData={currentObject} selectedComponent={selectedNode} theme={theme} />;
       case 'insights':
-        return <DesignInsights objectData={currentObject} depthLevel={depthLevel} />;
+        return <DesignInsights objectData={currentObject} depthLevel={depthLevel} theme={theme} />;
       default:
         return null;
     }
@@ -265,10 +267,10 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
       />
 
       {/* Main 3-Column Engineering Studio */}
-      <div className={`workspace-main flex-1 flex overflow-hidden relative ${theme === 'light' ? 'bg-[#f4efe8]' : 'bg-[#141210]'}`}>
+      <div className={`workspace-main flex-1 flex overflow-hidden relative ${theme === 'light' ? 'bg-[#F4EFE8]' : 'bg-[#141210]'}`}>
         {/* LEFT PANEL: Assembly Hierarchy & Component Tree (Hidden on mobile, 260-320px on desktop) */}
         <div className={`workspace-sidebar hidden md:flex flex-col w-72 lg:w-80 shrink-0 h-full border-r ${
-          theme === 'light' ? 'border-[#dfd8cf] bg-[#f4efe8]' : 'border-[var(--line)] bg-[#181513]'
+          theme === 'light' ? 'border-[#DDD6CB] bg-[#F4EFE8]' : 'border-[var(--line)] bg-[#181513]'
         }`}>
           <ComponentTree
             rootComponents={currentObject.rootComponents}
@@ -289,7 +291,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           className="workspace-viewport flex-1 h-full relative overflow-hidden flex flex-col select-none"
           style={{
             background: theme === 'light'
-              ? 'radial-gradient(circle at 50% 48%, #ffffff 0%, #ece7e1 60%, #e2dcd4 100%)'
+              ? 'radial-gradient(circle at 50% 48%, #ffffff 0%, #F5F1EB 60%, #ECE6DE 100%)'
               : 'radial-gradient(circle at 50% 42%, #38322c 0%, #292420 50%, #1c1917 100%)',
           }}
         >
@@ -363,31 +365,31 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           <div
             className="absolute top-2 right-2 z-30 md:hidden flex items-center gap-1.5 p-1 rounded-xl border backdrop-blur-xl shadow-lg pointer-events-auto transition-all"
             style={{
-              backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.94)' : 'rgba(24,21,19,0.94)',
-              borderColor: theme === 'light' ? 'rgba(226,232,240,0.85)' : 'var(--line)',
+              backgroundColor: theme === 'light' ? 'rgba(247,245,240,0.96)' : 'rgba(24,21,19,0.94)',
+              borderColor: theme === 'light' ? '#DDD6CB' : 'var(--line)',
             }}
           >
             {/* View Mode Toggle Pill */}
             <button
               onClick={() => setIsMobileControlsOpen(true)}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[11px] font-mono-cad font-semibold transition-all touch-manipulation min-h-[36px] ${
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[11px] font-mono-cad font-semibold transition-all touch-manipulation min-h-[36px] cursor-pointer ${
                 theme === 'light'
-                  ? 'bg-slate-50 text-slate-700 border-slate-200 active:bg-slate-100'
+                  ? 'bg-white text-[#161311] border-[#DDD6CB] active:bg-[#EAE4DC]'
                   : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)] active:bg-[#2a2420]'
               }`}
               title="View Modes & Shaders"
             >
-              <Box className="w-3.5 h-3.5 text-[#e27228]" />
+              <Box className="w-3.5 h-3.5 text-[#C2410C] dark:text-[#e27228]" />
               <span className="uppercase text-[10px] tracking-wider">{viewMode}</span>
             </button>
 
             {/* Animate Continuous Mechanism Toggle */}
             <button
               onClick={() => setIsPlayingMechanism(!isPlayingMechanism)}
-              className={`p-2 rounded-lg border transition-all touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center ${
+              className={`p-2 rounded-lg border transition-all touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer ${
                 isPlayingMechanism
-                  ? theme === 'light' ? 'bg-orange-50 text-[#c2410c] border-orange-200' : 'bg-[#e27228]/15 text-[#e27228] border-[#e27228]/40'
-                  : theme === 'light' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)]'
+                  ? theme === 'light' ? 'bg-[#FFF7ED] text-[#C2410C] border-[#FDBA74]' : 'bg-[#e27228]/15 text-[#e27228] border-[#e27228]/40'
+                  : theme === 'light' ? 'bg-white text-[#5C554E] hover:text-[#161311] border-[#DDD6CB]' : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)]'
               }`}
               title={isPlayingMechanism ? 'Pause motion' : 'Play motion'}
             >
@@ -397,9 +399,9 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             {/* Reset Camera View */}
             <button
               onClick={handleResetView}
-              className={`p-2 rounded-lg border transition-all touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center ${
+              className={`p-2 rounded-lg border transition-all touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer ${
                 theme === 'light'
-                  ? 'bg-slate-50 text-slate-600 hover:text-slate-900 border-slate-200'
+                  ? 'bg-white text-[#5C554E] hover:text-[#161311] border-[#DDD6CB]'
                   : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)]'
               }`}
               title="Reset View & Camera"
@@ -415,19 +417,19 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               <div
                 className="flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl shadow-xl transition-all"
                 style={{
-                  backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.96)' : 'rgba(24,21,19,0.96)',
-                  borderColor: theme === 'light' ? '#e2e8f0' : 'var(--line)',
+                  backgroundColor: theme === 'light' ? 'rgba(247,245,240,0.98)' : 'rgba(24,21,19,0.96)',
+                  borderColor: theme === 'light' ? '#DDD6CB' : 'var(--line)',
                 }}
               >
                 <button
                   onClick={() => setExplodeAmount(explodeAmount > 0.1 ? 0.0 : 1.0)}
-                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-mono-cad font-bold tracking-wider uppercase transition-all flex items-center gap-1.5 shrink-0 touch-manipulation min-h-[36px] ${
+                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-mono-cad font-bold tracking-wider uppercase transition-all flex items-center gap-1.5 shrink-0 touch-manipulation min-h-[36px] cursor-pointer ${
                     explodeAmount > 0.1
-                      ? theme === 'light' ? 'bg-orange-50 text-[#c2410c] border border-orange-200' : 'bg-[#e27228]/20 text-[#e27228] border border-[#e27228]/50'
-                      : theme === 'light' ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-[#211e1c] text-[#8c8278] border border-[var(--line)]'
+                      ? theme === 'light' ? 'bg-[#FFF7ED] text-[#C2410C] border border-[#FDBA74]' : 'bg-[#e27228]/20 text-[#e27228] border border-[#e27228]/50'
+                      : theme === 'light' ? 'bg-[#EAE4DC] text-[#161311] border border-[#DDD6CB]' : 'bg-[#211e1c] text-[#8c8278] border border-[var(--line)]'
                   }`}
                 >
-                  <Layers className="w-3.5 h-3.5 text-[#e27228]" />
+                  <Layers className="w-3.5 h-3.5 text-[#C2410C] dark:text-[#e27228]" />
                   <span>{explodeAmount > 0.1 ? 'ASSEMBLE' : 'EXPLODE'}</span>
                 </button>
 
@@ -439,11 +441,11 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                     value={Math.round(explodeAmount * 100)}
                     onChange={(e) => setExplodeAmount(Number(e.target.value) / 100)}
                     className={`w-full h-1.5 rounded appearance-none cursor-pointer ${
-                      theme === 'light' ? 'bg-slate-200 accent-[#c2410c]' : 'bg-[#25201c] accent-[#e27228]'
+                      theme === 'light' ? 'bg-[#DDD6CB] accent-[#C2410C]' : 'bg-[#25201c] accent-[#e27228]'
                     }`}
                   />
                   <span className={`text-[11px] font-mono-cad font-bold w-9 text-right shrink-0 ${
-                    theme === 'light' ? 'text-[#c2410c]' : 'text-[#e27228]'
+                    theme === 'light' ? 'text-[#C2410C]' : 'text-[#e27228]'
                   }`}>
                     {Math.round(explodeAmount * 100)}%
                   </span>
@@ -454,31 +456,31 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               <div
                 className="flex items-center justify-between gap-1.5 p-1 rounded-xl border backdrop-blur-xl shadow-xl"
                 style={{
-                  backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.96)' : 'rgba(24,21,19,0.96)',
-                  borderColor: theme === 'light' ? '#e2e8f0' : 'var(--line)',
+                  backgroundColor: theme === 'light' ? 'rgba(247,245,240,0.98)' : 'rgba(24,21,19,0.96)',
+                  borderColor: theme === 'light' ? '#DDD6CB' : 'var(--line)',
                 }}
               >
                 <button
                   onClick={() => setIsMobileTreeOpen(true)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg border text-[11px] font-mono-cad font-bold transition-all touch-manipulation min-h-[44px] ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg border text-[11px] font-mono-cad font-bold transition-all touch-manipulation min-h-[44px] cursor-pointer ${
                     theme === 'light'
-                      ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800 active:bg-slate-200'
+                      ? 'bg-white hover:bg-[#F4EFE8] border-[#DDD6CB] text-[#161311] active:bg-[#EAE4DC]'
                       : 'bg-[#211e1c] hover:bg-[#2a2420] border-[var(--line)] text-[#EFEAE2] active:bg-[#2a2420]'
                   }`}
                 >
-                  <Layers className="w-3.5 h-3.5 text-[#e27228]" />
+                  <Layers className="w-3.5 h-3.5 text-[#C2410C] dark:text-[#e27228]" />
                   <span>PARTS ({currentObject.rootComponents?.length || 0})</span>
                 </button>
 
                 <button
                   onClick={() => setIsMobileControlsOpen(true)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg border text-[11px] font-mono-cad font-bold transition-all touch-manipulation min-h-[44px] ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg border text-[11px] font-mono-cad font-bold transition-all touch-manipulation min-h-[44px] cursor-pointer ${
                     theme === 'light'
-                      ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800 active:bg-slate-200'
+                      ? 'bg-white hover:bg-[#F4EFE8] border-[#DDD6CB] text-[#161311] active:bg-[#EAE4DC]'
                       : 'bg-[#211e1c] hover:bg-[#2a2420] border-[var(--line)] text-[#EFEAE2] active:bg-[#2a2420]'
                   }`}
                 >
-                  <Sliders className="w-3.5 h-3.5 text-[#e27228]" />
+                  <Sliders className="w-3.5 h-3.5 text-[#C2410C] dark:text-[#e27228]" />
                   <span>VIEW MODES</span>
                 </button>
 
@@ -487,13 +489,13 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                     setActiveInspectorTab('overview');
                     setIsMobileInspectorOpen(true);
                   }}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg border text-[11px] font-mono-cad font-bold transition-all touch-manipulation min-h-[44px] ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg border text-[11px] font-mono-cad font-bold transition-all touch-manipulation min-h-[44px] cursor-pointer ${
                     theme === 'light'
-                      ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800 active:bg-slate-200'
+                      ? 'bg-white hover:bg-[#F4EFE8] border-[#DDD6CB] text-[#161311] active:bg-[#EAE4DC]'
                       : 'bg-[#211e1c] hover:bg-[#2a2420] border-[var(--line)] text-[#EFEAE2] active:bg-[#2a2420]'
                   }`}
                 >
-                  <Settings className="w-3.5 h-3.5 text-[#e27228]" />
+                  <Settings className="w-3.5 h-3.5 text-[#C2410C] dark:text-[#e27228]" />
                   <span>OVERVIEW</span>
                 </button>
               </div>
@@ -509,9 +511,9 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   : 'h-auto'
               }`}
               style={{
-                backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.98)' : 'rgba(24,21,19,0.98)',
-                borderColor: theme === 'light' ? '#cbd5e1' : 'var(--line)',
-                boxShadow: theme === 'light' ? '0 -10px 40px rgba(0,0,0,0.15)' : '0 -10px 50px rgba(0,0,0,0.9)',
+                backgroundColor: theme === 'light' ? '#F7F5F0' : '#181513',
+                borderColor: theme === 'light' ? '#DDD6CB' : 'var(--line)',
+                boxShadow: theme === 'light' ? '0 -10px 40px rgba(0,0,0,0.08)' : '0 -10px 50px rgba(0,0,0,0.9)',
               }}
             >
               {/* Drag Handle & Quick Toggle Bar */}
@@ -519,19 +521,19 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                 onClick={() => setMobileSheetStage(mobileSheetStage === 'peek' ? 'expanded' : 'peek')}
                 className="w-full pt-2 pb-1 cursor-pointer touch-manipulation flex flex-col items-center select-none"
               >
-                <div className="w-10 h-1 rounded-full bg-slate-400/40 dark:bg-white/25" />
+                <div className="w-10 h-1 rounded-full bg-[#DDD6CB] dark:bg-white/25" />
               </div>
 
               {/* SHEET HEADER (Always Visible in both Peek & Expanded) */}
               <div className={`px-4 py-2 border-b flex items-center justify-between text-xs font-mono-cad ${
-                theme === 'light' ? 'border-slate-100 bg-slate-50/80' : 'border-[var(--line)] bg-[#181513]'
+                theme === 'light' ? 'border-[#DDD6CB] bg-[#EAE4DC]' : 'border-[var(--line)] bg-[#181513]'
               }`}>
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="w-2 h-2 rounded-full bg-[#e27228] shrink-0 animate-pulse" />
-                  <span className="font-bold text-[#e27228] shrink-0 text-xs tracking-wider">{selectedNode.cadId || 'PART'}</span>
-                  <span className="shrink-0 text-slate-400">•</span>
+                  <span className="w-2 h-2 rounded-full bg-[#C2410C] dark:bg-[#e27228] shrink-0 animate-pulse" />
+                  <span className="font-bold text-[#C2410C] dark:text-[#e27228] shrink-0 text-xs tracking-wider">{selectedNode.cadId || 'PART'}</span>
+                  <span className={`shrink-0 ${theme === 'light' ? 'text-[#786E66]' : 'text-slate-400'}`}>•</span>
                   <span className={`uppercase tracking-wider font-semibold truncate max-w-[130px] text-[10px] ${
-                    theme === 'light' ? 'text-slate-600' : 'text-[#8c8278]'
+                    theme === 'light' ? 'text-[#5C554E]' : 'text-[#8c8278]'
                   }`}>
                     {selectedNode.category}
                   </span>
@@ -542,11 +544,11 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   <button
                     onClick={() => handleToggleIsolate(selectedNode.id)}
                     title={isolatedComponentId === selectedNode.id ? 'Restore all components' : 'Isolate component'}
-                    className={`px-2 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase transition-all touch-manipulation min-h-[36px] flex items-center gap-1 border ${
+                    className={`px-2 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase transition-all touch-manipulation min-h-[36px] flex items-center gap-1 border cursor-pointer ${
                       isolatedComponentId === selectedNode.id
-                        ? 'bg-[#e27228] text-white border-[#e27228]'
+                        ? 'bg-[#C2410C] text-white border-[#C2410C] dark:bg-[#e27228] dark:border-[#e27228]'
                         : theme === 'light'
-                        ? 'bg-white text-slate-700 border-slate-200 active:bg-slate-100'
+                        ? 'bg-white text-[#161311] border-[#DDD6CB] active:bg-[#EAE4DC]'
                         : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)] active:bg-[#2a2420]'
                     }`}
                   >
@@ -557,11 +559,11 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   <button
                     onClick={() => handleToggleHide(selectedNode.id)}
                     title="Hide component"
-                    className={`p-1.5 rounded-md border transition-all touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center ${
+                    className={`p-1.5 rounded-md border transition-all touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer ${
                       hiddenComponentIds.has(selectedNode.id)
                         ? 'bg-red-500/20 text-red-400 border-red-500/40'
                         : theme === 'light'
-                        ? 'bg-white text-slate-600 border-slate-200'
+                        ? 'bg-white text-[#5C554E] hover:text-[#161311] border-[#DDD6CB]'
                         : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)]'
                     }`}
                   >
@@ -570,8 +572,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
                   <button
                     onClick={() => handleSelectComponent(null)}
-                    className={`p-1.5 rounded-md border transition-all touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center ${
-                      theme === 'light' ? 'bg-white border-slate-200 text-slate-400 hover:text-slate-800' : 'bg-[#211e1c] border-[var(--line)] text-[#8c8278] hover:text-[#EFEAE2]'
+                    className={`p-1.5 rounded-md border transition-all touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer ${
+                      theme === 'light' ? 'bg-white border-[#DDD6CB] text-[#786E66] hover:text-[#161311]' : 'bg-[#211e1c] border-[var(--line)] text-[#8c8278] hover:text-[#EFEAE2]'
                     }`}
                     title="Deselect and return to model"
                   >
@@ -584,24 +586,24 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               {mobileSheetStage === 'peek' ? (
                 <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-2.5">
                   <div>
-                    <h3 className={`text-base font-bold font-heading truncate ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                    <h3 className={`text-base font-bold font-heading truncate ${theme === 'light' ? 'text-[#161311]' : 'text-white'}`}>
                       {selectedNode.name}
                     </h3>
-                    <p className={`text-xs leading-relaxed line-clamp-2 mt-1 font-mono-cad ${theme === 'light' ? 'text-slate-600' : 'text-[#c5c7d0]'}`}>
+                    <p className={`text-xs leading-relaxed line-clamp-2 mt-1 font-mono-cad ${theme === 'light' ? 'text-[#5C554E]' : 'text-[#c5c7d0]'}`}>
                       {selectedNode.function || 'Mechanical CAD component in current assembly.'}
                     </p>
                   </div>
 
                   <div className="flex items-center justify-between gap-2 pt-1 text-[11px] font-mono-cad">
-                    <span className={`truncate max-w-[170px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                      MATERIAL: <span className="font-bold text-slate-800 dark:text-slate-200">{selectedNode.material?.name || 'Engineered Alloy'}</span>
+                    <span className={`truncate max-w-[170px] ${theme === 'light' ? 'text-[#786E66]' : 'text-slate-400'}`}>
+                      MATERIAL: <span className={`font-bold ${theme === 'light' ? 'text-[#161311]' : 'text-slate-200'}`}>{selectedNode.material?.name || 'Engineered Alloy'}</span>
                     </span>
 
                     <button
                       onClick={() => setMobileSheetStage('expanded')}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold tracking-wider uppercase transition-all touch-manipulation min-h-[44px] shadow-sm ${
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold tracking-wider uppercase transition-all touch-manipulation min-h-[44px] shadow-sm cursor-pointer ${
                         theme === 'light'
-                          ? 'bg-orange-50 text-[#c2410c] border border-orange-200 active:bg-orange-100'
+                          ? 'bg-[#FFF7ED] text-[#C2410C] border border-[#FDBA74] active:bg-[#FFEDD5]'
                           : 'bg-[#e27228]/15 text-[#e27228] border border-[#e27228]/40 active:bg-[#e27228]/30'
                       }`}
                     >
@@ -614,7 +616,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                 /* EXPANDED STAGE CONTENT: 100% Discoverable Engineering Inspector */
                 <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                   {/* Sticky Tabs Header */}
-                  <div className="shrink-0 border-b border-slate-200 dark:border-[var(--line)]">
+                  <div className="shrink-0 border-b border-[#DDD6CB] dark:border-[var(--line)]">
                     <InspectorTabs
                       activeTab={activeInspectorTab}
                       onTabChange={setActiveInspectorTab}
@@ -627,20 +629,20 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   </div>
 
                   {/* Scrollable Content (100% of information available) */}
-                  <div className="flex-1 overflow-y-auto p-4 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-3 -webkit-overflow-scrolling-touch">
+                  <div className="flex-1 overflow-y-auto p-4 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-3 -webkit-overflow-scrolling-touch no-scrollbar">
                     {renderInspectorContent()}
                   </div>
 
                   {/* Bottom Collapse Bar */}
-                  <div className="p-2.5 border-t border-slate-200 dark:border-[var(--line)] bg-slate-50 dark:bg-[#181513] flex items-center justify-between pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-                    <span className="text-[10px] font-mono-cad text-slate-500">
+                  <div className="p-2.5 border-t border-[#DDD6CB] dark:border-[var(--line)] bg-[#EAE4DC] dark:bg-[#181513] flex items-center justify-between pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+                    <span className={`text-[10px] font-mono-cad ${theme === 'light' ? 'text-[#5C554E]' : 'text-slate-500'}`}>
                       {selectedNode.cadId} • {activeInspectorTab.toUpperCase()}
                     </span>
                     <button
                       onClick={() => setMobileSheetStage('peek')}
-                      className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border text-[11px] font-mono-cad font-bold uppercase transition-all touch-manipulation min-h-[36px] ${
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border text-[11px] font-mono-cad font-bold uppercase transition-all touch-manipulation min-h-[36px] cursor-pointer ${
                         theme === 'light'
-                          ? 'bg-white text-slate-700 border-slate-200'
+                          ? 'bg-white text-[#161311] border-[#DDD6CB]'
                           : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)]'
                       }`}
                     >
@@ -659,21 +661,21 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               <div
                 className="w-full rounded-t-2xl border-t shadow-2xl p-4 space-y-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-in slide-in-from-bottom duration-200"
                 style={{
-                  backgroundColor: theme === 'light' ? '#ffffff' : '#181513',
-                  borderColor: theme === 'light' ? '#e2e8f0' : 'var(--line)',
-                  color: theme === 'light' ? '#0f172a' : '#EFEAE2',
+                  backgroundColor: theme === 'light' ? '#F7F5F0' : '#181513',
+                  borderColor: theme === 'light' ? '#DDD6CB' : 'var(--line)',
+                  color: theme === 'light' ? '#161311' : '#EFEAE2',
                 }}
               >
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-[var(--line)]">
+                <div className="flex items-center justify-between pb-2 border-b border-[#DDD6CB] dark:border-[var(--line)]">
                   <div className="flex items-center gap-2">
-                    <Sliders className="w-4 h-4 text-[#e27228]" />
+                    <Sliders className="w-4 h-4 text-[#C2410C] dark:text-[#e27228]" />
                     <span className="text-xs font-mono-cad font-bold tracking-wider uppercase">
                       VIEWPORT RENDERING & TOOLS
                     </span>
                   </div>
                   <button
                     onClick={() => setIsMobileControlsOpen(false)}
-                    className="p-1.5 rounded-lg border border-slate-200 dark:border-[var(--line)] text-slate-400 hover:text-white touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center"
+                    className="p-1.5 rounded-lg border border-[#DDD6CB] dark:border-[var(--line)] text-[#786E66] dark:text-slate-400 hover:text-[#161311] dark:hover:text-white touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -681,7 +683,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
                 {/* View Modes Grid */}
                 <div>
-                  <span className="text-[10px] font-mono-cad uppercase tracking-wider text-slate-400 block mb-2">
+                  <span className="text-[10px] font-mono-cad uppercase tracking-wider text-[#786E66] dark:text-slate-400 block mb-2">
                     Rendering Shaders
                   </span>
                   <div className="grid grid-cols-2 xs:grid-cols-3 gap-2">
@@ -701,13 +703,13 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                             setViewMode(mode.id as ViewMode3D);
                             setIsMobileControlsOpen(false);
                           }}
-                          className={`p-3 rounded-xl border text-xs font-mono-cad font-bold flex flex-col items-center gap-1.5 transition-all touch-manipulation min-h-[54px] ${
+                          className={`p-3 rounded-xl border text-xs font-mono-cad font-bold flex flex-col items-center gap-1.5 transition-all touch-manipulation min-h-[54px] cursor-pointer ${
                             isSel
                               ? theme === 'light'
-                                ? 'bg-orange-50 text-[#c2410c] border-orange-300 shadow-sm'
+                                ? 'bg-[#FFF7ED] text-[#C2410C] border-[#FDBA74] shadow-xs'
                                 : 'bg-[#e27228]/20 text-[#e27228] border-[#e27228]/60 shadow-[0_0_12px_rgba(226,114,40,0.25)]'
                               : theme === 'light'
-                              ? 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                              ? 'bg-white text-[#161311] border-[#DDD6CB] hover:bg-[#F4EFE8]'
                               : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)] hover:bg-[#2a2420]'
                           }`}
                         >
@@ -720,13 +722,13 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                 </div>
 
                 {/* Auxiliary Toggles */}
-                <div className="pt-2 border-t border-slate-200 dark:border-[var(--line)] grid grid-cols-2 gap-2 text-xs font-mono-cad">
+                <div className="pt-2 border-t border-[#DDD6CB] dark:border-[var(--line)] grid grid-cols-2 gap-2 text-xs font-mono-cad">
                   <button
                     onClick={() => setShowLeaderLines(!showLeaderLines)}
-                    className={`p-2.5 rounded-xl border flex items-center justify-center gap-2 touch-manipulation min-h-[44px] ${
+                    className={`p-2.5 rounded-xl border flex items-center justify-center gap-2 touch-manipulation min-h-[44px] cursor-pointer ${
                       showLeaderLines
-                        ? theme === 'light' ? 'bg-orange-50 text-[#c2410c] border-orange-200 font-bold' : 'bg-[#e27228]/15 text-[#e27228] border-[#e27228]/40 font-bold'
-                        : theme === 'light' ? 'bg-slate-50 text-slate-500 border-slate-200' : 'bg-[#211e1c] text-[#8c8278] border-[var(--line)]'
+                        ? theme === 'light' ? 'bg-[#FFF7ED] text-[#C2410C] border-[#FDBA74] font-bold' : 'bg-[#e27228]/15 text-[#e27228] border-[#e27228]/40 font-bold'
+                        : theme === 'light' ? 'bg-white text-[#5C554E] border-[#DDD6CB]' : 'bg-[#211e1c] text-[#8c8278] border-[var(--line)]'
                     }`}
                   >
                     <Tag className="w-3.5 h-3.5" />
@@ -738,10 +740,10 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                       setShowCalipers(!showCalipers);
                       setIsMobileControlsOpen(false);
                     }}
-                    className={`p-2.5 rounded-xl border flex items-center justify-center gap-2 touch-manipulation min-h-[44px] ${
+                    className={`p-2.5 rounded-xl border flex items-center justify-center gap-2 touch-manipulation min-h-[44px] cursor-pointer ${
                       showCalipers
-                        ? theme === 'light' ? 'bg-orange-50 text-[#c2410c] border-orange-200 font-bold' : 'bg-[#e27228]/15 text-[#e27228] border-[#e27228]/40 font-bold'
-                        : theme === 'light' ? 'bg-slate-50 text-slate-500 border-slate-200' : 'bg-[#211e1c] text-[#8c8278] border-[var(--line)]'
+                        ? theme === 'light' ? 'bg-[#FFF7ED] text-[#C2410C] border-[#FDBA74] font-bold' : 'bg-[#e27228]/15 text-[#e27228] border-[#e27228]/40 font-bold'
+                        : theme === 'light' ? 'bg-white text-[#5C554E] border-[#DDD6CB]' : 'bg-[#211e1c] text-[#8c8278] border-[var(--line)]'
                     }`}
                   >
                     <Ruler className="w-3.5 h-3.5" />
@@ -758,30 +760,30 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               <div
                 className="w-full max-h-[85dvh] flex flex-col rounded-t-2xl border-t shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200"
                 style={{
-                  backgroundColor: theme === 'light' ? '#ffffff' : '#181513',
-                  borderColor: theme === 'light' ? '#e2e8f0' : 'var(--line)',
-                  color: theme === 'light' ? '#0f172a' : '#EFEAE2',
+                  backgroundColor: theme === 'light' ? '#F7F5F0' : '#181513',
+                  borderColor: theme === 'light' ? '#DDD6CB' : 'var(--line)',
+                  color: theme === 'light' ? '#161311' : '#EFEAE2',
                 }}
               >
                 {/* Drawer Header */}
                 <div className={`flex items-center justify-between px-4 py-2.5 border-b ${
-                  theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[var(--line)] bg-[#1c1917]'
+                  theme === 'light' ? 'border-[#DDD6CB] bg-[#EAE4DC]' : 'border-[var(--line)] bg-[#1c1917]'
                 }`}>
                   <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-[#e27228]" />
+                    <Layers className="w-4 h-4 text-[#C2410C] dark:text-[#e27228]" />
                     <span className="text-xs font-mono-cad font-bold tracking-wider uppercase">
                       ASSEMBLY HIERARCHY
                     </span>
                     <span className={`text-[10px] font-mono-cad px-1.5 py-0.5 rounded border ${
-                      theme === 'light' ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-[#211e1c] border-[var(--line)] text-[#8c8278]'
+                      theme === 'light' ? 'bg-[#DDD6CB] border-[#C8C0B4] text-[#5C554E]' : 'bg-[#211e1c] border-[var(--line)] text-[#8c8278]'
                     }`}>
                       {currentObject.rootComponents?.length || 0} ROOTS
                     </span>
                   </div>
                   <button
                     onClick={() => setIsMobileTreeOpen(false)}
-                    className={`p-1.5 rounded-lg border transition-colors touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center ${
-                      theme === 'light' ? 'border-slate-200 text-slate-500 hover:text-slate-900 bg-white' : 'border-[var(--line)] text-[#8c8278] hover:text-[#EFEAE2] bg-[#211e1c]'
+                    className={`p-1.5 rounded-lg border transition-colors touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer ${
+                      theme === 'light' ? 'border-[#DDD6CB] text-[#786E66] hover:text-[#161311] bg-white' : 'border-[var(--line)] text-[#8c8278] hover:text-[#EFEAE2] bg-[#211e1c]'
                     }`}
                   >
                     <X className="w-4 h-4" />
@@ -789,7 +791,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                 </div>
 
                 {/* Component Tree */}
-                <div className="flex-1 overflow-y-auto p-2">
+                <div className="flex-1 overflow-y-auto p-2 no-scrollbar">
                   <ComponentTree
                     rootComponents={currentObject.rootComponents}
                     selectedComponentId={selectedComponentId}
@@ -816,25 +818,25 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               <div
                 className="w-full max-h-[85dvh] flex flex-col rounded-t-2xl border-t shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200"
                 style={{
-                  backgroundColor: theme === 'light' ? '#ffffff' : '#181513',
-                  borderColor: theme === 'light' ? '#e2e8f0' : 'var(--line)',
-                  color: theme === 'light' ? '#0f172a' : '#EFEAE2',
+                  backgroundColor: theme === 'light' ? '#F7F5F0' : '#181513',
+                  borderColor: theme === 'light' ? '#DDD6CB' : 'var(--line)',
+                  color: theme === 'light' ? '#161311' : '#EFEAE2',
                 }}
               >
                 {/* Drawer Header */}
                 <div className={`flex items-center justify-between px-4 py-2.5 border-b ${
-                  theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[var(--line)] bg-[#1c1917]'
+                  theme === 'light' ? 'border-[#DDD6CB] bg-[#EAE4DC]' : 'border-[var(--line)] bg-[#1c1917]'
                 }`}>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-[#e27228]" />
+                    <div className="w-2 h-2 rounded-full bg-[#C2410C] dark:bg-[#e27228]" />
                     <span className="text-xs font-mono-cad font-bold tracking-wider uppercase">
                       {currentObject.name.toUpperCase()} • TEARDOWN
                     </span>
                   </div>
                   <button
                     onClick={() => setIsMobileInspectorOpen(false)}
-                    className={`p-1.5 rounded-lg border transition-colors touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center ${
-                      theme === 'light' ? 'border-slate-200 text-slate-500 hover:text-slate-900 bg-white' : 'border-[var(--line)] text-[#8c8278] hover:text-[#EFEAE2] bg-[#211e1c]'
+                    className={`p-1.5 rounded-lg border transition-colors touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer ${
+                      theme === 'light' ? 'border-[#DDD6CB] text-[#786E66] hover:text-[#161311] bg-white' : 'border-[var(--line)] text-[#8c8278] hover:text-[#EFEAE2] bg-[#211e1c]'
                     }`}
                   >
                     <X className="w-4 h-4" />
@@ -854,7 +856,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                 />
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-3.5 space-y-3 -webkit-overflow-scrolling-touch">
+                <div className="flex-1 overflow-y-auto p-3.5 space-y-3 -webkit-overflow-scrolling-touch no-scrollbar">
                   {renderInspectorContent()}
                 </div>
               </div>
@@ -865,7 +867,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         {/* RIGHT PANEL: Engineering Inspector & Analysis Studio (drag to resize) */}
         <div
           className={`workspace-inspector hidden md:flex shrink-0 h-full relative flex-col border-l z-20 min-w-0 ${
-            theme === 'light' ? 'bg-[#f4efe8] border-[#dfd8cf] shadow-sm' : 'bg-[#181513] border-[var(--line)]'
+            theme === 'light' ? 'bg-[#F4EFE8] border-[#DDD6CB] shadow-sm' : 'bg-[#181513] border-[var(--line)]'
           }`}
           style={{ width: inspectorWidth }}
         >
@@ -885,7 +887,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             theme={theme}
           />
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto no-scrollbar">
             {renderInspectorContent()}
           </div>
         </div>

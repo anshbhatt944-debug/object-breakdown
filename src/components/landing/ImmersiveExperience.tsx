@@ -3009,9 +3009,9 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             style={{ opacity: uploadOpacity, y: uploadY, filter: uploadBlur, display: uploadDisplay, pointerEvents: uploadPointerEvents }}
             className="absolute inset-0 flex flex-col justify-center items-center text-center pointer-events-none overflow-y-auto"
           >
-            <div className="max-w-2xl w-full space-y-6 my-auto pointer-events-auto">
+            <div className="max-w-2xl w-full space-y-6 my-auto pointer-events-auto relative p-6 sm:p-9 rounded-lg bg-[var(--current-ground,var(--carbon))]/85 backdrop-blur-md border border-[var(--line)] shadow-[0_12px_40px_rgba(0,0,0,0.08)]">
               <div className="space-y-2">
-                <p className="text-[0.8125rem] font-sans text-[var(--muted)]">System ingestion</p>
+                <p className="text-[0.8125rem] font-sans text-[var(--muted)] tracking-wider uppercase font-mono text-[11px]">System Ingestion Protocol</p>
                 <h2 className="font-sans font-light text-3xl sm:text-5xl tracking-tight text-[var(--text)]">
                   Analyze your specimen
                 </h2>
@@ -3031,10 +3031,10 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                 onMouseEnter={() => { uploadAuraWeightRef.current = 0.85; }}
                 onMouseLeave={() => { if (!isDragOver) uploadAuraWeightRef.current = 0; }}
                 onClick={() => fileInputRef.current?.click()}
-                className={`relative p-8 rounded-[2px] border transition-colors duration-150 cursor-pointer ${
+                className={`relative p-8 rounded-[4px] border-2 border-dashed transition-all duration-150 cursor-pointer ${
                   isDragOver
-                    ? 'border-[var(--text)] bg-[var(--line)]'
-                    : 'border-[var(--line)] bg-[var(--current-ground,var(--carbon))] hover:border-[var(--text)]'
+                    ? 'border-[var(--text)] bg-[color-mix(in_srgb,var(--text)_8%,transparent)] shadow-lg'
+                    : 'border-[var(--line)] bg-[color-mix(in_srgb,var(--text)_2%,transparent)] hover:border-[var(--text)] hover:bg-[color-mix(in_srgb,var(--text)_4%,transparent)]'
                 }`}
               >
                 <input
@@ -3052,15 +3052,15 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                 />
 
                 <div className="flex flex-col items-center gap-3">
-                  <div className="w-10 h-10 rounded-[2px] border border-[var(--line)] flex items-center justify-center text-[var(--text)]">
-                    <Upload className="w-4 h-4" />
+                  <div className="w-11 h-11 rounded-[3px] border border-[var(--line)] flex items-center justify-center text-[var(--text)] bg-[var(--current-ground,var(--carbon))] shadow-sm">
+                    <Upload className="w-5 h-5 text-[#c2410c] dark:text-[#e27228]" />
                   </div>
                   <div>
                     <div className="text-[1rem] font-sans font-medium text-[var(--text)] mb-1">
                       Drop your 3D CAD model
                     </div>
                     <div className="text-[0.875rem] font-serif text-[var(--muted)]">
-                      Release file here or <span className="underline text-[var(--text)]">browse local disk</span>
+                      Release file here or <span className="underline text-[var(--text)] font-sans">browse local disk</span>
                     </div>
                   </div>
                 </div>
@@ -3074,7 +3074,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                     onSearchCustom(searchQuery.trim());
                   }
                 }}
-                className="rounded-[2px] border border-[var(--line)] p-2 flex items-center gap-2 w-full bg-[var(--current-ground,var(--carbon))]"
+                className="rounded-[3px] border border-[var(--line)] p-2 flex items-center gap-2 w-full bg-[var(--current-ground,var(--carbon))] shadow-sm"
               >
                 <input
                   type="text"
@@ -3089,7 +3089,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                   disabled={!searchQuery.trim()}
                   className="btn-plate btn-plate-filled text-[0.8125rem]"
                 >
-                  Analyze
+                  <span className="relative z-10 pointer-events-none">Analyze</span>
                 </button>
               </form>
 
@@ -3106,7 +3106,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                       setSearchQuery(prompt);
                       onSearchCustom?.(prompt);
                     }}
-                    className="px-2.5 py-1 rounded-[2px] border border-[var(--line)] text-[0.8125rem] font-sans text-[var(--muted)] hover:text-[var(--text)] hover:border-[var(--text)] transition-colors cursor-pointer"
+                    className="px-2.5 py-1 rounded-[3px] border border-[var(--line)] text-[0.8125rem] font-sans text-[var(--muted)] hover:text-[var(--text)] hover:border-[var(--text)] hover:bg-[color-mix(in_srgb,var(--text)_8%,transparent)] active:scale-[0.98] transition-all cursor-pointer select-none"
                   >
                     + {prompt}
                   </button>
@@ -3120,21 +3120,21 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                   onClick={() => onSelectObject(objects[0])}
                   className="btn-plate btn-plate-filled"
                 >
-                  Explore Swiss watch
+                  <span className="relative z-10 pointer-events-none">Explore Swiss watch</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => onSelectObject(objects[1])}
                   className="btn-plate"
                 >
-                  Explore Drone
+                  <span className="relative z-10 pointer-events-none">Explore Drone</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => onSelectObject(objects[2])}
                   className="btn-plate"
                 >
-                  Explore Turbo
+                  <span className="relative z-10 pointer-events-none">Explore Turbo</span>
                 </button>
               </div>
             </div>

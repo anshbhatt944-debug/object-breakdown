@@ -82,8 +82,10 @@ export const FooterCta: React.FC<FooterCtaProps> = ({ onSearch }) => {
               disabled={!query.trim()}
               className="btn-plate btn-plate-filled shrink-0"
             >
-              <span>Analyze</span>
-              <ArrowRight className="w-4 h-4" />
+              <span className="relative z-10 pointer-events-none flex items-center gap-1.5">
+                <span>Analyze</span>
+                <ArrowRight className="w-4 h-4" />
+              </span>
             </button>
           </form>
         </div>

@@ -1,12 +1,32 @@
 import React from 'react';
-import { ALL_OBJECTS } from '../../data/objectRegistry';
 import { ObjectBreakdownData, DepthLevel } from '../../types/objectData';
-import { ChevronLeft, Scale, Sun, Moon, Box, Activity, Sparkles, Layers, Upload } from 'lucide-react';
+import { wristwatchData } from '../../data/objects/wristwatch';
+import { droneData } from '../../data/objects/drone';
+import { carEngineData } from '../../data/objects/carEngine';
+import { jetTurbineData } from '../../data/objects/jetTurbine';
+import { electricMotorData } from '../../data/objects/electricMotor';
+import { ballpointPenData } from '../../data/objects/ballpointPen';
+import {
+  Layers,
+  ChevronLeft,
+  Moon,
+  Sun,
+  Scale,
+  Upload,
+} from 'lucide-react';
+
+const ALL_OBJECTS: ObjectBreakdownData[] = [
+  ballpointPenData,
+  wristwatchData,
+  droneData,
+  carEngineData,
+  jetTurbineData,
+  electricMotorData,
+];
 
 interface WorkspaceHeaderProps {
   currentObject: ObjectBreakdownData;
   onSelectObject: (obj: ObjectBreakdownData) => void;
-  uploadedObject?: ObjectBreakdownData | null;
   depthLevel: DepthLevel;
   onDepthChange: (depth: DepthLevel) => void;
   onOpenCompare: () => void;
@@ -14,12 +34,12 @@ interface WorkspaceHeaderProps {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   onUploadModel?: (file: File) => void;
+  uploadedObject?: ObjectBreakdownData | null;
 }
 
 export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   currentObject,
   onSelectObject,
-  uploadedObject = null,
   depthLevel,
   onDepthChange,
   onOpenCompare,
@@ -27,21 +47,22 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   theme,
   onToggleTheme,
   onUploadModel,
+  uploadedObject,
 }) => {
-  const depthModes: { id: DepthLevel; label: string; badge: string }[] = [
-    { id: 'quick', label: 'Quick', badge: '30s' },
-    { id: 'detailed', label: 'Detailed', badge: 'Part' },
-    { id: 'engineering', label: 'Engineering', badge: 'DFMA' },
-    { id: 'expert', label: 'Expert', badge: 'FEA' },
-  ];
-
   const isLight = theme === 'light';
+
+  const depthModes: { id: DepthLevel; label: string; badge: string }[] = [
+    { id: 'quick', label: 'QUICK', badge: '30s' },
+    { id: 'detailed', label: 'DETAILED', badge: 'PART' },
+    { id: 'engineering', label: 'ENGINEERING', badge: 'DFMA' },
+    { id: 'expert', label: 'EXPERT', badge: 'FEA' },
+  ];
 
   return (
     <header
       className={`workspace-header min-h-[48px] h-[calc(3rem+env(safe-area-inset-top))] md:h-12 px-2 sm:px-4 flex items-center justify-between border-b text-xs font-mono-cad select-none z-30 transition-colors pt-[env(safe-area-inset-top))] md:pt-0 ${
         isLight
-          ? 'border-slate-200 bg-white text-slate-800 shadow-sm'
+          ? 'border-[#DDD6CB] bg-[#F7F5F0] text-[#161311] shadow-xs'
           : 'border-[var(--line)] bg-[#181513] text-[#EFEAE2]'
       }`}
     >
@@ -49,26 +70,28 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
       <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         <button
           onClick={onReturnHome}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-1 rounded transition-colors border touch-manipulation min-h-[36px] sm:min-h-0 shrink-0 ${
+          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-[3px] transition-all border touch-manipulation min-h-[36px] sm:min-h-0 shrink-0 cursor-pointer ${
             isLight
-              ? 'text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 border-slate-200'
+              ? 'text-[#161311] hover:text-[#C2410C] bg-white hover:bg-[#F4EFE8] border-[#DDD6CB] shadow-xs'
               : 'text-[#8c8278] hover:text-[#EFEAE2] bg-[#211e1c] hover:bg-[#2a2420] border-[var(--line)]'
           }`}
           data-cursor="EXIT"
           title="Return to Landing Page"
         >
-          <ChevronLeft className="w-3.5 h-3.5 text-[#e27228]" />
-          <span className="text-[11px] uppercase tracking-wider">EXIT</span>
+          <ChevronLeft className="w-3.5 h-3.5 text-[#C2410C] dark:text-[#e27228]" />
+          <span className="text-[11px] uppercase tracking-wider font-semibold">EXIT</span>
         </button>
 
-        <div className={`h-4 w-px ${isLight ? 'bg-slate-200' : 'bg-[var(--line)]'} hidden sm:block`} />
+        <div className={`h-4 w-px ${isLight ? 'bg-[#DDD6CB]' : 'bg-[var(--line)]'} hidden sm:block`} />
 
         {/* CAD Breadcrumb & Target Selector */}
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <div className="hidden md:flex items-center gap-1 text-[11px] tracking-wider text-[#8c8278] shrink-0">
+          <div className={`hidden md:flex items-center gap-1 text-[11px] tracking-wider shrink-0 ${
+            isLight ? 'text-[#786e64]' : 'text-[#8c8278]'
+          }`}>
             <span>OBJECT BREAKDOWN</span>
             <span>/</span>
-            <span className="text-[#e27228] font-medium">{currentObject.category?.toUpperCase() || 'CAD'}</span>
+            <span className="text-[#C2410C] dark:text-[#e27228] font-bold">{currentObject.category?.toUpperCase() || 'CAD'}</span>
             <span>/</span>
           </div>
 
@@ -87,14 +110,14 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                 const selected = ALL_OBJECTS.find((o) => o.id === val);
                 if (selected) onSelectObject(selected);
               }}
-              className={`bg-transparent text-[11px] font-bold focus:outline-none cursor-pointer uppercase tracking-wider font-mono-cad border-b border-dashed pb-0.5 hover:border-[#e27228] transition-colors max-w-[110px] xs:max-w-[150px] sm:max-w-none truncate ${
-                isLight ? 'text-slate-900 border-slate-300' : 'text-[#EFEAE2] border-[var(--line)]'
+              className={`bg-transparent text-[11px] font-bold focus:outline-none cursor-pointer uppercase tracking-wider font-mono-cad border-b border-dashed pb-0.5 transition-colors max-w-[110px] xs:max-w-[150px] sm:max-w-none truncate ${
+                isLight ? 'text-[#161311] border-[#DDD6CB] hover:border-[#C2410C]' : 'text-[#EFEAE2] border-[var(--line)] hover:border-[#e27228]'
               }`}
             >
               {uploadedObject && (
                 <option
                   value={uploadedObject.id}
-                  className={isLight ? 'bg-white text-blue-600 font-bold' : 'bg-[#181513] text-[#e27228] font-bold'}
+                  className={isLight ? 'bg-white text-[#C2410C] font-bold' : 'bg-[#181513] text-[#e27228] font-bold'}
                 >
                   ★ {uploadedObject.name.toUpperCase()} (UPLOADED)
                 </option>
@@ -102,20 +125,20 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
               {!uploadedObject && !ALL_OBJECTS.some((o) => o.id === currentObject.id) && (
                 <option
                   value={currentObject.id}
-                  className={isLight ? 'bg-white text-blue-600 font-bold' : 'bg-[#181513] text-[#e27228] font-bold'}
+                  className={isLight ? 'bg-white text-[#C2410C] font-bold' : 'bg-[#181513] text-[#e27228] font-bold'}
                 >
                   ★ {currentObject.name.toUpperCase()} (UPLOADED)
                 </option>
               )}
               {ALL_OBJECTS.map((obj) => (
-                <option key={obj.id} value={obj.id} className={isLight ? 'bg-white text-slate-900' : 'bg-[#181513] text-[#EFEAE2]'}>
+                <option key={obj.id} value={obj.id} className={isLight ? 'bg-white text-[#161311]' : 'bg-[#181513] text-[#EFEAE2]'}>
                   {obj.name}
                 </option>
               ))}
             </select>
 
-            <span className={`hidden xs:inline text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${
-              isLight ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-[#211e1c] border-[var(--line)] text-[#8c8278]'
+            <span className={`hidden xs:inline text-[10px] px-1.5 py-0.5 rounded-[2px] border shrink-0 ${
+              isLight ? 'bg-[#EAE4DC] border-[#DDD6CB] text-[#5e5750] font-semibold' : 'bg-[#211e1c] border-[var(--line)] text-[#8c8278]'
             }`}>
               {currentObject.stats.componentCount} PARTS
             </span>
@@ -124,8 +147,8 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
       </div>
 
       {/* Middle: Segmented Depth Mode Switcher */}
-      <div className={`hidden lg:flex items-center gap-1 p-0.5 rounded border ${
-        isLight ? 'bg-slate-100 border-slate-200' : 'bg-[#211e1c] border-[var(--line)]'
+      <div className={`hidden lg:flex items-center gap-1 p-0.5 rounded-[4px] border ${
+        isLight ? 'bg-[#EAE4DC] border-[#DDD6CB]' : 'bg-[#211e1c] border-[var(--line)]'
       }`}>
         {depthModes.map((dm) => {
           const isSelected = depthLevel === dm.id;
@@ -133,13 +156,13 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
             <button
               key={dm.id}
               onClick={() => onDepthChange(dm.id)}
-              className={`px-2.5 py-1 rounded text-[11px] font-mono-cad uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded-[3px] text-[11px] font-mono-cad uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
                 isSelected
                   ? isLight
-                    ? 'bg-white text-[#c2410c] font-bold shadow-sm border border-slate-200'
+                    ? 'bg-white text-[#C2410C] font-bold shadow-xs border border-[#DDD6CB]'
                     : 'bg-[#25201c] text-[#EFEAE2] font-bold border border-[#e27228]/70 shadow-[0_0_10px_rgba(226,114,40,0.15)]'
                   : isLight
-                  ? 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                  ? 'text-[#5e5750] hover:text-[#161311] hover:bg-white/50'
                   : 'text-[#8c8278] hover:text-[#EFEAE2] hover:bg-[#25201c]'
               }`}
             >
@@ -147,8 +170,8 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
               <span
                 className={`text-[9px] px-1 py-0.2 rounded font-normal ${
                   isSelected
-                    ? (isLight ? 'bg-orange-50 text-[#c2410c]' : 'bg-[rgba(226,114,40,0.2)] text-[#e27228]')
-                    : (isLight ? 'bg-slate-200 text-slate-600' : 'bg-[#181513] text-[#8c8278]')
+                    ? isLight ? 'bg-orange-50 text-[#C2410C] font-bold' : 'bg-[rgba(226,114,40,0.2)] text-[#e27228]'
+                    : isLight ? 'bg-[#DDD6CB] text-[#5e5750]' : 'bg-[#181513] text-[#8c8278]'
                 }`}
               >
                 {dm.badge}
@@ -162,16 +185,16 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {onUploadModel && (
           <label
-            className={`flex items-center justify-center gap-1 sm:gap-1.5 p-2 sm:px-2.5 sm:py-1 rounded border text-[11px] font-mono-cad uppercase tracking-wider transition-all cursor-pointer touch-manipulation min-h-[36px] sm:min-h-0 min-w-[36px] sm:min-w-0 ${
+            className={`flex items-center justify-center gap-1 sm:gap-1.5 p-2 sm:px-2.5 sm:py-1 rounded-[3px] border text-[11px] font-mono-cad uppercase tracking-wider transition-all cursor-pointer touch-manipulation min-h-[36px] sm:min-h-0 min-w-[36px] sm:min-w-0 ${
               isLight
-                ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                ? 'bg-white hover:bg-[#F4EFE8] text-[#161311] border-[#DDD6CB] shadow-xs'
                 : 'bg-[#211e1c] hover:bg-[#2a2420] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)]'
             }`}
             data-cursor="UPLOAD"
             title="Upload GLB or GLTF 3D model"
           >
-            <Upload className="w-3.5 h-3.5 text-[#e27228]" />
-            <span className="hidden sm:inline">Upload</span>
+            <Upload className="w-3.5 h-3.5 text-[#C2410C] dark:text-[#e27228]" />
+            <span className="hidden sm:inline font-semibold">Upload</span>
             <input
               type="file"
               accept=".glb,.gltf"
@@ -189,28 +212,28 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
 
         <button
           onClick={onOpenCompare}
-          className={`flex items-center justify-center gap-1 sm:gap-1.5 p-2 sm:px-2.5 sm:py-1 rounded border text-[11px] font-mono-cad uppercase tracking-wider transition-all touch-manipulation min-h-[36px] sm:min-h-0 min-w-[36px] sm:min-w-0 ${
+          className={`flex items-center justify-center gap-1 sm:gap-1.5 p-2 sm:px-2.5 sm:py-1 rounded-[3px] border text-[11px] font-mono-cad uppercase tracking-wider transition-all touch-manipulation min-h-[36px] sm:min-h-0 min-w-[36px] sm:min-w-0 cursor-pointer ${
             isLight
-              ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+              ? 'bg-white hover:bg-[#F4EFE8] text-[#161311] border-[#DDD6CB] shadow-xs'
               : 'bg-[#211e1c] hover:bg-[#2a2420] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)]'
           }`}
           data-cursor="COMPARE"
           title="Compare with other CAD mechanisms"
         >
-          <Scale className="w-3.5 h-3.5 text-[#e27228]" />
-          <span className="hidden sm:inline">Compare</span>
+          <Scale className="w-3.5 h-3.5 text-[#C2410C] dark:text-[#e27228]" />
+          <span className="hidden sm:inline font-semibold">Compare</span>
         </button>
 
         <button
           onClick={onToggleTheme}
           title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          className={`w-9 h-9 sm:w-7 sm:h-7 rounded border flex items-center justify-center transition-all touch-manipulation ${
+          className={`w-9 h-9 sm:w-7 sm:h-7 rounded-[3px] border flex items-center justify-center transition-all touch-manipulation cursor-pointer ${
             isLight
-              ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
+              ? 'bg-white hover:bg-[#F4EFE8] border-[#DDD6CB] text-[#161311] shadow-xs'
               : 'bg-[#211e1c] hover:bg-[#2a2420] border-[var(--line)] text-[#8c8278] hover:text-[#EFEAE2]'
           }`}
         >
-          {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-700" />}
+          {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-[#161311]" />}
         </button>
       </div>
     </header>
