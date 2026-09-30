@@ -971,16 +971,18 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
                   <path
                     d={ann.pathD}
                     fill="none"
-                    stroke={active ? (theme === 'light' ? '#0284c7' : '#38bdf8') : (theme === 'light' ? '#2563eb' : '#3b82f6')}
-                    strokeOpacity={active ? 1 : 0.65}
-                    strokeWidth={active ? 2 : 1.2}
-                    strokeDasharray={active ? undefined : '3 3'}
+                    stroke={active ? '#e27228' : (theme === 'light' ? '#8c827a' : '#c5bdb5')}
+                    strokeOpacity={active ? 1 : 0.55}
+                    strokeWidth={active ? 1.6 : 1.1}
+                    strokeDasharray={active ? undefined : '2 3'}
                   />
                   <circle
                     cx={ann.anchorX}
                     cy={ann.anchorY}
-                    r={active ? 4.5 : 3}
-                    fill={active ? (theme === 'light' ? '#0284c7' : '#38bdf8') : (theme === 'light' ? '#2563eb' : '#3b82f6')}
+                    r={active ? 4 : 2.5}
+                    fill={active ? '#e27228' : (theme === 'light' ? '#1D1713' : '#EFEAE2')}
+                    stroke={active ? (theme === 'light' ? '#fff' : '#181513') : 'none'}
+                    strokeWidth={active ? 1.5 : 0}
                   />
                 </g>
               );
@@ -1011,7 +1013,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
                     e.stopPropagation();
                     onSelectComponent(isSelected ? null : ann.nodeId);
                   }}
-                  className={`three-label pointer-events-auto cursor-pointer w-full px-3 py-2 text-xs font-mono-cad border transition-all ${
+                  className={`three-label pointer-events-auto cursor-pointer w-full px-2.5 py-1.5 text-xs transition-all ${
                     isSelected
                       ? 'three-label-selected'
                       : isHovered
@@ -1020,14 +1022,14 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
                   }`}
                 >
                   <div className="flex items-start gap-2">
-                    <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center text-[9px] font-bold annotation-index ${isSelected ? 'annotation-index-active' : ''}`}>
+                    <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-[9px] font-mono font-bold annotation-index ${isSelected ? 'annotation-index-active' : ''}`}>
                       {String(idx + 1).padStart(2, '0')}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="three-label-name font-semibold tracking-wide leading-tight truncate">{ann.name}</div>
-                      <div className="three-label-meta mt-1 text-[9px] uppercase tracking-[0.12em] flex items-center gap-1.5 truncate">
+                      <div className="three-label-name text-[11px] font-sans font-medium tracking-wide leading-tight truncate">{ann.name}</div>
+                      <div className="three-label-meta mt-0.5 text-[8.5px] font-mono uppercase tracking-[0.12em] flex items-center gap-1.5 truncate">
                         {ann.category}
-                        {ann.isVirtual && <span className="text-[8px] text-amber-300/90 border border-amber-300/20 rounded px-1 py-0.5">REFERENCE</span>}
+                        {ann.isVirtual && <span className="text-[8px] text-amber-500/90 border border-amber-500/30 rounded px-1 py-0.2">REF</span>}
                       </div>
                     </div>
                   </div>
