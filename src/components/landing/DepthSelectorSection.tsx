@@ -51,13 +51,13 @@ export const DepthSelectorSection: React.FC<DepthSelectorSectionProps> = ({
     <section id="depth" className="py-28 px-4 sm:px-8 max-w-[1800px] mx-auto border-t border-white/10">
       {/* Header */}
       <div className="mb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono-cad text-[#00f2ad] uppercase tracking-widest mb-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono-cad text-[var(--text)] uppercase tracking-widest mb-4">
           <Layers className="w-3.5 h-3.5" />
           <span>Cognitive Exploration Tiers</span>
         </div>
-        <h2 className="text-[clamp(2.2rem,5vw,4.5rem)] font-light leading-[1] tracking-tighter text-slate-100 font-heading">
+        <h2 className="text-[clamp(2.2rem,5vw,4.5rem)] font-light leading-[1] tracking-tighter text-[var(--muted)] font-heading">
           SELECT YOUR <br />
-          <span className="text-slate-400">ANALYSIS DEPTH.</span>
+          <span className="text-[var(--muted)]">ANALYSIS DEPTH.</span>
         </h2>
       </div>
 
@@ -74,8 +74,8 @@ export const DepthSelectorSection: React.FC<DepthSelectorSectionProps> = ({
               whileHover={{ y: -4 }}
               className={`rounded-2xl p-6 sm:p-8 text-left transition-all duration-300 relative flex flex-col justify-between border ${
                 isSelected
-                  ? 'bg-[#00f2ad]/10 border-[#00f2ad] shadow-[0_0_30px_rgba(0,242,173,0.2)]'
-                  : 'bg-[#0a0d14] border-white/10 hover:border-white/20 hover:bg-[#0f1420]'
+                  ? 'bg-[var(--text)]/10 border-[var(--text)] shadow-[0_0_30px_var(--line)]'
+                  : 'bg-[var(--carbon)] border-white/10 hover:border-white/20 hover:bg-[var(--carbon)]'
               }`}
               data-cursor="SELECT"
             >
@@ -85,8 +85,8 @@ export const DepthSelectorSection: React.FC<DepthSelectorSectionProps> = ({
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                       isSelected
-                        ? 'bg-[#00f2ad] text-black shadow-[0_0_15px_rgba(0,242,173,0.4)]'
-                        : 'bg-white/5 text-slate-400'
+                        ? 'bg-[var(--text)] text-black shadow-[0_0_15px_var(--line)]'
+                        : 'bg-white/5 text-[var(--muted)]'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -95,8 +95,8 @@ export const DepthSelectorSection: React.FC<DepthSelectorSectionProps> = ({
                   <span
                     className={`text-[10px] font-mono-cad px-2.5 py-1 rounded-full font-bold ${
                       isSelected
-                        ? 'bg-[#00f2ad] text-black'
-                        : 'bg-white/5 text-slate-400'
+                        ? 'bg-[var(--text)] text-black'
+                        : 'bg-white/5 text-[var(--muted)]'
                     }`}
                   >
                     {isSelected ? 'ACTIVE TIER' : tier.badge}
@@ -104,20 +104,20 @@ export const DepthSelectorSection: React.FC<DepthSelectorSectionProps> = ({
                 </div>
 
                 {/* Title & Tagline */}
-                <h3 className="text-2xl font-light text-slate-100 font-heading mb-1">
+                <h3 className="text-2xl font-light text-[var(--muted)] font-heading mb-1">
                   {tier.title}
                 </h3>
-                <p className="text-xs text-slate-400 font-mono-cad uppercase tracking-wider mb-6">
+                <p className="text-xs text-[var(--muted)] font-mono-cad uppercase tracking-wider mb-6">
                   {tier.tagline}
                 </p>
 
                 {/* Unlocked Features */}
                 <div className="space-y-2.5 pt-4 border-t border-white/10">
                   {tier.features.map((feature, i) => (
-                    <div key={i} className="flex items-start gap-2 text-xs text-slate-300 leading-snug">
+                    <div key={i} className="flex items-start gap-2 text-xs text-[var(--muted)] leading-snug">
                       <Check
                         className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${
-                          isSelected ? 'text-[#00f2ad]' : 'text-slate-500'
+                          isSelected ? 'text-[var(--text)]' : 'text-[var(--muted)]'
                         }`}
                       />
                       <span>{feature}</span>
@@ -128,7 +128,7 @@ export const DepthSelectorSection: React.FC<DepthSelectorSectionProps> = ({
 
               {/* Bottom Trigger Indicator */}
               <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-[10px] font-mono-cad">
-                <span className={isSelected ? 'text-[#00f2ad] font-bold' : 'text-slate-500'}>
+                <span className={isSelected ? 'text-[var(--text)] font-bold' : 'text-[var(--muted)]'}>
                   {isSelected ? '✓ CURRENT WORKSPACE MODE' : 'CLICK TO ACTIVATE'}
                 </span>
               </div>
