@@ -53,10 +53,10 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
   return (
     <div className="hidden md:flex absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex-col items-center gap-2 w-[95%] sm:w-[92%] max-w-2xl pointer-events-none">
       {/* Explode Slider Panel */}
-      <div className={`pointer-events-auto flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded w-full border shadow-xl transition-colors duration-200 ${
+      <div className={`pointer-events-auto flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-[2px] w-full border shadow-xl backdrop-blur-md transition-colors duration-200 ${
         theme === 'light'
-          ? 'bg-white/95 border-slate-200 text-slate-800 shadow-md'
-          : 'bg-[#1a1b21] border-[#262832] text-[#f3f4f8]'
+          ? 'bg-[#f4efe8]/95 border-[#dfd8cf] text-[#1D1713] shadow-md'
+          : 'bg-[#181513]/95 border-[var(--line)] text-[#EFEAE2]'
       }`}>
         <button
           onClick={handleExplodeToggle}
@@ -67,7 +67,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
                 : 'bg-[rgba(226,114,40,0.15)] text-[#e27228] border border-[rgba(226,114,40,0.5)] shadow-[0_0_10px_rgba(226,114,40,0.2)]'
               : theme === 'light'
               ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
-              : 'bg-[#111318] text-[#c5c7d0] hover:bg-[#37393f]/40 border border-[#262832]'
+              : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] hover:bg-[#2a2420] border border-[var(--line)]'
           }`}
         >
           <Layers className="w-3.5 h-3.5 text-[#e27228]" />
@@ -75,7 +75,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
         </button>
 
         <div className="flex-1 flex items-center gap-2.5">
-          <span className={`text-[10px] font-mono-cad ${theme === 'light' ? 'text-slate-500' : 'text-[#6b7082]'}`}>0%</span>
+          <span className={`text-[10px] font-mono-cad ${theme === 'light' ? 'text-slate-500' : 'text-[#8c8278]'}`}>0%</span>
           <input
             type="range"
             min={0}
@@ -83,7 +83,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
             value={Math.round(explodeAmount * 100)}
             onChange={(e) => onExplodeChange(Number(e.target.value) / 100)}
             className={`w-full h-1 rounded appearance-none cursor-pointer ${
-              theme === 'light' ? 'bg-slate-200 accent-[#c2410c]' : 'bg-[#0c0e13] accent-[#e27228]'
+              theme === 'light' ? 'bg-slate-200 accent-[#c2410c]' : 'bg-[#25201c] accent-[#e27228]'
             }`}
           />
           <span className={`text-[11px] font-mono-cad font-semibold w-9 text-right ${
@@ -104,7 +104,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
                 : 'bg-[rgba(226,114,40,0.15)] text-[#e27228] border border-[rgba(226,114,40,0.5)] shadow-[0_0_10px_rgba(226,114,40,0.2)]'
               : theme === 'light'
               ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
-              : 'bg-[#111318] text-[#c5c7d0] hover:bg-[#37393f]/40 hover:text-white border border-[#262832]'
+              : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] hover:bg-[#2a2420] border border-[var(--line)]'
           }`}
         >
           {isPlayingMechanism ? (
@@ -124,10 +124,10 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
       </div>
 
       {/* View Mode Presets & Tool Icons */}
-      <div className={`pointer-events-auto flex items-center gap-1 p-1 rounded border shadow-xl overflow-x-auto no-scrollbar max-w-full transition-colors duration-200 ${
+      <div className={`pointer-events-auto flex items-center gap-1 p-1 rounded-[2px] border shadow-xl backdrop-blur-md overflow-x-auto no-scrollbar max-w-full transition-colors duration-200 ${
         theme === 'light'
-          ? 'bg-white/95 border-slate-200 text-slate-800 shadow-md'
-          : 'bg-[#1a1b21] border-[#262832] text-[#f3f4f8]'
+          ? 'bg-[#f4efe8]/95 border-[#dfd8cf] text-[#1D1713] shadow-md'
+          : 'bg-[#181513]/95 border-[var(--line)] text-[#EFEAE2]'
       }`}>
         {/* Solid CAD */}
         <button
@@ -136,10 +136,10 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
             viewMode === 'solid'
               ? theme === 'light'
                 ? 'bg-orange-50 text-[#c2410c] font-semibold border border-orange-200'
-                : 'bg-[#16181f] text-white font-semibold border border-[rgba(226,114,40,0.6)]'
+                : 'bg-[#25201c] text-[#EFEAE2] font-semibold border border-[rgba(226,114,40,0.7)]'
               : theme === 'light'
               ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              : 'text-[#6b7082] hover:text-[#c5c7d0] hover:bg-[#111318]'
+              : 'text-[#8c8278] hover:text-[#EFEAE2] hover:bg-[#211e1c]'
           }`}
         >
           <Box className="w-3.5 h-3.5" />
@@ -152,11 +152,11 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
           className={`px-2 sm:px-2.5 py-1.5 sm:py-1 rounded text-[10px] sm:text-[11px] font-mono-cad flex items-center gap-1.5 transition-all touch-manipulation whitespace-nowrap min-h-[36px] sm:min-h-0 ${
             viewMode === 'xray'
               ? theme === 'light'
-                ? 'bg-cyan-50 text-[#0284c7] font-semibold border border-cyan-200'
-                : 'bg-[#16181f] text-[#22d3ee] font-semibold border border-[rgba(34,211,238,0.6)]'
+                ? 'bg-orange-50 text-[#c2410c] font-semibold border border-orange-200'
+                : 'bg-[#25201c] text-[#e27228] font-semibold border border-[rgba(226,114,40,0.7)]'
               : theme === 'light'
               ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              : 'text-[#6b7082] hover:text-[#c5c7d0] hover:bg-[#111318]'
+              : 'text-[#8c8278] hover:text-[#EFEAE2] hover:bg-[#211e1c]'
           }`}
         >
           <Eye className="w-3.5 h-3.5" />
@@ -169,11 +169,11 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
           className={`px-2 sm:px-2.5 py-1.5 sm:py-1 rounded text-[10px] sm:text-[11px] font-mono-cad flex items-center gap-1.5 transition-all touch-manipulation whitespace-nowrap min-h-[36px] sm:min-h-0 ${
             viewMode === 'wireframe'
               ? theme === 'light'
-                ? 'bg-purple-50 text-purple-700 font-semibold border border-purple-200'
-                : 'bg-[#16181f] text-[#c084fc] font-semibold border border-[rgba(192,132,252,0.6)]'
+                ? 'bg-orange-50 text-[#c2410c] font-semibold border border-orange-200'
+                : 'bg-[#25201c] text-[#e27228] font-semibold border border-[rgba(226,114,40,0.7)]'
               : theme === 'light'
               ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              : 'text-[#6b7082] hover:text-[#c5c7d0] hover:bg-[#111318]'
+              : 'text-[#8c8278] hover:text-[#EFEAE2] hover:bg-[#211e1c]'
           }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
@@ -187,10 +187,10 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
             viewMode === 'stress'
               ? theme === 'light'
                 ? 'bg-amber-50 text-amber-700 font-semibold border border-amber-200'
-                : 'bg-[#16181f] text-[#f59e0b] font-semibold border border-[rgba(245,158,11,0.6)]'
+                : 'bg-[#25201c] text-[#e27228] font-semibold border border-[rgba(226,114,40,0.7)]'
               : theme === 'light'
               ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              : 'text-[#6b7082] hover:text-[#c5c7d0] hover:bg-[#111318]'
+              : 'text-[#8c8278] hover:text-[#EFEAE2] hover:bg-[#211e1c]'
           }`}
         >
           <Activity className="w-3.5 h-3.5" />
@@ -203,18 +203,18 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
           className={`px-2 sm:px-2.5 py-1.5 sm:py-1 rounded text-[10px] sm:text-[11px] font-mono-cad flex items-center gap-1.5 transition-all touch-manipulation whitespace-nowrap min-h-[36px] sm:min-h-0 ${
             viewMode === 'thermal'
               ? theme === 'light'
-                ? 'bg-rose-50 text-rose-700 font-semibold border border-rose-200'
-                : 'bg-[#16181f] text-[#ef4444] font-semibold border border-[rgba(239,68,68,0.6)]'
+                ? 'bg-orange-50 text-[#c2410c] font-semibold border border-orange-200'
+                : 'bg-[#25201c] text-[#e27228] font-semibold border border-[rgba(226,114,40,0.7)]'
               : theme === 'light'
               ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              : 'text-[#6b7082] hover:text-[#c5c7d0] hover:bg-[#111318]'
+              : 'text-[#8c8278] hover:text-[#EFEAE2] hover:bg-[#211e1c]'
           }`}
         >
           <Flame className="w-3.5 h-3.5" />
           Thermal
         </button>
 
-        <div className={`w-[1px] h-3.5 mx-0.5 sm:mx-1 shrink-0 ${theme === 'light' ? 'bg-slate-200' : 'bg-[#262832]'}`} />
+        <div className={`w-[1px] h-3.5 mx-0.5 sm:mx-1 shrink-0 ${theme === 'light' ? 'bg-slate-200' : 'bg-[var(--line)]'}`} />
 
         {/* Leader Lines Pin Toggle */}
         <button
@@ -224,10 +224,10 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
             showLeaderLines
               ? theme === 'light'
                 ? 'bg-orange-50 text-[#c2410c] border border-orange-200'
-                : 'bg-[#16181f] text-[#e27228] border border-[rgba(226,114,40,0.5)]'
+                : 'bg-[#25201c] text-[#e27228] border border-[rgba(226,114,40,0.7)]'
               : theme === 'light'
               ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              : 'text-[#6b7082] hover:text-[#c5c7d0] hover:bg-[#111318]'
+              : 'text-[#8c8278] hover:text-[#EFEAE2] hover:bg-[#211e1c]'
           }`}
         >
           <Tag className="w-3.5 h-3.5" />
@@ -240,11 +240,11 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
           className={`p-2 sm:p-1.5 rounded transition-all touch-manipulation min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 flex items-center justify-center shrink-0 ${
             showCalipers
               ? theme === 'light'
-                ? 'bg-cyan-50 text-[#0284c7] border border-cyan-200'
-                : 'bg-[#16181f] text-[#22d3ee] border border-[rgba(34,211,238,0.5)]'
+                ? 'bg-orange-50 text-[#c2410c] border border-orange-200'
+                : 'bg-[#25201c] text-[#e27228] border border-[rgba(226,114,40,0.7)]'
               : theme === 'light'
               ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              : 'text-[#6b7082] hover:text-[#c5c7d0] hover:bg-[#111318]'
+              : 'text-[#8c8278] hover:text-[#EFEAE2] hover:bg-[#211e1c]'
           }`}
         >
           <Ruler className="w-3.5 h-3.5" />
@@ -257,7 +257,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
           className={`p-2 sm:p-1.5 rounded transition-all touch-manipulation min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 flex items-center justify-center shrink-0 ${
             theme === 'light'
               ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              : 'text-[#6b7082] hover:text-[#c5c7d0] hover:bg-[#111318]'
+              : 'text-[#8c8278] hover:text-[#EFEAE2] hover:bg-[#211e1c]'
           }`}
         >
           <RotateCcw className="w-3.5 h-3.5" />
