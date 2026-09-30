@@ -3,6 +3,7 @@ import { ObjectBreakdownData, DepthLevel } from './types/objectData';
 import { wristwatchData } from './data/objects/wristwatch';
 import { droneData } from './data/objects/drone';
 import { carEngineData } from './data/objects/carEngine';
+import { jetTurbineData } from './data/objects/jetTurbine';
 import { electricMotorData } from './data/objects/electricMotor';
 import { ballpointPenData } from './data/objects/ballpointPen';
 import { searchOrGenerateObject, getObjectById } from './data/objectRegistry';
@@ -268,18 +269,18 @@ export const App: React.FC = () => {
 
         {/* Global Full-Screen Drag-and-Drop HUD Overlay */}
         {isDraggingFile && (
-          <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/85 backdrop-blur-2xl pointer-events-none select-none animate-in fade-in duration-150">
-            <div className="flex flex-col items-center p-12 rounded-3xl border-2 border-dashed border-[#00f2ad] bg-[#080d1a]/95 text-center shadow-[0_0_80px_rgba(0,242,173,0.35)]">
-              <div className="w-20 h-20 rounded-2xl bg-[#00f2ad]/10 border border-[#00f2ad]/30 flex items-center justify-center mb-6 text-[#00f2ad] animate-bounce">
-                <Upload className="w-10 h-10" />
+          <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/85 pointer-events-none select-none">
+            <div className="flex flex-col items-center p-10 rounded-[2px] border border-[var(--line)] bg-[var(--carbon)] text-center">
+              <div className="w-16 h-16 rounded-[2px] border border-[var(--line)] flex items-center justify-center mb-5 text-[var(--text)]">
+                <Upload className="w-8 h-8" />
               </div>
-              <h3 className="text-2xl font-bold font-heading text-white tracking-tight mb-2">
-                DROP 3D CAD MODEL TO DECONSTRUCT
+              <h3 className="text-xl font-sans font-medium text-[var(--text)] tracking-tight mb-2">
+                Drop 3D CAD model to deconstruct
               </h3>
-              <p className="text-xs font-mono-cad text-slate-400 max-w-sm">
+              <p className="text-[0.875rem] font-serif text-[var(--muted)] max-w-sm">
                 Release anywhere to inspect assembly geometry and generate an interactive 3D exploded breakdown.
               </p>
-              <div className="mt-6 flex items-center gap-3 text-[10px] font-mono-cad text-[#00f2ad] uppercase tracking-widest font-bold">
+              <div className="mt-5 flex items-center gap-3 text-[0.75rem] font-sans text-[var(--muted)]">
                 <span>Supports .GLB</span>
                 <span>•</span>
                 <span>Supports .GLTF</span>
@@ -301,7 +302,7 @@ export const App: React.FC = () => {
         theme === 'light'
           ? 'theme-light'
           : 'theme-dark'
-      } selection:bg-[#3b82f6]/30`}
+      } selection:bg-white/20`}
     >
       <CustomCursor theme={theme} />
 
@@ -342,18 +343,18 @@ export const App: React.FC = () => {
 
       {/* Global Full-Screen Drag-and-Drop HUD Overlay */}
       {isDraggingFile && (
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/85 backdrop-blur-2xl pointer-events-none select-none animate-in fade-in duration-150">
-          <div className="flex flex-col items-center p-12 rounded-3xl border-2 border-dashed border-[#00f2ad] bg-[#080d1a]/95 text-center shadow-[0_0_80px_rgba(0,242,173,0.35)]">
-            <div className="w-20 h-20 rounded-2xl bg-[#00f2ad]/10 border border-[#00f2ad]/30 flex items-center justify-center mb-6 text-[#00f2ad] animate-bounce">
-              <Upload className="w-10 h-10" />
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/85 pointer-events-none select-none">
+          <div className="flex flex-col items-center p-10 rounded-[2px] border border-[var(--line)] bg-[var(--carbon)] text-center">
+            <div className="w-16 h-16 rounded-[2px] border border-[var(--line)] flex items-center justify-center mb-5 text-[var(--text)]">
+              <Upload className="w-8 h-8" />
             </div>
-            <h3 className="text-2xl font-bold font-heading text-white tracking-tight mb-2">
-              DROP 3D CAD MODEL TO DECONSTRUCT
+            <h3 className="text-xl font-sans font-medium text-[var(--text)] tracking-tight mb-2">
+              Import 3D CAD specimen
             </h3>
-            <p className="text-xs font-mono-cad text-slate-400 max-w-sm">
-              Release anywhere to inspect assembly geometry and generate an interactive 3D exploded breakdown.
+            <p className="text-[0.875rem] font-serif text-[var(--muted)] max-w-sm">
+              Release anywhere to inspect assembly geometry and generate an interactive exploded breakdown.
             </p>
-            <div className="mt-6 flex items-center gap-3 text-[10px] font-mono-cad text-[#00f2ad] uppercase tracking-widest font-bold">
+            <div className="mt-5 flex items-center gap-3 text-[0.75rem] font-sans text-[var(--muted)]">
               <span>Supports .GLB</span>
               <span>•</span>
               <span>Supports .GLTF</span>
