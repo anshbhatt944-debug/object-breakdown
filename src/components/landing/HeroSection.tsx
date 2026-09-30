@@ -77,9 +77,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono-cad text-[#00f2ad] uppercase tracking-widest mb-6 w-fit"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono-cad text-[var(--text)] uppercase tracking-widest mb-6 w-fit"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00f2ad] animate-ping" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--text)] animate-ping" />
             <span>AI 3D CAD Deconstruction Engine</span>
           </motion.div>
 
@@ -88,10 +88,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="text-[clamp(2.8rem,6vw,5.5rem)] font-light leading-[0.95] tracking-tighter text-slate-100 font-heading mb-6"
+            className="text-[clamp(2.8rem,6vw,5.5rem)] font-light leading-[0.95] tracking-tighter text-[var(--muted)] font-heading mb-6"
           >
             DECONSTRUCT <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-100 via-slate-400 to-slate-600 font-normal">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r text-[var(--muted)] text-[var(--muted)] text-[var(--muted)] font-normal">
               THE INVISIBLE
             </span> <br />
             MECHANICS.
@@ -102,7 +102,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-base sm:text-lg text-slate-400 font-light leading-relaxed max-w-lg mb-8"
+            className="text-base sm:text-lg text-[var(--muted)] font-light leading-relaxed max-w-lg mb-8"
           >
             An interactive digital atlas for examining mechanical assemblies, material metallurgy,
             contact kinematics, and DFMA physics. Upload any 3D CAD asset or explore our verified catalog.
@@ -128,7 +128,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               onClick={() => fileInputRef.current?.click()}
               className="btn-ghost flex items-center gap-2 text-xs"
             >
-              <Upload className="w-3.5 h-3.5 text-[#00f2ad]" />
+              <Upload className="w-3.5 h-3.5 text-[var(--text)]" />
               <span>Drop 3D CAD File</span>
             </button>
             <input
@@ -147,7 +147,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             transition={{ duration: 1, delay: 0.5 }}
             className="mt-10 pt-6 border-t border-white/10 flex flex-col gap-2"
           >
-            <span className="text-[10px] font-mono-cad uppercase tracking-widest text-slate-500">
+            <span className="text-[10px] font-mono-cad uppercase tracking-widest text-[var(--muted)]">
               Interactive Preview Target:
             </span>
             <div className="flex flex-wrap gap-2">
@@ -162,8 +162,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     }}
                     className={`px-3 py-1 rounded-lg text-xs font-mono-cad transition-all ${
                       isActive
-                        ? 'bg-[#00f2ad]/15 text-[#00f2ad] border border-[#00f2ad]/40 font-bold'
-                        : 'bg-white/5 text-slate-400 hover:text-white border border-white/5 hover:border-white/20'
+                        ? 'bg-[var(--text)]/15 text-[var(--text)] border border-[var(--text)]/40 font-bold'
+                        : 'bg-white/5 text-[var(--muted)] hover:text-white border border-white/5 hover:border-white/20'
                     }`}
                   >
                     {preset.label}
@@ -179,7 +179,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           initial={{ opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.2 }}
-          className="lg:col-span-7 h-[520px] sm:h-[620px] w-full relative rounded-3xl bg-[#080b11] border border-white/10 shadow-[0_20px_80px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col"
+          className="lg:col-span-7 h-[520px] sm:h-[620px] w-full relative rounded-3xl bg-[var(--carbon)] border border-white/10 shadow-[0_20px_80px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col"
           onDragOver={(e) => {
             e.preventDefault();
             setIsDragOver(true);
@@ -196,10 +196,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           {/* Top Stage Header HUD */}
           <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
             <div className="flex items-center gap-2 pointer-events-auto">
-              <span className="px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-mono-cad text-[#00f2ad] font-bold">
+              <span className="px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-mono-cad text-[var(--text)] font-bold">
                 {currentObject.id.toUpperCase()} // CAD
               </span>
-              <span className="hidden sm:inline px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-mono-cad text-slate-400">
+              <span className="hidden sm:inline px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-mono-cad text-[var(--muted)]">
                 {currentObject.stats.componentCount} Components
               </span>
             </div>
@@ -212,8 +212,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   onClick={() => setViewMode(mode)}
                   className={`px-2.5 py-1 rounded-lg text-[10px] font-mono-cad uppercase transition-all ${
                     viewMode === mode
-                      ? 'bg-[#00f2ad] text-black font-bold shadow-[0_0_10px_rgba(0,242,173,0.4)]'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-[var(--text)] text-black font-bold shadow-[0_0_10px_var(--line)]'
+                      : 'text-[var(--muted)] hover:text-white'
                   }`}
                 >
                   {mode}
@@ -256,12 +256,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
             {/* Drag & Drop Over Overlay */}
             {isDragOver && (
-              <div className="absolute inset-0 bg-[#00f2ad]/15 backdrop-blur-sm border-2 border-dashed border-[#00f2ad] z-30 flex flex-col items-center justify-center text-center p-6 pointer-events-none">
-                <Upload className="w-12 h-12 text-[#00f2ad] animate-bounce mb-3" />
+              <div className="absolute inset-0 bg-[var(--text)]/15 backdrop-blur-sm border-2 border-dashed border-[var(--text)] z-30 flex flex-col items-center justify-center text-center p-6 pointer-events-none">
+                <Upload className="w-12 h-12 text-[var(--text)] animate-bounce mb-3" />
                 <h3 className="text-xl font-bold text-white font-mono-cad">
                   DROP 3D CAD FILE (.GLB / .GLTF)
                 </h3>
-                <p className="text-xs text-[#00f2ad] mt-1">
+                <p className="text-xs text-[var(--text)] mt-1">
                   Automatic mesh parsing and AI component decomposition will trigger instantly.
                 </p>
               </div>
@@ -272,8 +272,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-black/70 backdrop-blur-xl border border-white/10 p-3 rounded-2xl shadow-xl">
             {/* Explode Factor Slider */}
             <div className="flex items-center gap-3 flex-1 px-2">
-              <div className="flex items-center gap-1.5 text-[10px] font-mono-cad text-slate-400 uppercase tracking-wider shrink-0">
-                <Sliders className="w-3.5 h-3.5 text-[#00f2ad]" />
+              <div className="flex items-center gap-1.5 text-[10px] font-mono-cad text-[var(--muted)] uppercase tracking-wider shrink-0">
+                <Sliders className="w-3.5 h-3.5 text-[var(--text)]" />
                 <span>Explode</span>
               </div>
               <input
@@ -283,9 +283,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 step={0.01}
                 value={explodeAmount}
                 onChange={(e) => setExplodeAmount(Number(e.target.value))}
-                className="flex-1 h-1.5 bg-white/10 rounded-lg appearance-none accent-[#00f2ad]"
+                className="flex-1 h-1.5 bg-white/10 rounded-lg appearance-none accent-[var(--text)]"
               />
-              <span className="text-[10px] font-mono-cad text-[#00f2ad] w-10 text-right">
+              <span className="text-[10px] font-mono-cad text-[var(--text)] w-10 text-right">
                 {Math.round(explodeAmount * 100)}%
               </span>
             </div>
@@ -296,8 +296,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 onClick={() => setIsPlayingMechanism(!isPlayingMechanism)}
                 className={`p-2 rounded-xl border transition-all text-xs flex items-center gap-1.5 ${
                   isPlayingMechanism
-                    ? 'bg-[#00f2ad]/15 border-[#00f2ad]/40 text-[#00f2ad]'
-                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                    ? 'bg-[var(--text)]/15 border-[var(--text)]/40 text-[var(--text)]'
+                    : 'bg-white/5 border-white/10 text-[var(--muted)] hover:text-white'
                 }`}
                 title={isPlayingMechanism ? 'Pause kinematics' : 'Play kinematics'}
               >
@@ -309,7 +309,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
               <button
                 onClick={() => onSelectPopular(currentObject.id)}
-                className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-[#00f2ad] hover:text-black border border-white/15 text-slate-200 text-xs font-mono-cad font-bold uppercase transition-all flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-[var(--text)] hover:text-black border border-white/15 text-[var(--muted)] text-xs font-mono-cad font-bold uppercase transition-all flex items-center gap-1.5"
                 title="Open detailed CAD workspace"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
@@ -321,22 +321,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       </div>
 
       {/* Real-Time Telemetry Bar Along Bottom */}
-      <div className="mt-12 pt-6 border-t border-white/10 grid grid-cols-2 md:grid-cols-4 gap-6 text-slate-400 font-mono-cad text-xs">
+      <div className="mt-12 pt-6 border-t border-white/10 grid grid-cols-2 md:grid-cols-4 gap-6 text-[var(--muted)] font-mono-cad text-xs">
         <div>
-          <div className="text-[9px] uppercase tracking-wider text-slate-500">Decomposition Depth</div>
-          <div className="text-slate-200 font-bold text-sm mt-0.5">6 Assembly Layers</div>
+          <div className="text-[9px] uppercase tracking-wider text-[var(--muted)]">Decomposition Depth</div>
+          <div className="text-[var(--muted)] font-bold text-sm mt-0.5">6 Assembly Layers</div>
         </div>
         <div>
-          <div className="text-[9px] uppercase tracking-wider text-slate-500">Material Database</div>
-          <div className="text-slate-200 font-bold text-sm mt-0.5">Metals, Polymers, Ceramics</div>
+          <div className="text-[9px] uppercase tracking-wider text-[var(--muted)]">Material Database</div>
+          <div className="text-[var(--muted)] font-bold text-sm mt-0.5">Metals, Polymers, Ceramics</div>
         </div>
         <div>
-          <div className="text-[9px] uppercase tracking-wider text-slate-500">Kinematic Engine</div>
-          <div className="text-[#00f2ad] font-bold text-sm mt-0.5">60 FPS WebGL Solver</div>
+          <div className="text-[9px] uppercase tracking-wider text-[var(--muted)]">Kinematic Engine</div>
+          <div className="text-[var(--text)] font-bold text-sm mt-0.5">60 FPS WebGL Solver</div>
         </div>
         <div>
-          <div className="text-[9px] uppercase tracking-wider text-slate-500">Format Ingestion</div>
-          <div className="text-slate-200 font-bold text-sm mt-0.5">GLB • GLTF • STEP 3D</div>
+          <div className="text-[9px] uppercase tracking-wider text-[var(--muted)]">Format Ingestion</div>
+          <div className="text-[var(--muted)] font-bold text-sm mt-0.5">GLB • GLTF • STEP 3D</div>
         </div>
       </div>
     </section>
