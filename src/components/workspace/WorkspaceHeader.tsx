@@ -39,10 +39,10 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
 
   return (
     <header
-      className={`workspace-header min-h-[48px] h-[calc(3rem+env(safe-area-inset-top))] md:h-12 px-2 sm:px-4 flex items-center justify-between border-b text-xs font-mono-cad select-none z-30 transition-colors pt-[env(safe-area-inset-top)] md:pt-0 ${
+      className={`workspace-header min-h-[48px] h-[calc(3rem+env(safe-area-inset-top))] md:h-12 px-2 sm:px-4 flex items-center justify-between border-b text-xs font-mono-cad select-none z-30 transition-colors pt-[env(safe-area-inset-top))] md:pt-0 ${
         isLight
           ? 'border-slate-200 bg-white text-slate-800 shadow-sm'
-          : 'border-[#262832] bg-[#111318] text-[#f3f4f8]'
+          : 'border-[var(--line)] bg-[#181513] text-[#EFEAE2]'
       }`}
     >
       {/* Left: Exit Studio + Breadcrumb Navigation + Asset Switcher */}
@@ -52,7 +52,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-1 rounded transition-colors border touch-manipulation min-h-[36px] sm:min-h-0 shrink-0 ${
             isLight
               ? 'text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 border-slate-200'
-              : 'text-[#c5c7d0] hover:text-white bg-[#1a1b21] hover:bg-[#37393f]/40 border-[#262832]'
+              : 'text-[#8c8278] hover:text-[#EFEAE2] bg-[#211e1c] hover:bg-[#2a2420] border-[var(--line)]'
           }`}
           data-cursor="EXIT"
           title="Return to Landing Page"
@@ -61,14 +61,14 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           <span className="text-[11px] uppercase tracking-wider">EXIT</span>
         </button>
 
-        <div className={`h-4 w-px ${isLight ? 'bg-slate-200' : 'bg-[#262832]'} hidden sm:block`} />
+        <div className={`h-4 w-px ${isLight ? 'bg-slate-200' : 'bg-[var(--line)]'} hidden sm:block`} />
 
         {/* CAD Breadcrumb & Target Selector */}
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <div className="hidden md:flex items-center gap-1 text-[11px] tracking-wider text-[#6b7082] shrink-0">
+          <div className="hidden md:flex items-center gap-1 text-[11px] tracking-wider text-[#8c8278] shrink-0">
             <span>OBJECT BREAKDOWN</span>
             <span>/</span>
-            <span className="text-[#22d3ee] font-medium">{currentObject.category?.toUpperCase() || 'CAD'}</span>
+            <span className="text-[#e27228] font-medium">{currentObject.category?.toUpperCase() || 'CAD'}</span>
             <span>/</span>
           </div>
 
@@ -88,13 +88,13 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                 if (selected) onSelectObject(selected);
               }}
               className={`bg-transparent text-[11px] font-bold focus:outline-none cursor-pointer uppercase tracking-wider font-mono-cad border-b border-dashed pb-0.5 hover:border-[#e27228] transition-colors max-w-[110px] xs:max-w-[150px] sm:max-w-none truncate ${
-                isLight ? 'text-slate-900 border-slate-300' : 'text-[#f3f4f8] border-[#262832]'
+                isLight ? 'text-slate-900 border-slate-300' : 'text-[#EFEAE2] border-[var(--line)]'
               }`}
             >
               {uploadedObject && (
                 <option
                   value={uploadedObject.id}
-                  className={isLight ? 'bg-white text-blue-600 font-bold' : 'bg-[#111318] text-[#e27228] font-bold'}
+                  className={isLight ? 'bg-white text-blue-600 font-bold' : 'bg-[#181513] text-[#e27228] font-bold'}
                 >
                   ★ {uploadedObject.name.toUpperCase()} (UPLOADED)
                 </option>
@@ -102,20 +102,20 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
               {!uploadedObject && !ALL_OBJECTS.some((o) => o.id === currentObject.id) && (
                 <option
                   value={currentObject.id}
-                  className={isLight ? 'bg-white text-blue-600 font-bold' : 'bg-[#111318] text-[#e27228] font-bold'}
+                  className={isLight ? 'bg-white text-blue-600 font-bold' : 'bg-[#181513] text-[#e27228] font-bold'}
                 >
                   ★ {currentObject.name.toUpperCase()} (UPLOADED)
                 </option>
               )}
               {ALL_OBJECTS.map((obj) => (
-                <option key={obj.id} value={obj.id} className={isLight ? 'bg-white text-slate-900' : 'bg-[#111318] text-[#c5c7d0]'}>
+                <option key={obj.id} value={obj.id} className={isLight ? 'bg-white text-slate-900' : 'bg-[#181513] text-[#EFEAE2]'}>
                   {obj.name}
                 </option>
               ))}
             </select>
 
             <span className={`hidden xs:inline text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${
-              isLight ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-[#1a1b21] border-[#262832] text-[#6b7082]'
+              isLight ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-[#211e1c] border-[var(--line)] text-[#8c8278]'
             }`}>
               {currentObject.stats.componentCount} PARTS
             </span>
@@ -125,7 +125,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
 
       {/* Middle: Segmented Depth Mode Switcher */}
       <div className={`hidden lg:flex items-center gap-1 p-0.5 rounded border ${
-        isLight ? 'bg-slate-100 border-slate-200' : 'bg-[#1a1b21] border-[#262832]'
+        isLight ? 'bg-slate-100 border-slate-200' : 'bg-[#211e1c] border-[var(--line)]'
       }`}>
         {depthModes.map((dm) => {
           const isSelected = depthLevel === dm.id;
@@ -137,10 +137,10 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                 isSelected
                   ? isLight
                     ? 'bg-white text-[#c2410c] font-bold shadow-sm border border-slate-200'
-                    : 'bg-[#16181f] text-[#f3f4f8] font-bold border border-[rgba(226,114,40,0.6)] shadow-[0_0_10px_rgba(226,114,40,0.2)]'
+                    : 'bg-[#25201c] text-[#EFEAE2] font-bold border border-[#e27228]/70 shadow-[0_0_10px_rgba(226,114,40,0.15)]'
                   : isLight
                   ? 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                  : 'text-[#6b7082] hover:text-[#c5c7d0] hover:bg-[#37393f]/30'
+                  : 'text-[#8c8278] hover:text-[#EFEAE2] hover:bg-[#25201c]'
               }`}
             >
               <span>{dm.label}</span>
@@ -148,7 +148,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                 className={`text-[9px] px-1 py-0.2 rounded font-normal ${
                   isSelected
                     ? (isLight ? 'bg-orange-50 text-[#c2410c]' : 'bg-[rgba(226,114,40,0.2)] text-[#e27228]')
-                    : (isLight ? 'bg-slate-200 text-slate-600' : 'bg-[#0c0e13] text-[#525666]')
+                    : (isLight ? 'bg-slate-200 text-slate-600' : 'bg-[#181513] text-[#8c8278]')
                 }`}
               >
                 {dm.badge}
@@ -165,12 +165,12 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
             className={`flex items-center justify-center gap-1 sm:gap-1.5 p-2 sm:px-2.5 sm:py-1 rounded border text-[11px] font-mono-cad uppercase tracking-wider transition-all cursor-pointer touch-manipulation min-h-[36px] sm:min-h-0 min-w-[36px] sm:min-w-0 ${
               isLight
                 ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                : 'bg-[#1a1b21] hover:bg-[#37393f]/40 text-[#c5c7d0] hover:text-white border-[#262832]'
+                : 'bg-[#211e1c] hover:bg-[#2a2420] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)]'
             }`}
             data-cursor="UPLOAD"
             title="Upload GLB or GLTF 3D model"
           >
-            <Upload className="w-3.5 h-3.5 text-[#22d3ee]" />
+            <Upload className="w-3.5 h-3.5 text-[#e27228]" />
             <span className="hidden sm:inline">Upload</span>
             <input
               type="file"
@@ -192,7 +192,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           className={`flex items-center justify-center gap-1 sm:gap-1.5 p-2 sm:px-2.5 sm:py-1 rounded border text-[11px] font-mono-cad uppercase tracking-wider transition-all touch-manipulation min-h-[36px] sm:min-h-0 min-w-[36px] sm:min-w-0 ${
             isLight
               ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-              : 'bg-[#1a1b21] hover:bg-[#37393f]/40 text-[#c5c7d0] hover:text-white border-[#262832]'
+              : 'bg-[#211e1c] hover:bg-[#2a2420] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)]'
           }`}
           data-cursor="COMPARE"
           title="Compare with other CAD mechanisms"
@@ -207,7 +207,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           className={`w-9 h-9 sm:w-7 sm:h-7 rounded border flex items-center justify-center transition-all touch-manipulation ${
             isLight
               ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-              : 'bg-[#1a1b21] hover:bg-[#37393f]/40 border-[#262832] text-[#c5c7d0] hover:text-white'
+              : 'bg-[#211e1c] hover:bg-[#2a2420] border-[var(--line)] text-[#8c8278] hover:text-[#EFEAE2]'
           }`}
         >
           {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-700" />}
