@@ -265,10 +265,10 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
       />
 
       {/* Main 3-Column Engineering Studio */}
-      <div className={`workspace-main flex-1 flex overflow-hidden relative ${theme === 'light' ? 'bg-[#f1f4f8]' : 'bg-[#0c0e13]'}`}>
+      <div className={`workspace-main flex-1 flex overflow-hidden relative ${theme === 'light' ? 'bg-[#f4efe8]' : 'bg-[#141210]'}`}>
         {/* LEFT PANEL: Assembly Hierarchy & Component Tree (Hidden on mobile, 260-320px on desktop) */}
         <div className={`workspace-sidebar hidden md:flex flex-col w-72 lg:w-80 shrink-0 h-full border-r ${
-          theme === 'light' ? 'border-slate-200 bg-white' : 'border-[#262832] bg-[#111318]'
+          theme === 'light' ? 'border-[#dfd8cf] bg-[#f4efe8]' : 'border-[var(--line)] bg-[#181513]'
         }`}>
           <ComponentTree
             rootComponents={currentObject.rootComponents}
@@ -289,8 +289,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           className="workspace-viewport flex-1 h-full relative overflow-hidden flex flex-col select-none"
           style={{
             background: theme === 'light'
-              ? 'radial-gradient(circle at 50% 48%, #ffffff 0%, #edf1f7 60%, #e2e7ef 100%)'
-              : 'radial-gradient(circle at 50% 42%, #787e8c 0%, #5e6473 48%, #444955 100%)',
+              ? 'radial-gradient(circle at 50% 48%, #ffffff 0%, #ece7e1 60%, #e2dcd4 100%)'
+              : 'radial-gradient(circle at 50% 42%, #38322c 0%, #292420 50%, #1c1917 100%)',
           }}
         >
           {currentObject.id === 'drone' ? (
@@ -363,8 +363,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           <div
             className="absolute top-2 right-2 z-30 md:hidden flex items-center gap-1.5 p-1 rounded-xl border backdrop-blur-xl shadow-lg pointer-events-auto transition-all"
             style={{
-              backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.94)' : 'rgba(17,19,24,0.94)',
-              borderColor: theme === 'light' ? 'rgba(226,232,240,0.85)' : 'rgba(38,40,50,0.85)',
+              backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.94)' : 'rgba(24,21,19,0.94)',
+              borderColor: theme === 'light' ? 'rgba(226,232,240,0.85)' : 'var(--line)',
             }}
           >
             {/* View Mode Toggle Pill */}
@@ -373,7 +373,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[11px] font-mono-cad font-semibold transition-all touch-manipulation min-h-[36px] ${
                 theme === 'light'
                   ? 'bg-slate-50 text-slate-700 border-slate-200 active:bg-slate-100'
-                  : 'bg-[#1a1b21] text-[#c5c7d0] border-[#262832] active:bg-[#37393f]/50'
+                  : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)] active:bg-[#2a2420]'
               }`}
               title="View Modes & Shaders"
             >
@@ -387,7 +387,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               className={`p-2 rounded-lg border transition-all touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center ${
                 isPlayingMechanism
                   ? theme === 'light' ? 'bg-orange-50 text-[#c2410c] border-orange-200' : 'bg-[#e27228]/15 text-[#e27228] border-[#e27228]/40'
-                  : theme === 'light' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-[#1a1b21] text-[#6b7082] border-[#262832]'
+                  : theme === 'light' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)]'
               }`}
               title={isPlayingMechanism ? 'Pause motion' : 'Play motion'}
             >
@@ -400,7 +400,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               className={`p-2 rounded-lg border transition-all touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center ${
                 theme === 'light'
                   ? 'bg-slate-50 text-slate-600 hover:text-slate-900 border-slate-200'
-                  : 'bg-[#1a1b21] text-[#6b7082] hover:text-white border-[#262832]'
+                  : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)]'
               }`}
               title="Reset View & Camera"
             >
@@ -415,8 +415,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               <div
                 className="flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl shadow-xl transition-all"
                 style={{
-                  backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.96)' : 'rgba(17,19,24,0.96)',
-                  borderColor: theme === 'light' ? '#e2e8f0' : '#262832',
+                  backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.96)' : 'rgba(24,21,19,0.96)',
+                  borderColor: theme === 'light' ? '#e2e8f0' : 'var(--line)',
                 }}
               >
                 <button
@@ -424,7 +424,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   className={`px-2.5 py-1.5 rounded-lg text-[10px] font-mono-cad font-bold tracking-wider uppercase transition-all flex items-center gap-1.5 shrink-0 touch-manipulation min-h-[36px] ${
                     explodeAmount > 0.1
                       ? theme === 'light' ? 'bg-orange-50 text-[#c2410c] border border-orange-200' : 'bg-[#e27228]/20 text-[#e27228] border border-[#e27228]/50'
-                      : theme === 'light' ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-[#1a1b21] text-[#c5c7d0] border border-[#262832]'
+                      : theme === 'light' ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-[#211e1c] text-[#8c8278] border border-[var(--line)]'
                   }`}
                 >
                   <Layers className="w-3.5 h-3.5 text-[#e27228]" />
@@ -439,7 +439,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                     value={Math.round(explodeAmount * 100)}
                     onChange={(e) => setExplodeAmount(Number(e.target.value) / 100)}
                     className={`w-full h-1.5 rounded appearance-none cursor-pointer ${
-                      theme === 'light' ? 'bg-slate-200 accent-[#c2410c]' : 'bg-[#0c0e13] accent-[#e27228]'
+                      theme === 'light' ? 'bg-slate-200 accent-[#c2410c]' : 'bg-[#25201c] accent-[#e27228]'
                     }`}
                   />
                   <span className={`text-[11px] font-mono-cad font-bold w-9 text-right shrink-0 ${
@@ -454,8 +454,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               <div
                 className="flex items-center justify-between gap-1.5 p-1 rounded-xl border backdrop-blur-xl shadow-xl"
                 style={{
-                  backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.96)' : 'rgba(17,19,24,0.96)',
-                  borderColor: theme === 'light' ? '#e2e8f0' : '#262832',
+                  backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.96)' : 'rgba(24,21,19,0.96)',
+                  borderColor: theme === 'light' ? '#e2e8f0' : 'var(--line)',
                 }}
               >
                 <button
@@ -463,7 +463,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg border text-[11px] font-mono-cad font-bold transition-all touch-manipulation min-h-[44px] ${
                     theme === 'light'
                       ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800 active:bg-slate-200'
-                      : 'bg-[#1a1b21] hover:bg-[#37393f]/40 border-[#262832] text-[#f3f4f8] active:bg-[#37393f]/60'
+                      : 'bg-[#211e1c] hover:bg-[#2a2420] border-[var(--line)] text-[#EFEAE2] active:bg-[#2a2420]'
                   }`}
                 >
                   <Layers className="w-3.5 h-3.5 text-[#e27228]" />
@@ -475,10 +475,10 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg border text-[11px] font-mono-cad font-bold transition-all touch-manipulation min-h-[44px] ${
                     theme === 'light'
                       ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800 active:bg-slate-200'
-                      : 'bg-[#1a1b21] hover:bg-[#37393f]/40 border-[#262832] text-[#f3f4f8] active:bg-[#37393f]/60'
+                      : 'bg-[#211e1c] hover:bg-[#2a2420] border-[var(--line)] text-[#EFEAE2] active:bg-[#2a2420]'
                   }`}
                 >
-                  <Sliders className="w-3.5 h-3.5 text-[#38bdf8]" />
+                  <Sliders className="w-3.5 h-3.5 text-[#e27228]" />
                   <span>VIEW MODES</span>
                 </button>
 
@@ -490,10 +490,10 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg border text-[11px] font-mono-cad font-bold transition-all touch-manipulation min-h-[44px] ${
                     theme === 'light'
                       ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800 active:bg-slate-200'
-                      : 'bg-[#1a1b21] hover:bg-[#37393f]/40 border-[#262832] text-[#f3f4f8] active:bg-[#37393f]/60'
+                      : 'bg-[#211e1c] hover:bg-[#2a2420] border-[var(--line)] text-[#EFEAE2] active:bg-[#2a2420]'
                   }`}
                 >
-                  <Settings className="w-3.5 h-3.5 text-[#22d3ee]" />
+                  <Settings className="w-3.5 h-3.5 text-[#e27228]" />
                   <span>OVERVIEW</span>
                 </button>
               </div>
@@ -509,8 +509,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   : 'h-auto'
               }`}
               style={{
-                backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.98)' : 'rgba(17,19,24,0.98)',
-                borderColor: theme === 'light' ? '#cbd5e1' : '#262832',
+                backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.98)' : 'rgba(24,21,19,0.98)',
+                borderColor: theme === 'light' ? '#cbd5e1' : 'var(--line)',
                 boxShadow: theme === 'light' ? '0 -10px 40px rgba(0,0,0,0.15)' : '0 -10px 50px rgba(0,0,0,0.9)',
               }}
             >
@@ -524,14 +524,14 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
               {/* SHEET HEADER (Always Visible in both Peek & Expanded) */}
               <div className={`px-4 py-2 border-b flex items-center justify-between text-xs font-mono-cad ${
-                theme === 'light' ? 'border-slate-100 bg-slate-50/80' : 'border-[#262832]/60 bg-[#16181f]/80'
+                theme === 'light' ? 'border-slate-100 bg-slate-50/80' : 'border-[var(--line)] bg-[#181513]'
               }`}>
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="w-2 h-2 rounded-full bg-[#e27228] shrink-0 animate-pulse" />
                   <span className="font-bold text-[#e27228] shrink-0 text-xs tracking-wider">{selectedNode.cadId || 'PART'}</span>
                   <span className="shrink-0 text-slate-400">•</span>
                   <span className={`uppercase tracking-wider font-semibold truncate max-w-[130px] text-[10px] ${
-                    theme === 'light' ? 'text-slate-600' : 'text-[#6b7082]'
+                    theme === 'light' ? 'text-slate-600' : 'text-[#8c8278]'
                   }`}>
                     {selectedNode.category}
                   </span>
@@ -547,7 +547,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                         ? 'bg-[#e27228] text-white border-[#e27228]'
                         : theme === 'light'
                         ? 'bg-white text-slate-700 border-slate-200 active:bg-slate-100'
-                        : 'bg-[#1a1b21] text-[#c5c7d0] border-[#262832] active:bg-[#37393f]/50'
+                        : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)] active:bg-[#2a2420]'
                     }`}
                   >
                     <Focus className="w-3.5 h-3.5" />
@@ -562,7 +562,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                         ? 'bg-red-500/20 text-red-400 border-red-500/40'
                         : theme === 'light'
                         ? 'bg-white text-slate-600 border-slate-200'
-                        : 'bg-[#1a1b21] text-[#c5c7d0] border-[#262832]'
+                        : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)]'
                     }`}
                   >
                     {hiddenComponentIds.has(selectedNode.id) ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -571,7 +571,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   <button
                     onClick={() => handleSelectComponent(null)}
                     className={`p-1.5 rounded-md border transition-all touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center ${
-                      theme === 'light' ? 'bg-white border-slate-200 text-slate-400 hover:text-slate-800' : 'bg-[#1a1b21] border-[#262832] text-slate-400 hover:text-white'
+                      theme === 'light' ? 'bg-white border-slate-200 text-slate-400 hover:text-slate-800' : 'bg-[#211e1c] border-[var(--line)] text-[#8c8278] hover:text-[#EFEAE2]'
                     }`}
                     title="Deselect and return to model"
                   >
@@ -614,7 +614,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                 /* EXPANDED STAGE CONTENT: 100% Discoverable Engineering Inspector */
                 <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                   {/* Sticky Tabs Header */}
-                  <div className="shrink-0 border-b border-slate-200 dark:border-[#262832]">
+                  <div className="shrink-0 border-b border-slate-200 dark:border-[var(--line)]">
                     <InspectorTabs
                       activeTab={activeInspectorTab}
                       onTabChange={setActiveInspectorTab}
@@ -632,7 +632,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   </div>
 
                   {/* Bottom Collapse Bar */}
-                  <div className="p-2.5 border-t border-slate-200 dark:border-[#262832] bg-slate-50 dark:bg-[#16181f] flex items-center justify-between pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+                  <div className="p-2.5 border-t border-slate-200 dark:border-[var(--line)] bg-slate-50 dark:bg-[#181513] flex items-center justify-between pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
                     <span className="text-[10px] font-mono-cad text-slate-500">
                       {selectedNode.cadId} • {activeInspectorTab.toUpperCase()}
                     </span>
@@ -641,7 +641,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                       className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border text-[11px] font-mono-cad font-bold uppercase transition-all touch-manipulation min-h-[36px] ${
                         theme === 'light'
                           ? 'bg-white text-slate-700 border-slate-200'
-                          : 'bg-[#1a1b21] text-[#c5c7d0] border-[#262832]'
+                          : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)]'
                       }`}
                     >
                       <ChevronDown className="w-3.5 h-3.5" />
@@ -659,21 +659,21 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               <div
                 className="w-full rounded-t-2xl border-t shadow-2xl p-4 space-y-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-in slide-in-from-bottom duration-200"
                 style={{
-                  backgroundColor: theme === 'light' ? '#ffffff' : '#111318',
-                  borderColor: theme === 'light' ? '#e2e8f0' : '#262832',
-                  color: theme === 'light' ? '#0f172a' : '#f3f4f8',
+                  backgroundColor: theme === 'light' ? '#ffffff' : '#181513',
+                  borderColor: theme === 'light' ? '#e2e8f0' : 'var(--line)',
+                  color: theme === 'light' ? '#0f172a' : '#EFEAE2',
                 }}
               >
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-[#262832]">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-[var(--line)]">
                   <div className="flex items-center gap-2">
-                    <Sliders className="w-4 h-4 text-[#38bdf8]" />
+                    <Sliders className="w-4 h-4 text-[#e27228]" />
                     <span className="text-xs font-mono-cad font-bold tracking-wider uppercase">
                       VIEWPORT RENDERING & TOOLS
                     </span>
                   </div>
                   <button
                     onClick={() => setIsMobileControlsOpen(false)}
-                    className="p-1.5 rounded-lg border border-slate-200 dark:border-[#262832] text-slate-400 hover:text-white touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center"
+                    className="p-1.5 rounded-lg border border-slate-200 dark:border-[var(--line)] text-slate-400 hover:text-white touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -708,7 +708,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                                 : 'bg-[#e27228]/20 text-[#e27228] border-[#e27228]/60 shadow-[0_0_12px_rgba(226,114,40,0.25)]'
                               : theme === 'light'
                               ? 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                              : 'bg-[#1a1b21] text-[#c5c7d0] border-[#262832] hover:bg-[#37393f]/40'
+                              : 'bg-[#211e1c] text-[#8c8278] hover:text-[#EFEAE2] border-[var(--line)] hover:bg-[#2a2420]'
                           }`}
                         >
                           <Icon className="w-4 h-4" />
@@ -720,13 +720,13 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                 </div>
 
                 {/* Auxiliary Toggles */}
-                <div className="pt-2 border-t border-slate-200 dark:border-[#262832] grid grid-cols-2 gap-2 text-xs font-mono-cad">
+                <div className="pt-2 border-t border-slate-200 dark:border-[var(--line)] grid grid-cols-2 gap-2 text-xs font-mono-cad">
                   <button
                     onClick={() => setShowLeaderLines(!showLeaderLines)}
                     className={`p-2.5 rounded-xl border flex items-center justify-center gap-2 touch-manipulation min-h-[44px] ${
                       showLeaderLines
-                        ? theme === 'light' ? 'bg-blue-50 text-[#2563eb] border-blue-200 font-bold' : 'bg-[#22d3ee]/15 text-[#22d3ee] border-[#22d3ee]/40 font-bold'
-                        : theme === 'light' ? 'bg-slate-50 text-slate-500 border-slate-200' : 'bg-[#1a1b21] text-[#6b7082] border-[#262832]'
+                        ? theme === 'light' ? 'bg-orange-50 text-[#c2410c] border-orange-200 font-bold' : 'bg-[#e27228]/15 text-[#e27228] border-[#e27228]/40 font-bold'
+                        : theme === 'light' ? 'bg-slate-50 text-slate-500 border-slate-200' : 'bg-[#211e1c] text-[#8c8278] border-[var(--line)]'
                     }`}
                   >
                     <Tag className="w-3.5 h-3.5" />
@@ -740,8 +740,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                     }}
                     className={`p-2.5 rounded-xl border flex items-center justify-center gap-2 touch-manipulation min-h-[44px] ${
                       showCalipers
-                        ? theme === 'light' ? 'bg-amber-50 text-amber-700 border-amber-200 font-bold' : 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold'
-                        : theme === 'light' ? 'bg-slate-50 text-slate-500 border-slate-200' : 'bg-[#1a1b21] text-[#6b7082] border-[#262832]'
+                        ? theme === 'light' ? 'bg-orange-50 text-[#c2410c] border-orange-200 font-bold' : 'bg-[#e27228]/15 text-[#e27228] border-[#e27228]/40 font-bold'
+                        : theme === 'light' ? 'bg-slate-50 text-slate-500 border-slate-200' : 'bg-[#211e1c] text-[#8c8278] border-[var(--line)]'
                     }`}
                   >
                     <Ruler className="w-3.5 h-3.5" />
@@ -758,14 +758,14 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               <div
                 className="w-full max-h-[85dvh] flex flex-col rounded-t-2xl border-t shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200"
                 style={{
-                  backgroundColor: theme === 'light' ? '#ffffff' : '#111318',
-                  borderColor: theme === 'light' ? '#e2e8f0' : '#262832',
-                  color: theme === 'light' ? '#0f172a' : '#f3f4f8',
+                  backgroundColor: theme === 'light' ? '#ffffff' : '#181513',
+                  borderColor: theme === 'light' ? '#e2e8f0' : 'var(--line)',
+                  color: theme === 'light' ? '#0f172a' : '#EFEAE2',
                 }}
               >
                 {/* Drawer Header */}
                 <div className={`flex items-center justify-between px-4 py-2.5 border-b ${
-                  theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#262832] bg-[#16181f]'
+                  theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[var(--line)] bg-[#1c1917]'
                 }`}>
                   <div className="flex items-center gap-2">
                     <Layers className="w-4 h-4 text-[#e27228]" />
@@ -773,7 +773,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                       ASSEMBLY HIERARCHY
                     </span>
                     <span className={`text-[10px] font-mono-cad px-1.5 py-0.5 rounded border ${
-                      theme === 'light' ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-[#1a1b21] border-[#262832] text-[#6b7082]'
+                      theme === 'light' ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-[#211e1c] border-[var(--line)] text-[#8c8278]'
                     }`}>
                       {currentObject.rootComponents?.length || 0} ROOTS
                     </span>
@@ -781,7 +781,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   <button
                     onClick={() => setIsMobileTreeOpen(false)}
                     className={`p-1.5 rounded-lg border transition-colors touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center ${
-                      theme === 'light' ? 'border-slate-200 text-slate-500 hover:text-slate-900 bg-white' : 'border-[#262832] text-slate-400 hover:text-white bg-[#1a1b21]'
+                      theme === 'light' ? 'border-slate-200 text-slate-500 hover:text-slate-900 bg-white' : 'border-[var(--line)] text-[#8c8278] hover:text-[#EFEAE2] bg-[#211e1c]'
                     }`}
                   >
                     <X className="w-4 h-4" />
@@ -816,17 +816,17 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               <div
                 className="w-full max-h-[85dvh] flex flex-col rounded-t-2xl border-t shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200"
                 style={{
-                  backgroundColor: theme === 'light' ? '#ffffff' : '#111318',
-                  borderColor: theme === 'light' ? '#e2e8f0' : '#262832',
-                  color: theme === 'light' ? '#0f172a' : '#f3f4f8',
+                  backgroundColor: theme === 'light' ? '#ffffff' : '#181513',
+                  borderColor: theme === 'light' ? '#e2e8f0' : 'var(--line)',
+                  color: theme === 'light' ? '#0f172a' : '#EFEAE2',
                 }}
               >
                 {/* Drawer Header */}
                 <div className={`flex items-center justify-between px-4 py-2.5 border-b ${
-                  theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#262832] bg-[#16181f]'
+                  theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[var(--line)] bg-[#1c1917]'
                 }`}>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-[#22d3ee]" />
+                    <div className="w-2 h-2 rounded-full bg-[#e27228]" />
                     <span className="text-xs font-mono-cad font-bold tracking-wider uppercase">
                       {currentObject.name.toUpperCase()} • TEARDOWN
                     </span>
@@ -834,7 +834,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   <button
                     onClick={() => setIsMobileInspectorOpen(false)}
                     className={`p-1.5 rounded-lg border transition-colors touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center ${
-                      theme === 'light' ? 'border-slate-200 text-slate-500 hover:text-slate-900 bg-white' : 'border-[#262832] text-slate-400 hover:text-white bg-[#1a1b21]'
+                      theme === 'light' ? 'border-slate-200 text-slate-500 hover:text-slate-900 bg-white' : 'border-[var(--line)] text-[#8c8278] hover:text-[#EFEAE2] bg-[#211e1c]'
                     }`}
                   >
                     <X className="w-4 h-4" />
@@ -865,7 +865,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         {/* RIGHT PANEL: Engineering Inspector & Analysis Studio (drag to resize) */}
         <div
           className={`workspace-inspector hidden md:flex shrink-0 h-full relative flex-col border-l z-20 min-w-0 ${
-            theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#111318] border-[#262832]'
+            theme === 'light' ? 'bg-[#f4efe8] border-[#dfd8cf] shadow-sm' : 'bg-[#181513] border-[var(--line)]'
           }`}
           style={{ width: inspectorWidth }}
         >
