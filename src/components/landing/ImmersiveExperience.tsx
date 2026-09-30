@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import Lenis from 'lenis';
 import { ObjectBreakdownData } from '../../types/objectData';
 import { electricMotorData } from '../../data/objects/electricMotor';
+import { jetTurbineData } from '../../data/objects/jetTurbine';
 import {
   load3DModelForObject,
   LoadedObjectResult,
@@ -26,248 +27,6 @@ import {
   Zap,
 } from 'lucide-react';
 
-interface ChapterColors {
-  primary: [number, number, number];
-  secondary: [number, number, number];
-  baseGlow: [number, number, number];
-  intensity: number;
-}
-
-function lerpColor(c1: [number, number, number], c2: [number, number, number], t: number): [number, number, number] {
-  return [
-    Math.round(c1[0] + (c2[0] - c1[0]) * t),
-    Math.round(c1[1] + (c2[1] - c1[1]) * t),
-    Math.round(c1[2] + (c2[2] - c1[2]) * t),
-  ];
-}
-
-function getAtmospherePalette(p: number, isLight: boolean): ChapterColors {
-  // Keyframe progression along the scroll story
-  if (!isLight) {
-    // DARK MODE: Obsidian, Navy, Cyan, Electric Blue
-    if (p <= 0.12) {
-      // Intro
-      return { primary: [20, 50, 110], secondary: [10, 30, 70], baseGlow: [4, 10, 24], intensity: 0.35 };
-    } else if (p <= 0.38) {
-      // Watch & Horological Deconstruction
-      const t = (p - 0.12) / 0.26;
-      return {
-        primary: lerpColor([20, 50, 110], [30, 75, 195], t),
-        secondary: lerpColor([10, 30, 70], [6, 160, 215], t),
-        baseGlow: lerpColor([4, 10, 24], [8, 22, 54], t),
-        intensity: 0.35 + t * 0.12,
-      };
-    } else if (p <= 0.63) {
-      // Drone Aerospace
-      const t = (p - 0.38) / 0.25;
-      return {
-        primary: lerpColor([30, 75, 195], [15, 60, 165], t),
-        secondary: lerpColor([6, 160, 215], [2, 132, 199], t),
-        baseGlow: lerpColor([8, 22, 54], [6, 18, 44], t),
-        intensity: 0.47 + t * 0.05,
-      };
-    } else if (p <= 0.74) {
-      // Engine Industrial Power
-      const t = (p - 0.63) / 0.11;
-      return {
-        primary: lerpColor([15, 60, 165], [45, 35, 115], t),
-        secondary: lerpColor([2, 132, 199], [37, 99, 235], t),
-        baseGlow: lerpColor([6, 18, 44], [12, 14, 38], t),
-        intensity: 0.52 - t * 0.08,
-      };
-    } else if (p <= 0.81) {
-      // Motor Electrodynamics
-      const t = (p - 0.74) / 0.07;
-      return {
-        primary: lerpColor([45, 35, 115], [15, 110, 115], t),
-        secondary: lerpColor([37, 99, 235], [2, 132, 199], t),
-        baseGlow: lerpColor([12, 14, 38], [8, 22, 38], t),
-        intensity: 0.44 + t * 0.03,
-      };
-    } else if (p <= 0.86) {
-      // Pen Micro-Mechanics
-      const t = (p - 0.81) / 0.05;
-      return {
-        primary: lerpColor([15, 110, 115], [28, 48, 80], t),
-        secondary: lerpColor([2, 132, 199], [56, 189, 248], t),
-        baseGlow: lerpColor([8, 22, 38], [8, 16, 30], t),
-        intensity: 0.47 - t * 0.08,
-      };
-    } else if (p <= 0.93) {
-      // Transition & How It Works Sequential Story
-      const t = (p - 0.86) / 0.07;
-      return {
-        primary: lerpColor([28, 48, 80], [30, 70, 180], t),
-        secondary: lerpColor([56, 189, 248], [6, 182, 212], t),
-        baseGlow: lerpColor([8, 16, 30], [12, 24, 60], t),
-        intensity: 0.39 + t * 0.20,
-      };
-    } else {
-      // Upload Climax (Luminous, Welcoming, Receptor Aura)
-      const t = Math.min((p - 0.93) / 0.07, 1);
-      return {
-        primary: lerpColor([30, 70, 180], [35, 80, 215], t),
-        secondary: lerpColor([6, 182, 212], [0, 242, 173], t),
-        baseGlow: lerpColor([12, 24, 60], [14, 28, 70], t),
-        intensity: 0.59 + t * 0.12,
-      };
-    }
-  } else {
-    // LIGHT MODE: Architectural Silver, Crisp Cobalt, Clean Sky Cyan
-    if (p <= 0.12) {
-      return { primary: [215, 228, 245], secondary: [225, 232, 242], baseGlow: [238, 242, 248], intensity: 0.42 };
-    } else if (p <= 0.38) {
-      const t = (p - 0.12) / 0.26;
-      return {
-        primary: lerpColor([215, 228, 245], [195, 218, 252], t),
-        secondary: lerpColor([225, 232, 242], [185, 225, 248], t),
-        baseGlow: lerpColor([238, 242, 248], [230, 238, 248], t),
-        intensity: 0.42 + t * 0.08,
-      };
-    } else if (p <= 0.63) {
-      const t = (p - 0.38) / 0.25;
-      return {
-        primary: lerpColor([195, 218, 252], [186, 215, 248], t),
-        secondary: lerpColor([185, 225, 248], [180, 220, 245], t),
-        baseGlow: lerpColor([230, 238, 248], [228, 236, 246], t),
-        intensity: 0.50,
-      };
-    } else if (p <= 0.74) {
-      const t = (p - 0.63) / 0.11;
-      return {
-        primary: lerpColor([186, 215, 248], [210, 215, 248], t),
-        secondary: lerpColor([180, 220, 245], [200, 215, 245], t),
-        baseGlow: lerpColor([228, 236, 246], [232, 236, 244], t),
-        intensity: 0.48,
-      };
-    } else if (p <= 0.81) {
-      const t = (p - 0.74) / 0.07;
-      return {
-        primary: lerpColor([210, 215, 248], [200, 235, 242], t),
-        secondary: lerpColor([200, 215, 245], [210, 230, 245], t),
-        baseGlow: lerpColor([232, 236, 244], [235, 242, 248], t),
-        intensity: 0.50,
-      };
-    } else if (p <= 0.86) {
-      const t = (p - 0.81) / 0.05;
-      return {
-        primary: lerpColor([200, 235, 242], [225, 232, 242], t),
-        secondary: lerpColor([210, 230, 245], [215, 228, 242], t),
-        baseGlow: lerpColor([235, 242, 248], [238, 242, 248], t),
-        intensity: 0.45,
-      };
-    } else if (p <= 0.93) {
-      const t = (p - 0.86) / 0.07;
-      return {
-        primary: lerpColor([225, 232, 242], [190, 218, 252], t),
-        secondary: lerpColor([215, 228, 242], [180, 225, 248], t),
-        baseGlow: lerpColor([238, 242, 248], [230, 238, 248], t),
-        intensity: 0.45 + t * 0.15,
-      };
-    } else {
-      const t = Math.min((p - 0.93) / 0.07, 1);
-      return {
-        primary: lerpColor([190, 218, 252], [180, 215, 255], t),
-        secondary: lerpColor([180, 225, 248], [160, 240, 210], t),
-        baseGlow: lerpColor([230, 238, 248], [225, 236, 248], t),
-        intensity: 0.60 + t * 0.10,
-      };
-    }
-  }
-}
-
-function drawAtmosphereCanvas(
-  ctx: CanvasRenderingContext2D,
-  w: number,
-  h: number,
-  time: number,
-  p: number,
-  dampedX: number,
-  dampedY: number,
-  velocity: number,
-  uploadAura: number,
-  isLight: boolean
-) {
-  ctx.clearRect(0, 0, w, h);
-
-  const colors = getAtmospherePalette(p, isLight);
-  const maxDim = Math.max(w, h);
-
-  // Base background fill
-  ctx.fillStyle = isLight ? '#f4f6f9' : '#020408';
-  ctx.fillRect(0, 0, w, h);
-
-  // Blend mode: screen in dark gives luminous light fields; multiply in light gives rich architectural tonal depth
-  ctx.globalCompositeOperation = isLight ? 'multiply' : 'screen';
-
-  // ---------------------------------------------------------------------------
-  // Layer 1: Deep Environmental Foundation (Slow gentle orbital drift)
-  // ---------------------------------------------------------------------------
-  const l1X = w * (0.5 + 0.08 * Math.sin(time * 0.00014));
-  const l1Y = h * (0.5 + 0.06 * Math.cos(time * 0.00017));
-  const l1R = maxDim * 0.75;
-  const grad1 = ctx.createRadialGradient(l1X, l1Y, 0, l1X, l1Y, l1R);
-  const baseAlpha = (isLight ? 0.30 : 0.45) * colors.intensity;
-  grad1.addColorStop(0, `rgba(${colors.baseGlow[0]}, ${colors.baseGlow[1]}, ${colors.baseGlow[2]}, ${baseAlpha})`);
-  grad1.addColorStop(1, `rgba(${colors.baseGlow[0]}, ${colors.baseGlow[1]}, ${colors.baseGlow[2]}, 0)`);
-  ctx.fillStyle = grad1;
-  ctx.fillRect(0, 0, w, h);
-
-  // ---------------------------------------------------------------------------
-  // Layer 2: Primary Fluid Electric-Blue Field (Physical Inertia & Mouse Tracking)
-  // Stretches subtly along velocity axis, settles when stopped
-  // ---------------------------------------------------------------------------
-  const mouseInfluence = 0.36;
-  const l2X = w * 0.5 + (dampedX - 0.5) * w * mouseInfluence;
-  const velStretchY = Math.min(Math.max(velocity * 0.06, -100), 100);
-  const l2Y = h * 0.5 + (dampedY - 0.5) * h * mouseInfluence + velStretchY;
-  const l2R = maxDim * (0.42 + Math.min(Math.abs(velocity) * 0.0007, 0.12));
-  const grad2 = ctx.createRadialGradient(l2X, l2Y, 0, l2X, l2Y, l2R);
-  const primAlpha = (isLight ? 0.38 : 0.50) * colors.intensity;
-  grad2.addColorStop(0, `rgba(${colors.primary[0]}, ${colors.primary[1]}, ${colors.primary[2]}, ${primAlpha})`);
-  grad2.addColorStop(0.5, `rgba(${colors.primary[0]}, ${colors.primary[1]}, ${colors.primary[2]}, ${primAlpha * 0.4})`);
-  grad2.addColorStop(1, `rgba(${colors.primary[0]}, ${colors.primary[1]}, ${colors.primary[2]}, 0)`);
-  ctx.fillStyle = grad2;
-  ctx.fillRect(0, 0, w, h);
-
-  // ---------------------------------------------------------------------------
-  // Layer 3: Cool Cyan Secondary Field (Counter-Balanced & Upload Focus)
-  // Pulls toward center dropzone area when uploadAura is active
-  // ---------------------------------------------------------------------------
-  const counterInfluence = 0.30;
-  const dropCenterX = w * 0.5;
-  const dropCenterY = h * 0.52;
-  const rawL3X = w * 0.5 - (dampedX - 0.5) * w * counterInfluence;
-  const rawL3Y = h * 0.5 - (dampedY - 0.5) * h * counterInfluence;
-  const l3X = rawL3X + (dropCenterX - rawL3X) * uploadAura;
-  const l3Y = rawL3Y + (dropCenterY - rawL3Y) * uploadAura;
-  const l3R = maxDim * (0.34 + uploadAura * 0.22);
-  const grad3 = ctx.createRadialGradient(l3X, l3Y, 0, l3X, l3Y, l3R);
-  const secAlpha = (isLight ? 0.34 : 0.44) * colors.intensity * (1 + uploadAura * 0.55);
-  grad3.addColorStop(0, `rgba(${colors.secondary[0]}, ${colors.secondary[1]}, ${colors.secondary[2]}, ${secAlpha})`);
-  grad3.addColorStop(0.6, `rgba(${colors.secondary[0]}, ${colors.secondary[1]}, ${colors.secondary[2]}, ${secAlpha * 0.3})`);
-  grad3.addColorStop(1, `rgba(${colors.secondary[0]}, ${colors.secondary[1]}, ${colors.secondary[2]}, 0)`);
-  ctx.fillStyle = grad3;
-  ctx.fillRect(0, 0, w, h);
-
-  // ---------------------------------------------------------------------------
-  // Layer 4: Subtle Depth Vignette (Preserves 3D Model Centroid Contrast)
-  // ---------------------------------------------------------------------------
-  ctx.globalCompositeOperation = 'source-over';
-  const grad4 = ctx.createRadialGradient(w * 0.5, h * 0.5, maxDim * 0.22, w * 0.5, h * 0.5, maxDim * 0.74);
-  if (!isLight) {
-    grad4.addColorStop(0, 'rgba(2, 4, 8, 0)');
-    grad4.addColorStop(0.65, 'rgba(2, 4, 8, 0.32)');
-    grad4.addColorStop(1, 'rgba(2, 4, 8, 0.72)');
-  } else {
-    grad4.addColorStop(0, 'rgba(244, 246, 249, 0)');
-    grad4.addColorStop(0.65, 'rgba(226, 232, 240, 0.28)');
-    grad4.addColorStop(1, 'rgba(203, 213, 225, 0.60)');
-  }
-  ctx.fillStyle = grad4;
-  ctx.fillRect(0, 0, w, h);
-}
-
 interface ImmersiveExperienceProps {
   objects: ObjectBreakdownData[];
   onSelectObject: (obj: ObjectBreakdownData) => void;
@@ -286,6 +45,7 @@ export interface ProjectedAnnotation {
   labelX: number;
   labelY: number;
   isLeft?: boolean;
+  isSouth?: boolean;
   elbowX: number;
   labelEdgeX: number;
   orderIndex?: number;
@@ -302,7 +62,7 @@ function computeAdaptiveAnnotationLayout(
   }>,
   viewportW: number,
   viewportH: number,
-  editorialSide: 'left' | 'right' | 'none' = 'none'
+  editorialSide: 'left' | 'right' | 'hero' | 'none' = 'none'
 ): ProjectedAnnotation[] {
   if (!items.length) return [];
 
@@ -317,7 +77,76 @@ function computeAdaptiveAnnotationLayout(
   let leftItems: typeof items = [];
   let rightItems: typeof items = [];
 
-  if (editorialSide === 'left') {
+  if (editorialSide === 'hero') {
+    // Hero Panoramic Viewport with 3 Dedicated Spatial Sectors:
+    // 1. Back / Aft (Left Flank): Exhaust Mixer & HP Turbine Vanes (strictly upper-left y <= 330, above headline)
+    // 2. South of Model (Bottom-Center): HP Compressor Casing (open channel beneath engine core, between left headline and right buttons)
+    // 3. Front / Intake (Right Flank): Fan Module & Air Intake Cowling (upper-right flank)
+    const textBlockWidth = 260;
+    const result: ProjectedAnnotation[] = [];
+
+    // Deterministic identification by component ID to eliminate ALL sorting flicker
+    const backItems = items.filter(it => it.id === 'exhaust-mixer-nozzle' || it.id === 'turbine-nozzle-guide-vanes');
+    const southItems = items.filter(it => it.id === 'compressor-casing' || it.id === 'fan-containment-casing' || it.id === 'diffuser-combustor');
+    const frontItems = items.filter(it => it.id === 'fan-module' || it.id === 'inlet-cowl' || it.id === 'bypass-stator-grid');
+
+    let idx = 1;
+
+    // 1. Back (Left Flank, strictly upper-left above "Deconstruct the invisible")
+    const leftColX = Math.max(36, Math.min(midX - 340 - textBlockWidth, 64));
+    backItems.slice(0, 2).forEach((it, i) => {
+      const labelY = 175 + i * 90;
+      const labelEdgeX = leftColX + textBlockWidth;
+      result.push({
+        ...it,
+        isLeft: true,
+        isSouth: false,
+        labelX: leftColX,
+        labelY,
+        labelEdgeX,
+        elbowX: labelEdgeX + 24,
+        orderIndex: idx++,
+      });
+    });
+
+    // 2. South of the Model (Lower-Center open space beneath the engine core)
+    const southCard = southItems[0];
+    if (southCard) {
+      // Centered horizontally in the south channel: between left headline (x < 600) and right buttons (x > 1280)
+      const southX = Math.round(midX - textBlockWidth * 0.5 + 40);
+      const southY = Math.min(Math.round(viewportH * 0.58), 525);
+      const southTopEdgeX = southX + Math.round(textBlockWidth * 0.5);
+      result.push({
+        ...southCard,
+        isLeft: false,
+        isSouth: true,
+        labelX: southX,
+        labelY: southY,
+        labelEdgeX: southTopEdgeX,
+        elbowX: southTopEdgeX,
+        orderIndex: idx++,
+      });
+    }
+
+    // 3. Front (Right Flank, upper-right)
+    const rightColX = Math.min(viewportW - textBlockWidth - 36, Math.max(midX + 360, viewportW - textBlockWidth - 64));
+    frontItems.slice(0, 2).forEach((it, i) => {
+      const labelY = 195 + i * 95;
+      const labelEdgeX = rightColX;
+      result.push({
+        ...it,
+        isLeft: false,
+        isSouth: false,
+        labelX: rightColX,
+        labelY,
+        labelEdgeX,
+        elbowX: labelEdgeX - 24,
+        orderIndex: idx++,
+      });
+    });
+
+    return result;
+  } else if (editorialSide === 'left') {
     // Editorial text is on the LEFT flank -> place ALL annotation cards cleanly on the RIGHT flank
     rightItems = [...sorted];
     leftItems = [];
@@ -354,11 +183,15 @@ function computeAdaptiveAnnotationLayout(
     }
   }
 
-  const processSide = (list: typeof leftItems, isLeft: boolean): ProjectedAnnotation[] => {
-    const textBlockWidth = 220;
-    const minGap = list.length > 5 ? Math.max(50, Math.min(58, (viewportH * 0.76) / list.length)) : 64;
-    const topLimit = Math.max(60, viewportH * 0.10);
-    const bottomLimit = Math.min(viewportH - 60, viewportH * 0.90);
+  const processSide = (list: typeof leftItems, isLeft: boolean, indexStart: number = 1): ProjectedAnnotation[] => {
+    const textBlockWidth = 260;
+    const minGap = list.length > 5 ? Math.max(60, Math.min(76, (viewportH * 0.74) / list.length)) : 76;
+
+    const topLimit = Math.max(80, viewportH * 0.12);
+    // Keep cards well above the bottom buttons (Pause motion / Launch studio)
+    const bottomLimit = editorialSide === 'left'
+      ? Math.min(viewportH - 220, viewportH * 0.68)
+      : Math.min(viewportH - 120, viewportH * 0.85);
 
     // Fixed column X for architectural HUD alignment (never sits on top of 3D models)
     const colX = isLeft
@@ -374,10 +207,10 @@ function computeAdaptiveAnnotationLayout(
         ...item,
         isLeft,
         labelX,
-        labelY: item.y - 20,
+        labelY: item.y - 28,
         labelEdgeX,
         elbowX,
-        orderIndex: idx + 1,
+        orderIndex: indexStart + idx,
       };
     });
 
@@ -404,7 +237,9 @@ function computeAdaptiveAnnotationLayout(
     return result;
   };
 
-  return [...processSide(leftItems, true), ...processSide(rightItems, false)];
+  const leftAnnotations = processSide(leftItems, true, 1);
+  const rightAnnotations = processSide(rightItems, false, leftAnnotations.length + 1);
+  return [...leftAnnotations, ...rightAnnotations];
 }
 
 const _themeTargetBgColor = new THREE.Color();
@@ -438,6 +273,22 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
   const activeObjectRef = useRef<ObjectBreakdownData | null>(null);
   const activeModelRef = useRef<LoadedObjectResult | null>(null);
   const activeModelIdRef = useRef<string | null>(null);
+
+  // Machine Plate Ground & Seam Refs (Section 3 & 7)
+  const watchGroundRef = useRef<HTMLDivElement>(null);
+  const watchSeamRef = useRef<HTMLDivElement>(null);
+  const droneGroundRef = useRef<HTMLDivElement>(null);
+  const droneSeamRef = useRef<HTMLDivElement>(null);
+  const turboGroundRef = useRef<HTMLDivElement>(null);
+  const turboSeamRef = useRef<HTMLDivElement>(null);
+  const motorGroundRef = useRef<HTMLDivElement>(null);
+  const motorSeamRef = useRef<HTMLDivElement>(null);
+  const penGroundRef = useRef<HTMLDivElement>(null);
+  const penSeamRef = useRef<HTMLDivElement>(null);
+  const uploadGroundRef = useRef<HTMLDivElement>(null);
+  const uploadSeamRef = useRef<HTMLDivElement>(null);
+  const [activeChapter, setActiveChapter] = useState(1);
+  const currentChapterRef = useRef(1);
   const pointerDownPosRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   // Dynamic Theme Lighting Refs
@@ -524,7 +375,8 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
     labelY: number;
     opacity: number;
     targetOpacity: number;
-    side: 'left' | 'right' | null;
+    side: 'left' | 'right' | 'south' | null;
+    isSouth?: boolean;
   }>>(
     Array.from({ length: 12 }, () => ({
       currentId: null,
@@ -537,14 +389,14 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       opacity: 0,
       targetOpacity: 0,
       side: null,
+      isSouth: false,
     }))
   );
 
   // Smooth Scroll Controller (Lenis) for Sub-Pixel 144Hz Physics & No Wheel Skips
   const lenisRef = useRef<Lenis | null>(null);
 
-  // Atmospheric Canvas 2D Ref & Physically Damped Inertia State
-  const atmosphereCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  // Physically Damped Inertia State for Hover Interactions
   const dampedMouseRef = useRef({ x: 0.5, y: 0.5 });
   const dampedVelocityRef = useRef(0);
   const uploadAuraWeightRef = useRef(0);
@@ -602,7 +454,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
     camera.position.set(0, 0, 18);
     cameraRef.current = camera;
 
-    // WebGL Renderer with alpha: true so living atmospheric canvas shines through
+    // WebGL Renderer with alpha: true so machine plates shine through
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
       antialias: true,
@@ -616,32 +468,34 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
     renderer.toneMappingExposure = isStartLight ? 0.98 : 1.05;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     rendererRef.current = renderer;
+    scene.background = null;
 
-    // Precision Engineering Lighting Rig (Balanced to prevent metallic blowout)
-    const ambientLight = new THREE.AmbientLight(0xffffff, isStartLight ? 0.75 : 0.45);
-    ambientLightRef.current = ambientLight;
-    scene.add(ambientLight);
-
-    // Key Light (Balanced contrast)
-    const keyLight = new THREE.DirectionalLight(0xffffff, isStartLight ? 1.65 : 1.85);
+    // Section 4 & 8: Machine Plate Scene Lighting Rig
+    // Key Light: warm directional (#FFF0DC dark, #FFF7EB light)
+    const keyLight = new THREE.DirectionalLight(isStartLight ? 0xFFF7EB : 0xFFF0DC, isStartLight ? 1.65 : 1.85);
     keyLight.position.set(6, 10, 8);
     keyLightRef.current = keyLight;
     scene.add(keyLight);
 
-    // Deep Fill
-    const fillLight = new THREE.DirectionalLight(isStartLight ? 0x94a3b8 : 0x1e293b, isStartLight ? 1.2 : 0.9);
+    // Fill Light: soft warm ambient (#E9DCCB dark, #F0E8DC light)
+    const fillLight = new THREE.DirectionalLight(isStartLight ? 0xF0E8DC : 0xE9DCCB, isStartLight ? 1.2 : 0.9);
     fillLight.position.set(-6, -3, -4);
     fillLightRef.current = fillLight;
     scene.add(fillLight);
 
-    // Electric Blue Rim Light
-    const blueRimLight = new THREE.DirectionalLight(isStartLight ? 0x2563eb : 0x3b82f6, isStartLight ? 1.15 : 1.35);
+    // Soft Ambient Light (#E9DCCB dark, #F0E8DC light)
+    const ambientLight = new THREE.AmbientLight(isStartLight ? 0xF0E8DC : 0xE9DCCB, isStartLight ? 0.75 : 0.45);
+    ambientLightRef.current = ambientLight;
+    scene.add(ambientLight);
+
+    // Rim Light (Plate Tint - default tungsten #FFE7C7)
+    const blueRimLight = new THREE.DirectionalLight(isStartLight ? 0xF5EADB : 0xFFE7C7, isStartLight ? 0.35 : 0.45);
     blueRimLight.position.set(-5, 4, -7);
     blueRimLightRef.current = blueRimLight;
     scene.add(blueRimLight);
 
-    // Cool Cyan Rim Light
-    const cyanRimLight = new THREE.DirectionalLight(isStartLight ? 0x0284c7 : 0x38bdf8, isStartLight ? 0.75 : 0.95);
+    // Secondary Accent Light (Warm tungsten #FFE7C7)
+    const cyanRimLight = new THREE.DirectionalLight(isStartLight ? 0xF5EADB : 0xFFE7C7, isStartLight ? 0.25 : 0.35);
     cyanRimLight.position.set(6, -2, -5);
     cyanRimLightRef.current = cyanRimLight;
     scene.add(cyanRimLight);
@@ -651,7 +505,11 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
     // ------------------------------------------------------------------------
     let isMounted = true;
     const loadModels = async () => {
-      for (const obj of objects) {
+      const allObjectsToLoad = [...objects];
+      if (!allObjectsToLoad.some((o) => o.id === 'jet-turbine')) {
+        allObjectsToLoad.push(jetTurbineData);
+      }
+      for (const obj of allObjectsToLoad) {
         try {
           const loaded = await load3DModelForObject(obj, 'solid');
           if (!isMounted) return;
@@ -792,29 +650,111 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       (window as unknown as { __lastP?: number; __lastCurrentScroll?: number; __lastMaxScroll?: number }).__lastMaxScroll = maxScroll;
 
       // ----------------------------------------------------------------------
-      // Dynamic Theme Lighting & Background Transition (0-pop smooth lerp)
+      // Machine Plate Grounds & Dynamic Scene Lighting (Section 3, 4, 7)
       // ----------------------------------------------------------------------
       const isCurrentLight = themeRef.current === 'light';
-      const targetBgHex = isCurrentLight ? 0xf1f4f8 : 0x020408;
-      const targetAmbInt = isCurrentLight ? 0.75 : 0.45;
-      const targetKeyInt = isCurrentLight ? 1.65 : 1.85;
-      const targetFillHex = isCurrentLight ? 0x94a3b8 : 0x1e293b;
-      const targetFillInt = isCurrentLight ? 1.2 : 0.9;
-      const targetRimBlueHex = isCurrentLight ? 0x2563eb : 0x3b82f6;
-      const targetRimBlueInt = isCurrentLight ? 1.15 : 1.35;
-      const targetRimCyanHex = isCurrentLight ? 0x0284c7 : 0x38bdf8;
-      const targetRimCyanInt = isCurrentLight ? 0.75 : 0.95;
-      const targetExposure = isCurrentLight ? 0.98 : 1.05;
+      const targetAmbInt = isCurrentLight ? 0.85 : 0.55;
+      const targetKeyInt = isCurrentLight ? 1.75 : 1.90;
+      const targetFillInt = isCurrentLight ? 1.1 : 0.8;
+      const targetRimBlueInt = isCurrentLight ? 0.35 : 0.45;
+      const targetRimCyanInt = isCurrentLight ? 0.25 : 0.35;
+      const targetExposure = isCurrentLight ? 1.0 : 1.05;
 
       const themeLerpRate = Math.min(delta * 6, 0.25);
 
-      if (scene.background instanceof THREE.Color) {
-        scene.background.lerp(_themeTargetBgColor.setHex(targetBgHex), themeLerpRate);
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // Section 3: Seam windows (in normalized scroll progress p)
+      const seams = [
+        { id: 'watch', start: 0.04, end: 0.10, ground: watchGroundRef.current, seam: watchSeamRef.current },
+        { id: 'drone', start: 0.36, end: 0.43, ground: droneGroundRef.current, seam: droneSeamRef.current },
+        { id: 'turbo', start: 0.62, end: 0.67, ground: turboGroundRef.current, seam: turboSeamRef.current },
+        { id: 'motor', start: 0.74, end: 0.77, ground: motorGroundRef.current, seam: motorSeamRef.current },
+        { id: 'pen', start: 0.80, end: 0.825, ground: penGroundRef.current, seam: penSeamRef.current },
+        { id: 'upload', start: 0.885, end: 0.93, ground: uploadGroundRef.current, seam: uploadSeamRef.current },
+      ];
+
+      for (const s of seams) {
+        if (!s.ground) continue;
+        if (p < s.start) {
+          s.ground.style.clipPath = 'none';
+          s.ground.style.opacity = '0';
+          if (s.seam) s.seam.style.opacity = '0';
+        } else if (p > s.end) {
+          s.ground.style.clipPath = 'none';
+          s.ground.style.opacity = '1';
+          if (s.seam) s.seam.style.opacity = '0';
+        } else {
+          const pNorm = prefersReduced
+            ? (p >= (s.start + s.end) / 2 ? 1 : 0)
+            : (p - s.start) / (s.end - s.start);
+          const smoothFade = pNorm * pNorm * (3 - 2 * pNorm);
+          s.ground.style.clipPath = 'none';
+          s.ground.style.opacity = smoothFade.toFixed(3);
+          if (s.seam) s.seam.style.opacity = '0';
+        }
       }
+
+      let activePlate = 'hero';
+      let activeGroundToken = 'var(--carbon)';
+      let activeRimHex = isCurrentLight ? 0xF5EADB : 0xFFE7C7;
+      let chapterNum = 1;
+
+      if (p < 0.07) {
+        activePlate = 'hero';
+        activeGroundToken = 'var(--carbon)';
+        activeRimHex = isCurrentLight ? 0xF5EADB : 0xFFE7C7;
+        chapterNum = 1;
+      } else if (p < 0.395) {
+        activePlate = 'watch';
+        activeGroundToken = 'var(--ruby)';
+        activeRimHex = isCurrentLight ? 0xFCE8E8 : 0xFFE0E0;
+        chapterNum = 1;
+      } else if (p < 0.645) {
+        activePlate = 'drone';
+        activeGroundToken = 'var(--carbon)';
+        activeRimHex = isCurrentLight ? 0xF5EADB : 0xFFE7C7;
+        chapterNum = 2;
+      } else if (p < 0.755) {
+        activePlate = 'turbo';
+        activeGroundToken = 'var(--plum)';
+        activeRimHex = isCurrentLight ? 0xF4E8F8 : 0xEEDDF4;
+        chapterNum = 3;
+      } else if (p < 0.805) {
+        activePlate = 'motor';
+        activeGroundToken = 'var(--copper)';
+        activeRimHex = isCurrentLight ? 0xFAECE2 : 0xFFE8D6;
+        chapterNum = 3;
+      } else if (p < 0.885) {
+        activePlate = 'pen';
+        activeGroundToken = 'var(--ruby)';
+        activeRimHex = isCurrentLight ? 0xFCE8E8 : 0xFFE0E0;
+        chapterNum = 3;
+      } else {
+        activePlate = 'upload';
+        activeGroundToken = 'var(--carbon)';
+        activeRimHex = isCurrentLight ? 0xF5EADB : 0xFFE7C7;
+        chapterNum = 3;
+      }
+
+      document.documentElement.style.setProperty('--current-ground', activeGroundToken);
+      window.dispatchEvent(new CustomEvent('plate-scroll', { detail: { p, activePlate } }));
+
+      if (currentChapterRef.current !== chapterNum) {
+        currentChapterRef.current = chapterNum;
+        setActiveChapter(chapterNum);
+      }
+
+      const targetKeyHex = isCurrentLight ? 0xFFF7EB : 0xFFF0DC;
+      const targetFillHex = isCurrentLight ? 0xF0E8DC : 0xE9DCCB;
+      const targetAmbHex = isCurrentLight ? 0xF0E8DC : 0xE9DCCB;
+
       if (ambientLightRef.current) {
+        ambientLightRef.current.color.setHex(targetAmbHex);
         ambientLightRef.current.intensity += (targetAmbInt - ambientLightRef.current.intensity) * themeLerpRate;
       }
       if (keyLightRef.current) {
+        keyLightRef.current.color.setHex(targetKeyHex);
         keyLightRef.current.intensity += (targetKeyInt - keyLightRef.current.intensity) * themeLerpRate;
       }
       if (fillLightRef.current) {
@@ -822,56 +762,15 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         fillLightRef.current.intensity += (targetFillInt - fillLightRef.current.intensity) * themeLerpRate;
       }
       if (blueRimLightRef.current) {
-        blueRimLightRef.current.color.lerp(_themeTargetRimBlueColor.setHex(targetRimBlueHex), themeLerpRate);
+        blueRimLightRef.current.color.lerp(_themeTargetRimBlueColor.setHex(activeRimHex), themeLerpRate);
         blueRimLightRef.current.intensity += (targetRimBlueInt - blueRimLightRef.current.intensity) * themeLerpRate;
       }
       if (cyanRimLightRef.current) {
-        cyanRimLightRef.current.color.lerp(_themeTargetRimCyanColor.setHex(targetRimCyanHex), themeLerpRate);
+        cyanRimLightRef.current.color.lerp(_themeTargetRimCyanColor.setHex(isCurrentLight ? 0xF5EADB : 0xFFE7C7), themeLerpRate);
         cyanRimLightRef.current.intensity += (targetRimCyanInt - cyanRimLightRef.current.intensity) * themeLerpRate;
       }
       if (renderer) {
         renderer.toneMappingExposure += (targetExposure - renderer.toneMappingExposure) * themeLerpRate;
-      }
-
-      // ----------------------------------------------------------------------
-      // Dynamic Living Multi-Layer Atmospheric Lighting Canvas (144Hz)
-      // ----------------------------------------------------------------------
-      const atmosCanvas = atmosphereCanvasRef.current;
-      if (atmosCanvas) {
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-        if (atmosCanvas.width !== w || atmosCanvas.height !== h) {
-          atmosCanvas.width = w;
-          atmosCanvas.height = h;
-        }
-        const ctx = atmosCanvas.getContext('2d');
-        if (ctx) {
-          // Read raw normalized pointer coordinates from global tracking or fallback
-          const rawCoord = (window as unknown as { __mouseCoord?: { nx: number; ny: number } }).__mouseCoord;
-          const targetMouseX = rawCoord ? rawCoord.nx : 0.5;
-          const targetMouseY = rawCoord ? rawCoord.ny : 0.5;
-
-          // Physically damped inertia: atmosphere has physical mass/fluid drag (cursor fast, atmosphere fluid)
-          dampedMouseRef.current.x += (targetMouseX - dampedMouseRef.current.x) * 0.032;
-          dampedMouseRef.current.y += (targetMouseY - dampedMouseRef.current.y) * 0.032;
-
-          // Smooth velocity tracking
-          const currentVel = lenisRef.current ? lenisRef.current.velocity : 0;
-          dampedVelocityRef.current += (currentVel - dampedVelocityRef.current) * 0.08;
-
-          drawAtmosphereCanvas(
-            ctx,
-            w,
-            h,
-            time,
-            p,
-            dampedMouseRef.current.x,
-            dampedMouseRef.current.y,
-            dampedVelocityRef.current,
-            uploadAuraWeightRef.current,
-            isCurrentLight
-          );
-        }
       }
 
       const models = modelsMapRef.current;
@@ -913,6 +812,13 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       const penAssembledCenter = (penModel?.rootGroup.userData.assembledCenter as THREE.Vector3) || new THREE.Vector3(0, 0, 0);
       const penExplodedCenter = (penModel?.rootGroup.userData.explodedCenter as THREE.Vector3) || penAssembledCenter;
 
+      const turbofanModel = models.get('jet-turbine');
+      const turbofanBase = (turbofanModel?.rootGroup.userData.baseScale as THREE.Vector3) || new THREE.Vector3(1, 1, 1);
+      const turbofanDist = (turbofanModel?.rootGroup.userData.assembledDist as number) || 8.5;
+      const turbofanExplodedDist = (turbofanModel?.rootGroup.userData.explodedDist as number) || turbofanDist * 1.35;
+      const turbofanAssembledCenter = (turbofanModel?.rootGroup.userData.assembledCenter as THREE.Vector3) || new THREE.Vector3(0, 0, 0);
+      const turbofanExplodedCenter = (turbofanModel?.rootGroup.userData.explodedCenter as THREE.Vector3) || turbofanAssembledCenter;
+
       // ----------------------------------------------------------------------
       // 1. Live Continuous Mechanical Motion (Visibility-Aware & Pausable)
       // ----------------------------------------------------------------------
@@ -920,6 +826,35 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         kinematicTimeRef.current += Math.min(delta, 0.05);
       }
       const elapsed = kinematicTimeRef.current;
+
+      // Turbofan Engine Rotordynamics (True rotating spools only)
+      if (turbofanModel && (turbofanModel.rootGroup.visible || p < 0.10)) {
+        turbofanModel.componentMap.forEach((info, id) => {
+          const meshes = (info.sourceMeshes && info.sourceMeshes.length > 0) ? info.sourceMeshes : [info.mesh];
+          if (id === 'fan-module' || id === 'blades_0') {
+            meshes.forEach((m) => {
+              const baseRot = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
+              m.rotation.x = baseRot.x;
+              m.rotation.z = baseRot.z;
+              m.rotation.y = baseRot.y + elapsed * 3.5;
+            });
+          } else if (id === 'turbine-nozzle-guide-vanes' || id === 'fins_0') {
+            meshes.forEach((m) => {
+              const baseRot = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
+              m.rotation.x = baseRot.x;
+              m.rotation.y = baseRot.y;
+              m.rotation.z = baseRot.z + elapsed * 4.8;
+            });
+          } else if (id === 'coaxial-drive-shaft' || id === 'tube_0') {
+            meshes.forEach((m) => {
+              const baseRot = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
+              m.rotation.x = baseRot.x;
+              m.rotation.y = baseRot.y;
+              m.rotation.z = baseRot.z + elapsed * 4.2;
+            });
+          }
+        });
+      }
 
       // Watch Horological Motion (Oscillating balance wheel, hairspring breathing, pallet ticking)
       if (watchModel && (watchModel.rootGroup.visible || p < 0.42)) {
@@ -947,7 +882,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         droneModel.propellerMixer.update(delta * 1.5);
       }
 
-      // Turbocharger Kinematic High-Speed Rotordynamics (Compressor Wheel, Turbine Wheel, and Connecting Shaft)
+      // Turbocharger Kinematic High-Speed Rotordynamics (True rotating spools only)
       if (engineModel && (engineModel.rootGroup.visible || (p >= 0.61 && p < 0.75))) {
         engineModel.componentMap.forEach((info, id) => {
           const meshes = (info.sourceMeshes && info.sourceMeshes.length > 0) ? info.sourceMeshes : [info.mesh];
@@ -959,13 +894,11 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             id.includes('compressor-inlet') ||
             id.includes('exhaust-outlet')
           ) {
-            // Unified rotating assembly: compressor wheel, turbine wheel, and connecting shaft spin continuously around Z
             meshes.forEach((m) => {
               const baseRotZ = (m.userData?.baseRotation as THREE.Euler)?.z ?? info.baseRotation.z;
-              m.rotation.z = baseRotZ + elapsed * 10.0;
+              m.rotation.z = baseRotZ + elapsed * 10;
             });
           } else if (id === 'turbo-wastegate-linkage' || id.includes('linkage')) {
-            // Pneumatic boost wastegate flapper bellcrank oscillation
             meshes.forEach((m) => {
               const baseRotZ = (m.userData?.baseRotation as THREE.Euler)?.z ?? info.baseRotation.z;
               m.rotation.z = baseRotZ + Math.sin(elapsed * 3.5) * 0.04;
@@ -1021,7 +954,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       if (penModel) penModel.rootGroup.visible = false;
 
       const rawTargets: Array<{ id: string; label: string; category: string; description: string; x: number; y: number }> = [];
-      let currentEditorialSide: 'left' | 'right' | 'none' = 'none';
+      let currentEditorialSide: 'left' | 'right' | 'hero' | 'none' = 'none';
 
       // Precision 3D-to-Screen Projection Helper for Adaptive Annotations (Universal Skinned + Rigid Support)
       const projectTargets = (
@@ -1045,31 +978,65 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           if (!comp) return;
 
           const worldPos = new THREE.Vector3();
-          if (comp.sourceMeshes && comp.sourceMeshes.length > 0) {
-            const box = new THREE.Box3();
-            let hasVisible = false;
-            for (const sm of comp.sourceMeshes) {
-              if (sm.visible !== false) {
-                sm.updateWorldMatrix(true, false);
-                box.expandByObject(sm);
-                hasVisible = true;
+          let foundBonePos = false;
+
+          // Universal Skinned Skeleton Bone coordinate resolver
+          // For animated skinned models (like the drone), vertices are deformed on GPU via skeleton bones.
+          // Querying the animated bone world position yields the true deformed coordinate!
+          if (comp.nativeAnimated || model.rootGroup.name.includes('drone')) {
+            let targetBoneName = '';
+            if (t.id === 'drone-upper-body') targetBoneName = 'upper_body_jnt';
+            else if (t.id === 'drone-prop-fasteners') targetBoneName = 'prop_bolt_cap_1_jnt';
+            else if (t.id === 'drone-propeller-group') targetBoneName = 'prop_1_jnt';
+            else if (t.id === 'drone-motor-group') targetBoneName = 'motor_1_jnt';
+            else if (t.id === 'drone-camera') targetBoneName = 'camera_jnt';
+            else if (t.id === 'drone-battery') targetBoneName = 'battery_jnt';
+            else if (t.id === 'drone-flight-electronics') targetBoneName = 'top_board_jnt';
+            else if (t.id === 'drone-landing-gear') targetBoneName = 'leg_1_jnt';
+
+            if (targetBoneName) {
+              let matchedObj: THREE.Object3D | null = null;
+              model.rootGroup.traverse((child) => {
+                if (matchedObj) return;
+                if (child.name && child.name.toLowerCase().includes(targetBoneName)) {
+                  matchedObj = child;
+                }
+              });
+              if (matchedObj) {
+                (matchedObj as THREE.Object3D).updateWorldMatrix(true, false);
+                (matchedObj as THREE.Object3D).getWorldPosition(worldPos);
+                foundBonePos = true;
               }
             }
-            if (hasVisible && !box.isEmpty()) {
-              box.getCenter(worldPos);
+          }
+
+          if (!foundBonePos) {
+            if (comp.sourceMeshes && comp.sourceMeshes.length > 0) {
+              const box = new THREE.Box3();
+              let hasVisible = false;
+              for (const sm of comp.sourceMeshes) {
+                if (sm.visible !== false) {
+                  sm.updateWorldMatrix(true, false);
+                  box.expandByObject(sm);
+                  hasVisible = true;
+                }
+              }
+              if (hasVisible && !box.isEmpty()) {
+                box.getCenter(worldPos);
+              } else {
+                return;
+              }
+            } else if (comp.mesh && comp.mesh.visible !== false) {
+              comp.mesh.updateWorldMatrix(true, true);
+              const box = new THREE.Box3().setFromObject(comp.mesh);
+              if (!box.isEmpty()) {
+                box.getCenter(worldPos);
+              } else {
+                comp.mesh.getWorldPosition(worldPos);
+              }
             } else {
               return;
             }
-          } else if (comp.mesh && comp.mesh.visible !== false) {
-            comp.mesh.updateWorldMatrix(true, true);
-            const box = new THREE.Box3().setFromObject(comp.mesh);
-            if (!box.isEmpty()) {
-              box.getCenter(worldPos);
-            } else {
-              comp.mesh.getWorldPosition(worldPos);
-            }
-          } else {
-            return;
           }
 
           const proj = worldPos.clone().project(camera);
@@ -1085,30 +1052,81 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       };
 
       // ----------------------------------------------------------------------
-      // CHAPTER 01 & 02: Intro & Concept (p: 0.00 - 0.14)
+      // CHAPTER 01 & 02: Hero Boot & Specimen Overview (p: 0.00 - 0.14)
       // ----------------------------------------------------------------------
       if (p < 0.14) {
-        if (p < 0.035) {
-          // Pure typographic hero with atmosphere: Watch is NOT visible behind "DECONSTRUCT THE INVISIBLE"
-          activeObjectRef.current = null;
-          activeModelRef.current = null;
-          activeModelIdRef.current = null;
+        if (p < 0.045) {
+          // Hero boot: High-Bypass Turbofan FULLY EXPLODED horizontally across the panoramic viewport
+          activeObjectRef.current = jetTurbineData;
+          activeModelRef.current = turbofanModel || null;
+          activeModelIdRef.current = 'jet-turbine';
           if (watchModel) {
             watchModel.rootGroup.visible = false;
           }
-          camera.position.set(
-            watchAssembledCenter.x,
-            watchAssembledCenter.y,
-            watchAssembledCenter.z + watchDist * 2.5
-          );
-          camera.lookAt(watchAssembledCenter);
+
+          if (turbofanModel) {
+            currentEditorialSide = 'hero';
+            turbofanModel.rootGroup.visible = true;
+            // Positioned tastefully in the upper-middle zone:
+            // Centered horizontally, elevated in Y so it sits comfortably above the bottom headline
+            turbofanModel.rootGroup.position.set(0, 1.45, 0);
+            // Pure horizontal alignment: -PI/2 yaw aligns thrust axis (Z) exactly left→right
+            // Subtle pitch (0.14) gives an authentic engineering inspection angle
+            const heroYaw = -Math.PI / 2 + Math.sin(elapsed * 0.25) * 0.008;
+            const heroPitch = 0.14 + Math.cos(elapsed * 0.2) * 0.004;
+            turbofanModel.rootGroup.rotation.set(heroPitch, heroYaw, 0);
+            // Scale: scaled up gracefully to command presence without crowding (1.10)
+            turbofanModel.rootGroup.scale.copy(turbofanBase).multiplyScalar(1.10);
+            // FULL horizontal explosion along engine thrust axis
+            applyModelExplodeHorizontal(turbofanModel, 1.0);
+            turbofanModel.rootGroup.updateMatrixWorld(true);
+
+            // Camera positioned to frame the panoramic engine spread
+            camera.position.set(0, 1.45, 15.6);
+            camera.lookAt(0, 1.10, 0);
+
+            // 5 precision engineering callouts:
+            // Back / Aft (Left Flank): Exhaust Mixer & HP Turbine Vanes
+            // South of Model (Bottom Center): HP Compressor Casing
+            // Front / Intake (Right Flank): Titanium Fan Module & Air Intake Cowling
+            projectTargets(turbofanModel, [
+              { id: 'exhaust-mixer-nozzle', label: 'EXHAUST MIXER', category: 'PROPULSION', description: '16-lobe convoluted core exhaust mixer.' },
+              { id: 'turbine-nozzle-guide-vanes', label: 'HP TURBINE VANES', category: 'THERMODYNAMICS', description: 'CMSX-4 superalloy surviving 1,650°C.' },
+              { id: 'compressor-casing', label: 'HP COMPRESSOR CASING', category: 'CORE COMPRESSION', description: '10-stage axial casing producing 42:1 pressure ratio.' },
+              { id: 'fan-module', label: 'TITANIUM FAN MODULE', category: 'BYPASS PROPULSION', description: '22 hollow Ti-6Al-4V wide-chord blades.' },
+              { id: 'inlet-cowl', label: 'AIR INTAKE COWLING', category: 'NACELLE', description: 'CFRP acoustic lip conditioning freestream air.' },
+            ]);
+          } else {
+            camera.position.set(
+              watchAssembledCenter.x,
+              watchAssembledCenter.y,
+              watchAssembledCenter.z + watchDist * 2.5
+            );
+            camera.lookAt(watchAssembledCenter);
+          }
         } else {
-          // Watch smoothly emerges from depth, scales up, centers, and arrives as visual hero
+          // As visitor scrolls past hero (p: 0.045 - 0.14), the exploded turbofan
+          // collapses inward and drifts upward while the watch emerges
+          const emergeP = smoothstep(0.045, 0.14, p);
+
+          if (turbofanModel && p < 0.09) {
+            const heroRecede = smoothstep(0.09, 0.045, p);
+            turbofanModel.rootGroup.visible = heroRecede > 0.02;
+            turbofanModel.rootGroup.position.set(
+              0,
+              THREE.MathUtils.lerp(6.5, 1.45, heroRecede),
+              THREE.MathUtils.lerp(-20, 0, heroRecede)
+            );
+            turbofanModel.rootGroup.scale.copy(turbofanBase).multiplyScalar(heroRecede * 1.10);
+            applyModelExplodeHorizontal(turbofanModel, heroRecede * 1.0);
+          } else if (turbofanModel) {
+            turbofanModel.rootGroup.visible = false;
+          }
+
           activeObjectRef.current = objects[0];
           activeModelRef.current = watchModel || null;
           activeModelIdRef.current = 'wristwatch';
 
-          const emergeP = smoothstep(0.035, 0.14, p);
           camera.position.set(
             watchAssembledCenter.x,
             watchAssembledCenter.y,
@@ -1118,7 +1136,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
 
           if (watchModel) {
             watchModel.rootGroup.visible = true;
-            watchModel.rootGroup.scale.copy(watchBase).multiplyScalar(THREE.MathUtils.lerp(0.35, 1.0, emergeP));
+            watchModel.rootGroup.scale.copy(watchBase).multiplyScalar(THREE.MathUtils.lerp(0.35, 1.15, emergeP));
             watchModel.rootGroup.position.set(0, THREE.MathUtils.lerp(-0.4, 0, emergeP), THREE.MathUtils.lerp(-10, 0, emergeP));
             watchModel.rootGroup.rotation.y = THREE.MathUtils.lerp(-0.6, 0, emergeP);
             watchModel.rootGroup.rotation.x = THREE.MathUtils.lerp(0.2, 0.05, emergeP);
@@ -1138,7 +1156,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
 
         if (watchModel) {
           watchModel.rootGroup.visible = true;
-          watchModel.rootGroup.scale.copy(watchBase);
+          watchModel.rootGroup.scale.copy(watchBase).multiplyScalar(1.15);
           // Positioned cleanly in center-to-right zone (clear of left heading)
           watchModel.rootGroup.position.set(1.25, 0, 0);
           watchModel.rootGroup.rotation.y = Math.sin(time * 0.0006) * 0.08;
@@ -1179,10 +1197,10 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
 
           if (localP > 0.25) {
             projectTargets(watchModel, [
-              { id: 'watch-balance-wheel', label: 'HARMONIC OSCILLATOR', category: 'REGULATION', description: 'Glucydur balance wheel & hairspring oscillating at 4 Hz' },
-              { id: 'watch-escape-wheel', label: 'SWISS LEVER ESCAPEMENT', category: 'ESCAPEMENT', description: '15-tooth escape wheel with synthetic ruby pallet stones' },
-              { id: 'watch-center-wheel', label: 'STEPPED WHEEL TRAIN', category: 'TRANSMISSION', description: 'Center wheel driving minute motion with stepped gear multiplier' },
-              { id: 'watch-dial-bezel', label: 'DIAL CHAPTER RING', category: 'STRUCTURE', description: 'Machined 316L casing bezel with hour chapter track' },
+              { id: 'watch-balance-wheel', label: 'HARMONIC BALANCE', category: 'REGULATION', description: '4 Hz oscillating Glucydur wheel & hairspring' },
+              { id: 'watch-escape-wheel', label: 'LEVER ESCAPEMENT', category: 'ESCAPEMENT', description: '15-tooth impulse escape wheel' },
+              { id: 'watch-center-wheel', label: 'MOTION GEAR TRAIN', category: 'TRANSMISSION', description: 'High-ratio stepped minute drive gears' },
+              { id: 'watch-dial-bezel', label: 'BEZEL & DIAL', category: 'STRUCTURE', description: '316L surgical stainless casing assembly' },
             ]);
           }
         }
@@ -1219,17 +1237,17 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           // Curated 5 clean components on right flank with zero text overlap
           const targets = explodeP < 0.35
             ? [
-                { id: 'watch-balance-wheel', label: 'HARMONIC OSCILLATOR', category: 'REGULATION', description: 'Glucydur balance wheel & hairspring oscillating at 4 Hz' },
-                { id: 'watch-escape-wheel', label: 'SWISS LEVER ESCAPEMENT', category: 'ESCAPEMENT', description: '15-tooth escape wheel with synthetic ruby pallet stones' },
-                { id: 'watch-center-wheel', label: 'STEPPED WHEEL TRAIN', category: 'TRANSMISSION', description: 'Center wheel driving minute motion with stepped gear multiplier' },
-                { id: 'watch-ratchet-wheel', label: 'MAINSPRING RATCHET', category: 'ENERGY STORAGE', description: 'Winding ratchet wheel coupled to mainspring barrel' },
+                { id: 'watch-balance-wheel', label: 'HARMONIC BALANCE', category: 'REGULATION', description: '4 Hz oscillating Glucydur wheel & hairspring' },
+                { id: 'watch-escape-wheel', label: 'LEVER ESCAPEMENT', category: 'ESCAPEMENT', description: '15-tooth impulse escape wheel' },
+                { id: 'watch-center-wheel', label: 'MOTION GEAR TRAIN', category: 'TRANSMISSION', description: 'High-ratio stepped minute drive gears' },
+                { id: 'watch-ratchet-wheel', label: 'MAINSPRING RATCHET', category: 'ENERGY STORAGE', description: 'Mainspring winding ratchet wheel' },
               ]
             : [
-                { id: 'watch-balance-wheel', label: 'HARMONIC OSCILLATOR', category: 'REGULATION', description: 'Glucydur balance wheel & hairspring oscillating at 4 Hz' },
-                { id: 'watch-escape-wheel', label: 'SWISS LEVER ESCAPEMENT', category: 'ESCAPEMENT', description: '15-tooth escape wheel with synthetic ruby pallet stones' },
-                { id: 'watch-pallet-fork', label: 'STEEL PALLET FORK', category: 'ESCAPEMENT', description: 'Hardened pallet fork with synthetic ruby pallet stones' },
-                { id: 'watch-center-wheel', label: 'STEPPED WHEEL TRAIN', category: 'TRANSMISSION', description: 'Center wheel driving minute motion with stepped gear multiplier' },
-                { id: 'watch-ratchet-wheel', label: 'MAINSPRING RATCHET', category: 'ENERGY STORAGE', description: 'Winding ratchet wheel coupled to mainspring barrel' },
+                { id: 'watch-balance-wheel', label: 'HARMONIC BALANCE', category: 'REGULATION', description: '4 Hz oscillating Glucydur wheel & hairspring' },
+                { id: 'watch-escape-wheel', label: 'LEVER ESCAPEMENT', category: 'ESCAPEMENT', description: '15-tooth impulse escape wheel' },
+                { id: 'watch-pallet-fork', label: 'STEEL PALLET FORK', category: 'ESCAPEMENT', description: 'Synthetic ruby impulse pallets' },
+                { id: 'watch-center-wheel', label: 'MOTION GEAR TRAIN', category: 'TRANSMISSION', description: 'High-ratio stepped minute drive gears' },
+                { id: 'watch-ratchet-wheel', label: 'MAINSPRING RATCHET', category: 'ENERGY STORAGE', description: 'Mainspring winding ratchet wheel' },
               ];
 
           projectTargets(watchModel, targets);
@@ -1323,10 +1341,11 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           }
 
           projectTargets(droneModel, [
-            { id: 'drone-propeller-group', label: 'COUNTER-ROTATING PROPELLERS', category: 'PROPULSION', description: 'Fixed-pitch aerodynamic rotors generating dynamic lift' },
-            { id: 'drone-motor-group', label: 'BRUSHLESS OUTRUNNERS', category: 'ACTUATION', description: '14-pole direct-drive electromagnetic brushless motors' },
-            { id: 'drone-camera', label: 'GIMBAL IMAGING PAYLOAD', category: 'IMAGING PAYLOAD', description: '4K stabilized optical sensor with anti-vibration dampening' },
-            { id: 'drone-landing-gear', label: 'COMPOSITE LANDING GEAR', category: 'LANDING STRUCTURE', description: 'High-modulus composite struts absorbing touchdown loads' },
+            { id: 'drone-prop-fasteners', label: 'ROTOR HUB SPINNER CAPS', category: 'PROPULSION RETENTION', description: 'Counter-threaded aluminum propeller retaining caps' },
+            { id: 'drone-upper-body', label: 'UPPER BODY SHELL', category: 'AERODYNAMIC CANOPY', description: 'Impact-resistant aerodynamic top fuselage enclosure' },
+            { id: 'drone-propeller-group', label: 'LIFT PROPELLERS', category: 'PROPULSION', description: 'Counter-rotating high-efficiency rotors' },
+            { id: 'drone-camera', label: 'GIMBAL IMAGING PAYLOAD', category: 'IMAGING PAYLOAD', description: '4K stabilized optical sensor module' },
+            { id: 'drone-landing-gear', label: 'COMPOSITE LANDING GEAR', category: 'LANDING STRUCTURE', description: 'High-modulus shock absorption struts' },
           ]);
         }
         camera.position.set(droneAssembledCenter.x, droneAssembledCenter.y + 0.20, droneAssembledCenter.z + droneDist * 1.18);
@@ -1360,20 +1379,21 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             droneModel.animationMixer.setTime(easedExplode * peak);
           }
 
-          // Curated 5 clean components on left flank with zero text overlap
+          // Curated clean components with Rotor Spinner Caps and Upper Body Shell prominently labelled at top
           const targets = droneExplodeP < 0.35
             ? [
-                { id: 'drone-propeller-group', label: 'COUNTER-ROTATING PROPELLERS', category: 'PROPULSION', description: 'Fixed-pitch aerodynamic rotors generating dynamic lift' },
-                { id: 'drone-motor-group', label: 'BRUSHLESS OUTRUNNERS', category: 'ACTUATION', description: '14-pole direct-drive electromagnetic brushless motors' },
-                { id: 'drone-flight-electronics', label: 'FLIGHT AVIONICS', category: 'AVIONICS', description: 'Attitude stabilization core with dual IMU and telemetry bus' },
-                { id: 'drone-battery', label: 'RECHARGEABLE BATTERY', category: 'POWER SYSTEM', description: 'High-discharge lithium-polymer cell with balanced power bus' },
+                { id: 'drone-prop-fasteners', label: 'ROTOR HUB SPINNER CAPS', category: 'PROPULSION RETENTION', description: 'Counter-threaded aluminum propeller retaining caps' },
+                { id: 'drone-upper-body', label: 'UPPER BODY SHELL', category: 'AERODYNAMIC CANOPY', description: 'Impact-resistant aerodynamic top fuselage enclosure' },
+                { id: 'drone-propeller-group', label: 'LIFT PROPELLERS', category: 'PROPULSION', description: 'Counter-rotating high-efficiency rotors' },
+                { id: 'drone-camera', label: 'GIMBAL IMAGING PAYLOAD', category: 'IMAGING PAYLOAD', description: '4K stabilized optical sensor module' },
               ]
             : [
-                { id: 'drone-propeller-group', label: 'COUNTER-ROTATING PROPELLERS', category: 'PROPULSION', description: 'Fixed-pitch aerodynamic rotors generating dynamic lift' },
-                { id: 'drone-motor-group', label: 'BRUSHLESS OUTRUNNERS', category: 'ACTUATION', description: '14-pole direct-drive electromagnetic brushless motors' },
-                { id: 'drone-flight-electronics', label: 'FLIGHT AVIONICS', category: 'AVIONICS', description: 'Attitude stabilization core with dual IMU and telemetry bus' },
-                { id: 'drone-battery', label: 'RECHARGEABLE BATTERY', category: 'POWER SYSTEM', description: 'High-discharge lithium-polymer cell with balanced power bus' },
-                { id: 'drone-camera', label: 'GIMBAL IMAGING PAYLOAD', category: 'IMAGING PAYLOAD', description: '4K stabilized optical sensor with anti-vibration dampening' },
+                { id: 'drone-prop-fasteners', label: 'ROTOR HUB SPINNER CAPS', category: 'PROPULSION RETENTION', description: 'Counter-threaded aluminum propeller retaining caps' },
+                { id: 'drone-upper-body', label: 'UPPER BODY SHELL', category: 'AERODYNAMIC CANOPY', description: 'Impact-resistant aerodynamic top fuselage enclosure' },
+                { id: 'drone-propeller-group', label: 'LIFT PROPELLERS', category: 'PROPULSION', description: 'Counter-rotating high-efficiency rotors' },
+                { id: 'drone-motor-group', label: 'BRUSHLESS MOTORS', category: 'ACTUATION', description: '14-pole electromagnetic outrunners' },
+                { id: 'drone-battery', label: 'RECHARGEABLE BATTERY', category: 'POWER SYSTEM', description: 'High-discharge 4S LiPo power module' },
+                { id: 'drone-camera', label: 'GIMBAL IMAGING PAYLOAD', category: 'IMAGING PAYLOAD', description: '4K stabilized optical sensor module' },
               ];
 
           projectTargets(droneModel, targets);
@@ -1409,7 +1429,6 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
 
         if (engineModel) {
           engineModel.rootGroup.visible = true;
-          // Sits directly in its intended final visual zone (x: 1.35, y: -0.55), comfortably below heading
           engineModel.rootGroup.position.set(
             THREE.MathUtils.lerp(0.8, 1.35, easedTrans),
             THREE.MathUtils.lerp(-3.0, -0.55, easedTrans),
@@ -1449,14 +1468,12 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         if (engineModel) {
           engineModel.rootGroup.visible = true;
           engineModel.rootGroup.scale.copy(engineBase);
-          // Positioned in center-to-right zone comfortably below heading "TWIN-SCROLL TURBOCHARGER"
           engineModel.rootGroup.position.set(1.35, -0.55, 0);
           engineModel.rootGroup.rotation.y = 0.3 + engineExplodeP * 0.4;
           engineModel.rootGroup.rotation.x = 0.1;
           applyModelExplode(engineModel, easedEngine * 0.85);
           engineModel.rootGroup.updateMatrixWorld(true);
 
-          // Progressive disclosure: 2 -> 4 -> 5 components, all routed to right flank
           const targets = engineExplodeP < 0.18
             ? [
                 { id: 'turbo-compressor-housing', label: 'COMPRESSOR VOLUTE HOUSING', category: 'AIR INDUCTION', description: 'Cast A356-T6 aluminum scroll converting Mach 0.8 airflow into 2.4 bar static boost via divergent volute geometry.' },
@@ -1618,61 +1635,67 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
 
         if (penModel) {
           penModel.rootGroup.visible = true;
-          penModel.rootGroup.position.set(0.50, THREE.MathUtils.lerp(-2.0, 0, easedTrans), THREE.MathUtils.lerp(-16, 0, easedTrans));
-          penModel.rootGroup.scale.copy(penBase).multiplyScalar(THREE.MathUtils.lerp(0.35, 1.0, easedTrans));
-          // Vertical standing orientation (tip pointing downward, plunger at top)
-          penModel.rootGroup.rotation.set(0.08, THREE.MathUtils.lerp(-0.4, 0.35, easedTrans), 0);
-          applyModelExplode(penModel, 0);
+          penModel.rootGroup.position.set(0.42, THREE.MathUtils.lerp(-2.0, 0, easedTrans), THREE.MathUtils.lerp(-16, 0, easedTrans));
+          penModel.rootGroup.scale.copy(penBase).multiplyScalar(THREE.MathUtils.lerp(0.25, 0.68, easedTrans));
+          // Strictly upright standing orientation (pitch=0, roll=0, zero slant!)
+          penModel.rootGroup.rotation.set(0, THREE.MathUtils.lerp(-0.4, 0.35, easedTrans), 0);
+          // Arrives 100% un-exploded (assembled)
+          applyPenExplode(penModel, 0.0);
         }
 
-        const camTarget = new THREE.Vector3().lerpVectors(motorExplodedCenter, penAssembledCenter, easedTrans);
-        const camDist = THREE.MathUtils.lerp(motorExplodedDist * 1.12, penDist * 1.45, easedTrans);
+        const camTarget = new THREE.Vector3().lerpVectors(motorExplodedCenter, new THREE.Vector3(0.42, 0, 0), easedTrans);
+        const camDist = THREE.MathUtils.lerp(motorExplodedDist * 1.12, 12.8, easedTrans);
         camera.position.set(camTarget.x, camTarget.y + THREE.MathUtils.lerp(0.12, 0, easedTrans), camTarget.z + camDist);
         camera.lookAt(camTarget);
       }
 
       // ----------------------------------------------------------------------
-      // CHAPTER 12: Ballpoint Pen (p: 0.81 - 0.85)
+      // CHAPTER 12: Ballpoint Pen (p: 0.805 - 0.85)
       // ----------------------------------------------------------------------
-      else if (p >= 0.81 && p < 0.85) {
+      else if (p >= 0.805 && p < 0.85) {
         currentEditorialSide = 'left';
         activeObjectRef.current = objects[4];
         activeModelRef.current = penModel || null;
         activeModelIdRef.current = 'ballpoint-pen';
 
-        const penExplodeP = (p - 0.81) / 0.04;
-        const easedPen = smoothstep(0, 1, penExplodeP);
+        // Progressive Explosion on Scroll:
+        // p in [0.805, 0.820]: Arrives completely UN-EXPLODED (assembled)
+        // p in [0.820, 0.846]: Progressively deconstructs into full exploded CAD assembly
+        const explodeNorm = Math.max(0, Math.min(1, (p - 0.820) / 0.026));
+        const penExplodeFactor = smoothstep(0, 1, explodeNorm);
 
-        const camTarget = new THREE.Vector3().lerpVectors(penAssembledCenter, penExplodedCenter, easedPen);
-        // Backed up ~45% so vertical exploded components stay comfortably inside viewport bounds
-        const camDist = THREE.MathUtils.lerp(penDist, penExplodedDist, easedPen) * 1.45;
-        camera.position.set(camTarget.x, camTarget.y, camTarget.z + camDist);
+        // Camera smoothly adjusts framing from assembled (center Y=0, dist=12.8) to exploded (center Y=-0.65, dist=14.8)
+        const camTargetY = THREE.MathUtils.lerp(0.0, -0.65, penExplodeFactor);
+        const camTarget = new THREE.Vector3(0.42, camTargetY, 0);
+        const camDist = THREE.MathUtils.lerp(12.8, 14.8, penExplodeFactor);
+        camera.position.set(camTarget.x, camTarget.y, camDist);
         camera.lookAt(camTarget);
         camera.updateMatrixWorld(true);
 
         if (penModel) {
           penModel.rootGroup.visible = true;
-          penModel.rootGroup.scale.copy(penBase);
-          // Positioned in center-to-right zone (clear of left heading "BALLPOINT MECHANISM")
-          penModel.rootGroup.position.set(0.50, 0, 0);
-          // Vertical standing orientation (tip pointing downward, plunger at top)
-          penModel.rootGroup.rotation.set(0.08, 0.35 + penExplodeP * 0.25, 0);
-          applyModelExplode(penModel, easedPen * 0.36);
+          // Scale: 0.68 for slender, perfectly proportioned engineering specimen (strictly not enlarged)
+          penModel.rootGroup.scale.copy(penBase).multiplyScalar(0.68);
+          // Positioned safely clear of the left editorial text
+          penModel.rootGroup.position.set(0.42, 0, 0);
+          // Strictly upright vertical orientation (pitch=0, roll=0, zero slant!) with subtle yaw for 3D depth
+          const penYaw = 0.35 + Math.sin(elapsed * 0.20) * 0.04;
+          penModel.rootGroup.rotation.set(0, penYaw, 0);
+          // Dynamically deconstructs on scroll: 0.0 un-exploded -> 1.0 exploded
+          applyPenExplode(penModel, penExplodeFactor);
           penModel.rootGroup.updateMatrixWorld(true);
 
-          // Progressive disclosure: 2 -> 4 curated components on right flank
-          const targets = penExplodeP < 0.35
-            ? [
-                { id: 'pen-barrel', label: 'STAINLESS STEEL BARREL', category: 'CHASSIS', description: 'Deep-drawn AISI 304 austenitic stainless steel cylindrical body (0.40mm wall) with longitudinal satin-brush finish.' },
-                { id: 'supplemental-writing-tip', label: 'PRECISION WRITING TIP', category: 'MICRO-FLUIDICS', description: 'Swiss-turned CuZn39Pb3 brass socket broached with 5 micro-capillary ink feed grooves (0.005mm clearance).' },
-              ]
-            : [
-                { id: 'pen-barrel', label: 'STAINLESS STEEL BARREL', category: 'CHASSIS', description: 'Deep-drawn AISI 304 austenitic stainless steel cylindrical body (0.40mm wall) with longitudinal satin-brush finish.' },
-                { id: 'pen-clip-actuator', label: 'SPRING-STEEL CLIP & PLUNGER', category: 'ACTUATION', description: 'Hardened spring steel pocket clip integrated with bistable indexing plunger transmitting tactile 3.5N force.' },
-                { id: 'supplemental-writing-tip', label: 'PRECISION WRITING TIP', category: 'MICRO-FLUIDICS', description: 'Swiss-turned CuZn39Pb3 brass socket broached with 5 micro-capillary ink feed grooves (0.005mm clearance).' },
-                { id: 'supplemental-ink-cartridge', label: 'CAPILLARY INK RESERVOIR', category: 'FLUIDICS', description: 'Extruded polypropylene tube maintaining high surface tension to prevent air bubbles and gravity leakage.' },
-                { id: 'supplemental-return-spring', label: 'HELICAL RETURN SPRING', category: 'KINEMATICS', description: 'Cold-coiled ASTM A228 high-carbon musical spring wire providing 2.8N return force and 100,000-cycle fatigue life.' },
-              ];
+          // 4 clean callouts on the right flank (never cluttered, never reaching bottom buttons)
+          const targets = penExplodeFactor < 0.35 ? [
+            { id: 'pen-clip-actuator', label: 'SPRING-STEEL CLIP & PLUNGER', category: 'ACTUATION', description: 'Hardened spring steel pocket clip integrated with bistable click plunger.' },
+            { id: 'pen-barrel', label: 'STAINLESS STEEL BARREL', category: 'CHASSIS', description: 'Deep-drawn AISI 304 cylindrical body with longitudinal satin-brush finish.' },
+            { id: 'pen-grip-tip', label: 'RIBBED GRIP & NOSE CONE', category: 'ERGONOMICS', description: 'Precision Swiss-turned fluted front section housing the writing core.' },
+          ] : [
+            { id: 'pen-clip-actuator', label: 'SPRING-STEEL CLIP & PLUNGER', category: 'ACTUATION', description: 'Hardened spring steel pocket clip integrated with bistable click plunger.' },
+            { id: 'pen-barrel', label: 'STAINLESS STEEL BARREL', category: 'CHASSIS', description: 'Deep-drawn AISI 304 cylindrical body with longitudinal satin-brush finish.' },
+            { id: 'supplemental-return-spring', label: 'HELICAL RETURN SPRING', category: 'KINEMATICS', description: 'Cold-coiled ASTM A228 spring wire providing 2.8N return reset force.' },
+            { id: 'pen-grip-tip', label: 'PRECISION TIP & NOSE CONE', category: 'MICRO-FLUIDICS', description: 'Swiss-turned brass socket housing 1.0mm rolling tungsten carbide sphere.' },
+          ];
 
           projectTargets(penModel, targets);
         }
@@ -1690,12 +1713,12 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         const easedTrans = smoothstep(0, 1, transP);
         if (penModel && transP < 0.95) {
           penModel.rootGroup.visible = true;
-          penModel.rootGroup.position.set(0.50, THREE.MathUtils.lerp(0, 2.0, easedTrans), THREE.MathUtils.lerp(0, -22, easedTrans));
-          penModel.rootGroup.scale.copy(penBase).multiplyScalar(THREE.MathUtils.lerp(1.0, 0.15, easedTrans));
-          penModel.rootGroup.rotation.set(0.08, 0.60, 0);
-          applyModelExplode(penModel, 1.0);
+          penModel.rootGroup.position.set(0.42, THREE.MathUtils.lerp(0, 2.0, easedTrans), THREE.MathUtils.lerp(0, -22, easedTrans));
+          penModel.rootGroup.scale.copy(penBase).multiplyScalar(THREE.MathUtils.lerp(0.68, 0.15, easedTrans));
+          penModel.rootGroup.rotation.set(0, 0.60, 0);
+          applyPenExplode(penModel, 1.0);
         }
-        camera.position.set(0, 0.1, THREE.MathUtils.lerp(penExplodedDist * 1.45, penDist * 1.5, easedTrans));
+        camera.position.set(0, 0.1, THREE.MathUtils.lerp(14.8, penDist * 1.5, easedTrans));
         camera.lookAt(0, 0, 0);
       }
 
@@ -1833,7 +1856,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         const ann = assignedAnns[i];
 
         if (ann) {
-          const annSide: 'left' | 'right' = ann.isLeft ? 'left' : 'right';
+          const annSide: 'left' | 'right' | 'south' = ann.isSouth ? 'south' : (ann.isLeft ? 'left' : 'right');
           const sideSwapped = smoothed.side !== null && smoothed.side !== annSide;
           const idChanged = smoothed.currentId !== null && smoothed.currentId !== ann.id;
 
@@ -1841,6 +1864,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             // Slot is currently invisible: snap immediately to target position & new metadata
             smoothed.currentId = ann.id;
             smoothed.side = annSide;
+            smoothed.isSouth = !!ann.isSouth;
             smoothed.x = ann.x;
             smoothed.y = ann.y;
             smoothed.elbowX = ann.elbowX;
@@ -1862,6 +1886,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             if (smoothed.opacity < 0.08) {
               smoothed.currentId = ann.id;
               smoothed.side = annSide;
+              smoothed.isSouth = !!ann.isSouth;
               smoothed.x = ann.x;
               smoothed.y = ann.y;
               smoothed.elbowX = ann.elbowX;
@@ -1880,6 +1905,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             }
           } else {
             // Same target and same flank: smoothly track position with exponential decay
+            smoothed.isSouth = !!ann.isSouth;
             const posDecay = 1.0 - Math.exp(-22.0 * safeDelta);
             smoothed.x += (ann.x - smoothed.x) * posDecay;
             smoothed.y += (ann.y - smoothed.y) * posDecay;
@@ -1910,6 +1936,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             smoothed.opacity = 0;
             smoothed.currentId = null;
             smoothed.side = null;
+            smoothed.isSouth = false;
           }
         }
 
@@ -1923,10 +1950,18 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           slot.group.setAttribute('opacity', opStr);
           slot.circle.setAttribute('cx', smoothed.x.toFixed(1));
           slot.circle.setAttribute('cy', smoothed.y.toFixed(1));
-          slot.polyline.setAttribute(
-            'points',
-            `${smoothed.x.toFixed(1)},${smoothed.y.toFixed(1)} ${smoothed.elbowX.toFixed(1)},${smoothed.y.toFixed(1)} ${smoothed.labelEdgeX.toFixed(1)},${(smoothed.labelY + 22).toFixed(1)}`
-          );
+          if (smoothed.isSouth) {
+            const midY = smoothed.y + (smoothed.labelY - smoothed.y) * 0.45;
+            slot.polyline.setAttribute(
+              'points',
+              `${smoothed.x.toFixed(1)},${smoothed.y.toFixed(1)} ${smoothed.x.toFixed(1)},${midY.toFixed(1)} ${smoothed.labelEdgeX.toFixed(1)},${midY.toFixed(1)} ${smoothed.labelEdgeX.toFixed(1)},${smoothed.labelY.toFixed(1)}`
+            );
+          } else {
+            slot.polyline.setAttribute(
+              'points',
+              `${smoothed.x.toFixed(1)},${smoothed.y.toFixed(1)} ${smoothed.elbowX.toFixed(1)},${smoothed.y.toFixed(1)} ${smoothed.labelEdgeX.toFixed(1)},${(smoothed.labelY + 28).toFixed(1)}`
+            );
+          }
           slot.container.style.opacity = opStr;
           slot.container.style.transform = `translate3d(${smoothed.labelX.toFixed(1)}px, ${smoothed.labelY.toFixed(1)}px, 0)`;
           slot.container.style.pointerEvents = smoothed.opacity > 0.5 ? 'auto' : 'none';
@@ -2045,6 +2080,97 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
     return () => cancelAnimationFrame(animationFrameId);
   }, [scrollYProgress]);
 
+  // Helper: Horizontal-only explosion for the hero panoramic view
+  // Constrains all component movement to primarily the Z-axis (engine thrust axis = horizontal after Y rotation)
+  // This creates the reference image's clean linear spread rather than chaotic scatter
+  const applyModelExplodeHorizontal = (model: LoadedObjectResult, factor: number) => {
+    const elapsed = kinematicTimeRef.current;
+    model.componentMap.forEach((info, id) => {
+      if (info.nativeAnimated) return;
+      const isSupplemental = Boolean(info.mesh.userData?.supplemental);
+      if (isSupplemental) {
+        info.mesh.visible = factor >= info.explodeStart;
+      }
+      let localT = 0;
+      if (factor <= info.explodeStart) localT = 0;
+      else if (factor >= info.explodeEnd) localT = 1;
+      else localT = smoothstep(info.explodeStart, info.explodeEnd, factor);
+
+      const horizVector = new THREE.Vector3(0, 0, info.explodeVector.z * 1.25);
+
+      const meshes = (info.sourceMeshes && info.sourceMeshes.length > 0) ? info.sourceMeshes : [info.mesh];
+      meshes.forEach((m) => {
+        const basePos = (m.userData?.basePosition as THREE.Vector3) || info.basePosition;
+        m.position.copy(basePos);
+        m.position.addScaledVector(horizVector, localT);
+
+        const baseRot = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
+
+        // Accurate Turbofan Rotordynamics: Fan disc spins around local Y axis (true spindle of wide-chord fan)
+        if (id === 'fan-module' || id === 'blades_0' || m.name === 'blades_0') {
+          m.rotation.x = baseRot.x;
+          m.rotation.z = baseRot.z;
+          m.rotation.y = baseRot.y + elapsed * 3.5;
+        } else if (id === 'turbine-nozzle-guide-vanes' || id === 'fins_0' || m.name === 'fins_0') {
+          m.rotation.x = baseRot.x;
+          m.rotation.y = baseRot.y;
+          m.rotation.z = baseRot.z + elapsed * 4.8;
+        } else if (id === 'coaxial-drive-shaft' || id === 'tube_0' || m.name === 'tube_0') {
+          m.rotation.x = baseRot.x;
+          m.rotation.y = baseRot.y;
+          m.rotation.z = baseRot.z + elapsed * 4.2;
+        }
+      });
+    });
+  };
+
+  // Helper: Authentic coaxial breakdown of the ballpoint pen matching reference CAD visualization (Screenshot 2)
+  const applyPenExplode = (model: LoadedObjectResult, factor: number) => {
+    const eased = smoothstep(0, 1, Math.max(0, Math.min(1, factor)));
+
+    model.componentMap.forEach((info, id) => {
+      // Hide internal cam and cartridge so breakdown matches reference CAD visual exactly
+      if (
+        id.includes('cam') ||
+        id === 'supplemental-click-cam' ||
+        id.includes('cartridge') ||
+        id === 'supplemental-ink-cartridge'
+      ) {
+        info.mesh.visible = false;
+        if (info.sourceMeshes) {
+          info.sourceMeshes.forEach((m) => (m.visible = false));
+        }
+        return;
+      }
+
+      const isSupplemental = Boolean(info.mesh.userData?.supplemental);
+      if (isSupplemental) {
+        info.mesh.visible = eased > 0.05;
+      }
+
+      let targetOffsetY = 0;
+      if (id.includes('clip-actuator') || id === 'pen-clip-actuator' || id === 'Object_5') {
+        targetOffsetY = 0.55 * eased;
+      } else if (id.includes('barrel') || id === 'pen-barrel' || id === 'Object_4') {
+        targetOffsetY = 0.0;
+      } else if (id.includes('spring') || id === 'supplemental-return-spring') {
+        targetOffsetY = -0.75 * eased;
+      } else if ((id.includes('tip') && !id.includes('grip')) || id === 'supplemental-writing-tip') {
+        targetOffsetY = -1.25 * eased;
+      } else if (id.includes('ball') || id === 'supplemental-tungsten-ball') {
+        targetOffsetY = -1.55 * eased;
+      } else if (id.includes('grip') || id === 'pen-grip-tip' || id === 'Object_6') {
+        targetOffsetY = -2.15 * eased;
+      }
+
+      const meshes = (info.sourceMeshes && info.sourceMeshes.length > 0) ? info.sourceMeshes : [info.mesh];
+      meshes.forEach((m) => {
+        const basePos = (m.userData?.basePosition as THREE.Vector3) || info.basePosition;
+        m.position.set(basePos.x, basePos.y + targetOffsetY, basePos.z);
+      });
+    });
+  };
+
   // Helper: Apply physical component deconstruction with layered procedural kinematics
   const applyModelExplode = (model: LoadedObjectResult, factor: number) => {
     const elapsed = kinematicTimeRef.current;
@@ -2069,11 +2195,28 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       // Layer mechanical micro-motion directly on top of exploded pose so explosion never wipes out translation
       if (id.includes('cam') || id === 'supplemental-click-cam') {
         meshes.forEach((m) => {
-          m.position.x += Math.sin(elapsed * 2.0) * 0.015;
+          m.position.y += Math.sin(elapsed * 2.0) * 0.015;
         });
       } else if (id.includes('clip-actuator') || id === 'pen-clip-actuator' || id === 'pen_1') {
         meshes.forEach((m) => {
           m.position.y += Math.sin(elapsed * 2.0) * 0.012;
+        });
+      } else if (
+        id === 'turbo-chra-core' ||
+        id === 'turbo-compressor-inlet' ||
+        id === 'turbo-exhaust-outlet' ||
+        id.includes('chra') ||
+        id.includes('compressor-inlet') ||
+        id.includes('exhaust-outlet')
+      ) {
+        meshes.forEach((m) => {
+          const baseRotZ = (m.userData?.baseRotation as THREE.Euler)?.z ?? info.baseRotation.z;
+          m.rotation.z = baseRotZ + elapsed * 10;
+        });
+      } else if (id === 'turbo-wastegate-linkage' || id.includes('linkage')) {
+        meshes.forEach((m) => {
+          const baseRotZ = (m.userData?.baseRotation as THREE.Euler)?.z ?? info.baseRotation.z;
+          m.rotation.z = baseRotZ + Math.sin(elapsed * 3.5) * 0.04;
         });
       }
     });
@@ -2101,11 +2244,20 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
     restDelta: 0.0001,
   });
 
-  // 01. Intro Hero
+  // 01. Intro Hero — text positioned in the lower portion beneath the elevated turbine
   const introOpacity = useTransform(smoothScrollProgress, [0.00, 0.02, 0.065, 0.088], [1, 1, 0, 0]);
   const introY = useTransform(smoothScrollProgress, [0.00, 0.088], [0, -45]);
   const introBlur = useTransform(introOpacity, (o) => (o >= 0.98 ? 'none' : `blur(${((1 - Math.max(0, Math.min(1, o))) * 5).toFixed(1)}px)`));
   const introDisplay = useTransform(introOpacity, (v) => (v > 0.01 ? 'flex' : 'none'));
+
+  // Liquid Glass Overlay: Frosted glass sits below model initially, rises above on scroll
+  const liquidGlassOpacity = useTransform(smoothScrollProgress, [0.00, 0.005, 0.045, 0.075], [0.92, 0.92, 0.5, 0]);
+  const liquidGlassBlur = useTransform(smoothScrollProgress, [0.00, 0.045, 0.075], [16, 8, 0]);
+  const liquidGlassY = useTransform(smoothScrollProgress, [0.00, 0.07], [0, -35]);
+  const liquidGlassScale = useTransform(smoothScrollProgress, [0.00, 0.07], [1.0, 0.98]);
+  const liquidGlassDisplay = useTransform(liquidGlassOpacity, (v) => (v > 0.01 ? 'flex' : 'none'));
+  // Z-index: starts at 4 (beneath canvas z-10), on scroll rises to 25 (above canvas z-10)
+  const liquidGlassZ = useTransform(smoothScrollProgress, [0.00, 0.018, 0.042], [4, 12, 25]);
 
   // 02. Architectural Concept
   const conceptOpacity = useTransform(smoothScrollProgress, [0.065, 0.088, 0.128, 0.148], [0, 1, 1, 0]);
@@ -2298,23 +2450,26 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
     <div
       ref={containerRef}
       style={{ height: '1800vh' }}
-      className={`relative ${
-        isLight ? 'bg-[#f4f6f9] text-[#0f172a] selection:bg-[#2563eb]/20' : 'bg-[#020408] text-white selection:bg-[#3b82f6]/30'
-      } overflow-x-clip select-none transition-colors duration-300`}
+      className="relative overflow-x-clip select-none text-[var(--text)] bg-transparent"
     >
       {/* -------------------------------------------------------------------- */}
-      {/* Fixed Fullscreen Living Multi-Layer Atmospheric Lighting Canvas (144Hz) */}
+      {/* Machine Plate Grounds (Smooth Organic Crossfade Behind WebGL Canvas) */}
       {/* -------------------------------------------------------------------- */}
-      <canvas
-        ref={atmosphereCanvasRef}
-        className="fixed inset-0 z-0 pointer-events-none w-full h-full block"
-      />
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="ground" data-plate="hero" />
+        <div ref={watchGroundRef} className="ground" data-plate="watch" style={{ opacity: 0 }} />
+        <div ref={droneGroundRef} className="ground" data-plate="drone" style={{ opacity: 0 }} />
+        <div ref={turboGroundRef} className="ground" data-plate="turbo" style={{ opacity: 0 }} />
+        <div ref={motorGroundRef} className="ground" data-plate="motor" style={{ opacity: 0 }} />
+        <div ref={penGroundRef} className="ground" data-plate="pen" style={{ opacity: 0 }} />
+        <div ref={uploadGroundRef} className="ground" data-plate="upload" style={{ opacity: 0 }} />
+      </div>
 
       {/* -------------------------------------------------------------------- */}
       {/* Fixed Fullscreen Three.js Canvas with State-Based Click Routing */}
       {/* -------------------------------------------------------------------- */}
-      <div
-        className="fixed inset-0 z-[1] pointer-events-auto cursor-pointer"
+      <motion.div
+        className="fixed inset-0 z-10 pointer-events-auto cursor-pointer"
         onPointerDown={handleCanvasPointerDown}
         onPointerUp={handleCanvasPointerUp}
         onClick={(e) => handleCanvasClick(e.clientX, e.clientY)}
@@ -2324,42 +2479,69 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           onClick={(e) => handleCanvasClick(e.clientX, e.clientY)}
           className="w-full h-full block cursor-pointer"
         />
-      </div>
+      </motion.div>
 
       {/* -------------------------------------------------------------------- */}
-      {/* Subtle Background CAD Grid */}
+      {/* Liquid Glass Frosted Overlay — Sits below model initially, rises above on scroll */}
+      {/* On scroll, rises above the canvas (z-index 25 > 10) creating a liquid glass depth effect */}
       {/* -------------------------------------------------------------------- */}
-      <div className={`fixed inset-0 z-[2] pointer-events-none cad-grid ${isLight ? 'opacity-20' : 'opacity-25'}`} />
+      <motion.div
+        style={{
+          opacity: liquidGlassOpacity,
+          y: liquidGlassY,
+          scale: liquidGlassScale,
+          display: liquidGlassDisplay,
+          zIndex: liquidGlassZ,
+        }}
+        className="fixed inset-x-0 bottom-0 h-[52vh] pointer-events-none"
+      >
+        <div
+          className="w-full h-full relative overflow-hidden"
+          style={{
+            background: 'linear-gradient(to top, var(--current-ground, var(--carbon)) 0%, color-mix(in srgb, var(--current-ground, var(--carbon)) 88%, transparent) 45%, color-mix(in srgb, var(--current-ground, var(--carbon)) 35%, transparent) 75%, transparent 100%)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            maskImage: 'linear-gradient(to top, black 0%, black 40%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to top, black 0%, black 40%, transparent 100%)',
+          }}
+        >
+          {/* Subtle liquid glass specular highlight rim */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+        </div>
+      </motion.div>
 
       {/* -------------------------------------------------------------------- */}
-      {/* Precision 3D-to-Screen SVG Leader Lines with 90-degree elbows (Pool of 12) */}
+      {/* Precision 3D-to-Screen SVG Leader Lines (Section 5 & 7) */}
       {/* -------------------------------------------------------------------- */}
       <svg ref={annotationSvgRef} className="fixed inset-0 w-full h-full z-[15] pointer-events-none">
         {Array.from({ length: 12 }).map((_, i) => (
-          <g key={i} id={`ann-svg-group-${i}`} opacity="0" style={{ transition: 'opacity 180ms ease-out' }}>
+          <g key={i} id={`ann-svg-group-${i}`} opacity="0" style={{ transition: 'opacity 220ms ease-out' }}>
             <polyline
               id={`ann-polyline-${i}`}
               points="0,0 0,0 0,0"
               fill="none"
-              stroke={isLight ? '#0284c7' : '#38bdf8'}
-              strokeWidth="1.0"
-              strokeDasharray="2 2"
-              opacity={isLight ? '0.85' : '0.75'}
+              stroke="var(--text)"
+              strokeWidth="0.8"
+              strokeDasharray="3 4"
+              opacity="0.4"
             />
             <circle
               id={`ann-circle-${i}`}
               cx="0"
               cy="0"
               r="2.5"
-              fill={isLight ? '#0284c7' : '#38bdf8'}
-              stroke={isLight ? '#ffffff' : '#030712'}
-              strokeWidth="1.2"
+              fill="var(--text)"
+              stroke="var(--current-ground, #211e1c)"
+              strokeWidth="0.8"
+              opacity="0.7"
             />
           </g>
         ))}
       </svg>
 
-      {/* Precision Minimalist Typography Labels Attached Directly to 3D Parts (Pool of 12) */}
+      {/* -------------------------------------------------------------------- */}
+      {/* Precision Part Callouts — Refined Editorial Annotation Cards         */}
+      {/* -------------------------------------------------------------------- */}
       <div ref={annotationContainerRef} className="fixed inset-0 pointer-events-none z-[16]">
         {Array.from({ length: 12 }).map((_, i) => (
           <div
@@ -2373,118 +2555,74 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             className="absolute top-0 left-0 pointer-events-auto cursor-pointer opacity-0 will-change-transform select-none"
             style={{
               transform: 'translate3d(-999px, -999px, 0)',
-              transition: 'opacity 180ms ease-out',
+              transition: 'opacity 220ms ease-out',
             }}
           >
-            <div className={`w-[220px] px-2.5 py-1.5 rounded-lg border backdrop-blur-md transition-all duration-150 hover:scale-[1.02] ${
-              isLight
-                ? 'bg-white/92 border-slate-200/90 shadow-[0_2px_8px_rgba(15,23,42,0.06)] hover:border-[#2563eb]/60'
-                : 'bg-[#060b17]/85 border-white/10 shadow-[0_4px_16px_rgba(0,0,0,0.5)] hover:border-[#38bdf8]/60'
-            }`}>
-              <div className="flex items-center gap-1.5">
+            <div className="flex items-stretch rounded-[3px] bg-[var(--carbon)]/92 border border-[var(--text)]/18 shadow-[0_6px_28px_rgba(0,0,0,0.45)] backdrop-blur-xl w-[260px] hover:border-[var(--text)]/40 hover:shadow-[0_8px_36px_rgba(0,0,0,0.55)] transition-all duration-200 group overflow-hidden">
+              {/* Left accent bar */}
+              <div className="w-[3px] shrink-0 bg-[var(--text)]/25 group-hover:bg-[var(--text)]/50 transition-colors duration-200" />
+              <div className="flex items-start gap-2 px-3 py-2.5 min-w-0 flex-1">
                 <span
                   id={`ann-slot-idx-${i}`}
-                  className={`text-[9px] font-mono font-bold tracking-wider ${
-                    isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'
-                  }`}
+                  className="w-[18px] h-[18px] mt-px shrink-0 rounded-[2px] border border-[var(--text)]/40 bg-[var(--text)]/8 flex items-center justify-center text-[9px] font-mono font-bold tabular-nums text-[var(--text)]/80 group-hover:border-[var(--text)]/65 transition-colors"
                 >
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                <span
-                  id={`ann-slot-title-${i}`}
-                  className={`text-[10px] font-mono font-bold tracking-wide uppercase leading-tight truncate flex-1 ${
-                    isLight ? 'text-[#0f172a]' : 'text-white'
-                  }`}
-                />
+                <div className="min-w-0 flex-1">
+                  <span
+                    id={`ann-slot-cat-${i}`}
+                    className="block text-[8px] font-sans uppercase tracking-[0.16em] text-[var(--muted)] leading-none mb-1.5 truncate font-medium"
+                  />
+                  <span
+                    id={`ann-slot-title-${i}`}
+                    className="block text-[11.5px] font-sans font-semibold tracking-[0.04em] text-[var(--text)] leading-[1.3] break-words"
+                  />
+                  <div
+                    id={`ann-slot-desc-${i}`}
+                    className="text-[10.5px] font-serif italic text-[var(--muted)] leading-[1.45] mt-1 break-words opacity-80"
+                  />
+                </div>
               </div>
-              <div
-                id={`ann-slot-desc-${i}`}
-                className={`text-[9px] font-mono leading-tight mt-1 line-clamp-2 ${
-                  isLight ? 'text-slate-500' : 'text-slate-400'
-                }`}
-              />
             </div>
           </div>
         ))}
       </div>
 
       {/* -------------------------------------------------------------------- */}
-      {/* Sticky Top-0 Viewport: Holds All Dynamic Editorial Chapters */}
+      {/* Sticky Viewport Frame (Section 5 & 6) */}
       {/* -------------------------------------------------------------------- */}
-      <div className="sticky top-0 h-screen h-[100dvh] w-full flex flex-col justify-between p-4 sm:p-8 md:p-14 z-20 pointer-events-none">
-        {/* Top Telemetry */}
-        <div className={`flex justify-between items-center text-[10px] font-mono tracking-widest uppercase ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span className={`w-1.5 h-1.5 rounded-full animate-pulse shrink-0 ${
-              isMotionPaused ? 'bg-amber-400' : isLight ? 'bg-[#2563eb]' : 'bg-[#3b82f6]'
-            }`} />
-            <span className={isLight ? 'text-slate-800' : 'text-white/70'}>CINEMATIC 3D ATLAS</span>
-            <span>•</span>
-            <span className={`truncate max-w-[120px] xs:max-w-none ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-              {isMotionPaused ? 'KINEMATICS: PAUSED' : 'DETERMINISTIC KINEMATICS'}
-            </span>
-          </div>
+      <div className="sticky top-0 h-screen h-[100dvh] w-full flex flex-col justify-between px-[clamp(1.25rem,4vw,3.5rem)] py-6 sm:py-8 z-30 pointer-events-none">
+        {/* Top spacer to balance the bottom bar and keep center free */}
+        <div className="w-full h-8" />
 
-          <div className="hidden sm:flex items-center gap-6">
-            <span>[SCROLL TO DECONSTRUCT]</span>
-            <span>[HOVER 3D MESH TO INSPECT]</span>
-          </div>
-        </div>
-
-        {/* ------------------------------------------------------------------ */}
-        {/* EDITORIAL NARRATIVE LAYERS (Synchronized with 3D Object Motion) */}
-        {/* ------------------------------------------------------------------ */}
+        {/* Narrative Layers Container */}
         <div className="relative w-full max-w-[1700px] mx-auto my-auto h-full flex items-center">
-          {/* 01. INTRO HERO */}
+          {/* 01. INTRO HERO (Section 6: Bottom-Left aligned, strictly stacked) */}
           <motion.div
             style={{ opacity: introOpacity, y: introY, filter: introBlur, display: introDisplay }}
-            className="absolute inset-0 flex flex-col justify-center items-center text-center px-4"
+            className="absolute bottom-6 left-0 max-w-2xl flex flex-col items-start gap-4 pointer-events-auto select-none"
           >
-            <div className="space-y-4">
-              <div className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full transition-all duration-300 ${
-                isLight ? 'bg-blue-50/80 border border-blue-200/80 text-[#2563eb]' : 'bg-white/5 border border-white/10 text-[#3b82f6]'
-              } text-[10px] font-mono tracking-widest uppercase`}>
-                <Compass className="w-3.5 h-3.5" />
-                <span>Object Breakdown Atlas</span>
-              </div>
-              <h1 className={`text-[clamp(3.5rem,9vw,8.5rem)] font-light leading-[0.88] tracking-tighter font-heading transition-all duration-300 ${
-                isLight ? 'text-[#0f172a]' : 'text-white'
-              }`}>
-                DECONSTRUCT <br />
-                <span className={
-                  isLight
-                    ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-slate-400'
-                    : 'text-transparent bg-clip-text bg-gradient-to-r from-white via-white/80 to-white/20'
-                }>
-                  THE INVISIBLE
-                </span>
-              </h1>
-              <p className={`text-xs sm:text-sm font-mono tracking-widest uppercase max-w-md mx-auto pt-4 transition-all duration-300 ${
-                isLight ? 'text-slate-500' : 'text-white/40'
-              }`}>
-                Scroll to unveil physical systems layer by layer
-              </p>
-            </div>
+            <h1 className="font-sans font-light text-[clamp(3.25rem,8.5vw,8.5rem)] leading-[0.92] tracking-[-0.03em] text-[var(--text)] text-balance">
+              Deconstruct<br />the invisible
+            </h1>
+            <p className="font-serif text-[1.125rem] leading-[1.6] max-w-[44ch] text-[var(--muted)] text-pretty">
+              Discover what&apos;s inside everyday objects, from materials to motion.
+            </p>
           </motion.div>
 
           {/* 02. SYSTEM CONCEPT */}
           <motion.div
             style={{ opacity: conceptOpacity, y: conceptY, filter: conceptBlur, scale: conceptScale, display: conceptDisplay }}
-            className="absolute inset-0 flex flex-col justify-center items-start max-w-2xl px-4"
+            className="absolute inset-y-0 left-0 flex flex-col justify-center max-w-xl pointer-events-auto"
           >
-            <p className={`text-xs font-mono tracking-[0.3em] uppercase mb-3 transition-all duration-300 ${isLight ? 'text-[#2563eb]' : 'text-[#3b82f6]'}`}>
-              00 // ARCHITECTURAL DECOMPOSITION
+            <p className="text-[0.8125rem] font-sans text-[var(--muted)] mb-2">
+              Architectural decomposition
             </p>
-            <h2 className={`text-[clamp(2.5rem,5.5vw,5rem)] font-light leading-[0.92] tracking-tighter mb-6 transition-all duration-300 ${
-              isLight ? 'text-[#0f172a]' : 'text-white'
-            }`}>
-              EVERY OBJECT <br />
-              HAS A SYSTEM.
+            <h2 className="font-sans font-light text-[clamp(2.25rem,5vw,4.5rem)] leading-[0.95] tracking-[-0.02em] text-[var(--text)] mb-4 text-balance">
+              Every object<br />has a system
             </h2>
-            <p className={`text-sm sm:text-base font-mono leading-relaxed max-w-lg transition-all duration-300 ${
-              isLight ? 'text-slate-600' : 'text-white/60'
-            }`}>
-              Physical machines are hierarchies of functional assemblies, structural paths, and kinematic linkages. Scroll forward to open the movement.
+            <p className="font-serif text-[1.0625rem] leading-[1.55] max-w-[46ch] text-[var(--muted)] text-pretty">
+              Physical machines are hierarchies of functional assemblies, structural load paths, and kinematic linkages. Scroll forward to open the movement.
             </p>
           </motion.div>
 
@@ -2497,28 +2635,23 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               scale: watchTitleScale,
               display: watchTitleDisplay,
             }}
-            className="absolute inset-y-0 left-0 flex flex-col justify-center max-w-xl px-4 pointer-events-auto"
+            className="absolute inset-y-0 left-0 flex flex-col justify-center max-w-xl pointer-events-auto"
           >
-            <p className={`text-xs font-mono tracking-[0.3em] uppercase mb-2 transition-all duration-300 ${isLight ? 'text-[#2563eb]' : 'text-[#3b82f6]'}`}>
-              01 // HOROLOGICAL KINEMATICS
+            <p className="text-[0.8125rem] font-sans text-[var(--muted)] mb-2">
+              1 Horology
             </p>
-            <h2 className={`text-[clamp(2.8rem,6vw,5.5rem)] font-light leading-[0.9] tracking-tighter mb-6 transition-all duration-300 ${
-              isLight ? 'text-[#0f172a]' : 'text-white'
-            }`}>
-              MECHANICAL <br />
-              WRISTWATCH
+            <h2 className="font-sans font-light text-[clamp(2.25rem,5vw,4.5rem)] leading-[0.95] tracking-[-0.02em] text-[var(--text)] mb-6 text-balance">
+              Mechanical wristwatch
             </h2>
-            <div className={`flex gap-8 text-xs font-mono border-t pt-4 transition-all duration-300 ${
-              isLight ? 'text-slate-500 border-slate-200' : 'text-white/50 border-white/10'
-            }`}>
-              <div className="transition-transform duration-300 hover:translate-y-[-2px]">
-                <div className={`text-2xl sm:text-3xl font-light ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>138</div>
-                <div className="text-[10px] tracking-widest uppercase mt-1">COMPONENTS</div>
+            <div className="flex gap-8 text-[0.8125rem] font-sans border-t border-[var(--line)] pt-4 text-[var(--muted)]">
+              <div>
+                <div className="text-2xl sm:text-3xl font-light text-[var(--text)] tabular-nums">138</div>
+                <div className="text-[0.75rem] mt-1 text-[var(--muted)]">Components</div>
               </div>
-              <div className={`w-px h-10 ${isLight ? 'bg-slate-200' : 'bg-white/10'}`} />
-              <div className="transition-transform duration-300 hover:translate-y-[-2px]">
-                <div className={`text-2xl sm:text-3xl font-light ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>68</div>
-                <div className="text-[10px] tracking-widest uppercase mt-1">MOVING PARTS</div>
+              <div className="w-px h-10 bg-[var(--line)]" />
+              <div>
+                <div className="text-2xl sm:text-3xl font-light text-[var(--text)] tabular-nums">68</div>
+                <div className="text-[0.75rem] mt-1 text-[var(--muted)]">Moving parts</div>
               </div>
             </div>
           </motion.div>
@@ -2532,21 +2665,20 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               scale: watchRevealScale,
               display: watchRevealDisplay,
             }}
-            className="absolute inset-y-0 right-0 flex flex-col justify-center max-w-md text-right px-4 pointer-events-auto"
+            className="absolute inset-y-0 right-0 flex flex-col justify-center max-w-md text-right pointer-events-auto"
           >
-            <p className={`text-xs font-mono tracking-[0.3em] uppercase mb-2 transition-all duration-300 ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>
-              Phase 02 // Reveal
+            <p className="text-[0.8125rem] font-sans text-[var(--muted)] mb-2">
+              Precision in motion
             </p>
-            <h3 className={`text-3xl sm:text-5xl font-light tracking-tight mb-4 transition-all duration-300 ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>
-              PRECISION <br />
-              IN MOTION
+            <h3 className="font-sans font-light text-[clamp(2rem,4vw,3.5rem)] leading-[0.95] tracking-[-0.02em] text-[var(--text)] mb-3 text-balance">
+              Exposing the movement
             </h3>
-            <p className={`text-xs sm:text-sm font-mono leading-relaxed transition-all duration-300 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-              The AISI 316L stainless steel enclosure and single-crystal sapphire crystal lift outward to reveal the multi-tiered mechanical movement within.
+            <p className="font-serif text-[1rem] leading-[1.5] text-[var(--muted)] text-pretty">
+              The stainless steel enclosure and sapphire crystal lift outward to reveal the multi-tiered mechanical movement within.
             </p>
           </motion.div>
 
-          {/* 05. WATCH DECONSTRUCTION & SPATIAL ANNOTATIONS */}
+          {/* 05. WATCH DECONSTRUCTION */}
           <motion.div
             style={{
               opacity: watchDeconstructOpacity,
@@ -2555,25 +2687,20 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               scale: watchDeconstructScale,
               display: watchDeconstructDisplay,
             }}
-            className="absolute inset-y-0 left-0 flex flex-col justify-center max-w-md px-4 pointer-events-auto"
+            className="absolute inset-y-0 left-0 flex flex-col justify-center max-w-md pointer-events-auto"
           >
-            <p className={`text-xs font-mono tracking-[0.3em] uppercase mb-2 transition-all duration-300 ${isLight ? 'text-[#2563eb]' : 'text-[#3b82f6]'}`}>
-              Phase 03 // Decomposition
+            <p className="text-[0.8125rem] font-sans text-[var(--muted)] mb-2">
+              Internal kinematics
             </p>
-            <h3 className={`text-3xl sm:text-4xl font-light tracking-tight mb-3 transition-all duration-300 ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>
-              WHEEL TRAIN & ESCAPEMENT
+            <h3 className="font-sans font-light text-[clamp(2rem,4vw,3.5rem)] leading-[0.95] tracking-[-0.02em] text-[var(--text)] mb-3 text-balance">
+              Wheel train and escapement
             </h3>
-            <p className={`text-xs sm:text-sm font-mono leading-relaxed mb-6 transition-all duration-300 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+            <p className="font-serif text-[1rem] leading-[1.5] text-[var(--muted)] text-pretty mb-4">
               Stepped center, third, and fourth wheels multiply barrel torque toward the Swiss lever escapement and Glucydur balance wheel.
             </p>
-            <div className={`p-3.5 rounded-xl border font-mono text-[11px] space-y-1 transition-all duration-300 ${
-              isLight
-                ? 'bg-white/90 border-slate-200 text-slate-700 shadow-sm'
-                : 'bg-[#080f1d]/80 border-white/10 text-white/70'
-            }`}>
-              <div className={`${isLight ? 'text-[#2563eb]' : 'text-[#3b82f6]'} font-bold`}>TACTILE 3D PICKING</div>
-              <div>Hover your cursor over any exposed gear to examine its technical role.</div>
-            </div>
+            <p className="font-serif italic text-[0.875rem] text-[var(--muted)]">
+              Hover your cursor over any exposed gear to examine its technical role.
+            </p>
           </motion.div>
 
           {/* 06. WATCH -> DRONE TRANSITION */}
@@ -2584,15 +2711,11 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               filter: transitionWatchDroneBlur,
               display: transitionWatchDroneDisplay,
             }}
-            className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 pointer-events-none"
+            className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none"
           >
-            <div className="space-y-2">
-              <div className={`text-[10px] font-mono tracking-[0.3em] uppercase transition-all duration-300 ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>
-                Transitioning Subsystems
-              </div>
-              <div className={`text-xl sm:text-2xl font-mono tracking-widest transition-all duration-300 ${isLight ? 'text-slate-800' : 'text-white/80'}`}>
-                HOROLOGY → AEROSPACE ROBOTICS
-              </div>
+            <div className="space-y-1">
+              <p className="text-[0.8125rem] font-sans text-[var(--muted)]">Transitioning plates</p>
+              <p className="font-sans text-xl sm:text-2xl text-[var(--text)]">Horology to Aerospace robotics</p>
             </div>
           </motion.div>
 
@@ -2605,28 +2728,23 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               scale: droneTitleScale,
               display: droneTitleDisplay,
             }}
-            className="absolute inset-y-0 left-0 flex flex-col justify-center max-w-xl px-4 pointer-events-auto"
+            className="absolute inset-y-0 left-0 flex flex-col justify-center max-w-xl pointer-events-auto"
           >
-            <p className={`text-xs font-mono tracking-[0.3em] uppercase mb-2 transition-all duration-300 ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>
-              02 // AEROSPACE & ROBOTICS
+            <p className="text-[0.8125rem] font-sans text-[var(--muted)] mb-2">
+              2 Aerospace and robotics
             </p>
-            <h2 className={`text-[clamp(2.8rem,6vw,5.5rem)] font-light leading-[0.9] tracking-tighter mb-6 transition-all duration-300 ${
-              isLight ? 'text-[#0f172a]' : 'text-white'
-            }`}>
-              QUADCOPTER <br />
-              AERIAL SYSTEM
+            <h2 className="font-sans font-light text-[clamp(2.25rem,5vw,4.5rem)] leading-[0.95] tracking-[-0.02em] text-[var(--text)] mb-6 text-balance">
+              Quadcopter aerial system
             </h2>
-            <div className={`flex gap-8 text-xs font-mono border-t pt-4 transition-all duration-300 ${
-              isLight ? 'text-slate-500 border-slate-200' : 'text-white/50 border-white/10'
-            }`}>
-              <div className="transition-transform duration-300 hover:translate-y-[-2px]">
-                <div className={`text-2xl sm:text-3xl font-light ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>15</div>
-                <div className="text-[10px] tracking-widest uppercase mt-1">SUBSYSTEMS</div>
+            <div className="flex gap-8 text-[0.8125rem] font-sans border-t border-[var(--line)] pt-4 text-[var(--muted)]">
+              <div>
+                <div className="text-2xl sm:text-3xl font-light text-[var(--text)] tabular-nums">15</div>
+                <div className="text-[0.75rem] mt-1 text-[var(--muted)]">Subsystems</div>
               </div>
-              <div className={`w-px h-10 ${isLight ? 'bg-slate-200' : 'bg-white/10'}`} />
-              <div className="transition-transform duration-300 hover:translate-y-[-2px]">
-                <div className={`text-2xl sm:text-3xl font-light ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>16</div>
-                <div className="text-[10px] tracking-widest uppercase mt-1">MOVING PARTS</div>
+              <div className="w-px h-10 bg-[var(--line)]" />
+              <div>
+                <div className="text-2xl sm:text-3xl font-light text-[var(--text)] tabular-nums">16</div>
+                <div className="text-[0.75rem] mt-1 text-[var(--muted)]">Moving parts</div>
               </div>
             </div>
           </motion.div>
@@ -2640,27 +2758,20 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               scale: droneDeconstructScale,
               display: droneDeconstructDisplay,
             }}
-            className={`absolute inset-y-0 right-0 flex flex-col justify-center max-w-md text-right px-6 py-6 rounded-2xl backdrop-blur-sm pointer-events-auto transition-all duration-300 ${
-              isLight ? 'bg-white/40' : 'bg-[#020408]/40'
-            }`}
+            className="absolute inset-y-0 right-0 flex flex-col justify-center max-w-md text-right pointer-events-auto"
           >
-            <p className={`text-xs font-mono tracking-[0.3em] uppercase mb-2 transition-all duration-300 ${isLight ? 'text-[#2563eb]' : 'text-[#3b82f6]'}`}>
-              Phase 04 // Dynamic Aerodynamics
+            <p className="text-[0.8125rem] font-sans text-[var(--muted)] mb-2">
+              Dynamic aerodynamics
             </p>
-            <h3 className={`text-3xl sm:text-4xl font-light tracking-tight mb-3 transition-all duration-300 ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>
-              PROPULSION & AVIONICS
+            <h3 className="font-sans font-light text-[clamp(2rem,4vw,3.5rem)] leading-[0.95] tracking-[-0.02em] text-[var(--text)] mb-3 text-balance">
+              Propulsion and avionics
             </h3>
-            <p className={`text-xs sm:text-sm font-mono leading-relaxed mb-4 transition-all duration-300 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+            <p className="font-serif text-[1rem] leading-[1.5] text-[var(--muted)] text-pretty mb-3">
               Four independent brushless motors and counter-rotating rotors separate above the central carbon airframe, isolating the flight electronics stack.
             </p>
-            <div className={`inline-block p-3 rounded-xl border text-left font-mono text-[11px] transition-all duration-300 ${
-              isLight
-                ? 'bg-white/90 border-slate-200 text-slate-700 shadow-sm'
-                : 'bg-[#080f1d]/80 border-white/10 text-white/70'
-            }`}>
-              <div className={`${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'} font-bold`}>NATIVE EXPLODED POSE</div>
-              <div>Rotor blades spin dynamically while assemblies separate.</div>
-            </div>
+            <p className="font-serif italic text-[0.875rem] text-[var(--muted)]">
+              Rotor blades spin dynamically while assemblies separate.
+            </p>
           </motion.div>
 
           {/* 09. DRONE -> ENGINE TRANSITION */}
@@ -2671,19 +2782,15 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               filter: transitionDroneEngineBlur,
               display: transitionDroneEngineDisplay,
             }}
-            className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 pointer-events-none"
+            className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none"
           >
-            <div className="space-y-2">
-              <div className={`text-[10px] font-mono tracking-[0.3em] uppercase transition-all duration-300 ${isLight ? 'text-[#2563eb]' : 'text-[#3b82f6]'}`}>
-                Transitioning Subsystems
-              </div>
-              <div className={`text-xl sm:text-2xl font-mono tracking-widest transition-all duration-300 ${isLight ? 'text-slate-800' : 'text-white/80'}`}>
-                AEROSPACE → AUTOMOTIVE THERMODYNAMICS
-              </div>
+            <div className="space-y-1">
+              <p className="text-[0.8125rem] font-sans text-[var(--muted)]">Transitioning plates</p>
+              <p className="font-sans text-xl sm:text-2xl text-[var(--text)]">Rotary aerodynamics to Forced induction</p>
             </div>
           </motion.div>
 
-          {/* 10. TURBOCHARGED ENGINE / TURBOCHARGER */}
+          {/* 10. TURBOCHARGED ENGINE */}
           <motion.div
             style={{
               opacity: engineOpacity,
@@ -2692,82 +2799,37 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               scale: engineScale,
               display: engineDisplay,
             }}
-            className="absolute inset-y-0 left-0 flex flex-col justify-center max-w-xl px-4 pointer-events-auto"
+            className="absolute inset-y-0 left-0 flex flex-col justify-center max-w-xl pointer-events-auto"
           >
-            <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full w-fit mb-2 transition-all duration-300 ${
-              isLight ? 'bg-blue-50/90 border border-blue-200 text-[#2563eb]' : 'bg-[#2563eb]/10 border border-[#2563eb]/30 text-[#38bdf8]'
-            } text-[10px] font-mono tracking-widest uppercase`}>
-              <Flame className="w-3 h-3 text-amber-500 animate-pulse" />
-              <span>03 // Forced Induction Thermodynamics</span>
-            </div>
-
-            <h2 className={`text-[clamp(2.2rem,4.5vw,4.2rem)] font-light leading-[0.92] tracking-tighter mb-3 transition-all duration-300 ${
-              isLight ? 'text-[#0f172a]' : 'text-white'
-            }`}>
-              TWIN-SCROLL <br />
-              <span className={isLight ? 'text-[#2563eb]' : 'text-[#38bdf8]'}>TURBOCHARGER</span>
+            <p className="text-[0.8125rem] font-sans text-[var(--muted)] mb-2">
+              3 Kinematics
+            </p>
+            <h2 className="font-sans font-light text-[clamp(2.25rem,5vw,4.5rem)] leading-[0.95] tracking-[-0.02em] text-[var(--text)] mb-4 text-balance">
+              Twin-scroll turbocharger
             </h2>
 
-            {/* 4-Stat Telemetry Strip */}
-            <div className={`grid grid-cols-4 gap-2 text-xs font-mono border-y py-2.5 my-3 transition-all duration-300 ${
-              isLight ? 'text-slate-500 border-slate-200/90' : 'text-white/50 border-white/10'
-            }`}>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-xl font-light font-mono ${isLight ? 'text-[#2563eb]' : 'text-[#38bdf8]'}`}>220k</div>
-                <div className="text-[9px] tracking-wider uppercase text-slate-400">MAX RPM</div>
+            <div className="grid grid-cols-4 gap-2 text-[0.8125rem] font-sans border-y border-[var(--line)] py-3 my-4">
+              <div>
+                <div className="text-base sm:text-xl font-light text-[var(--text)] tabular-nums">220k</div>
+                <div className="text-[0.75rem] text-[var(--muted)]">Max RPM</div>
               </div>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-xl font-light font-mono ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>2.4 BAR</div>
-                <div className="text-[9px] tracking-wider uppercase text-slate-400">BOOST</div>
+              <div>
+                <div className="text-base sm:text-xl font-light text-[var(--text)] tabular-nums">2.4 bar</div>
+                <div className="text-[0.75rem] text-[var(--muted)]">Boost</div>
               </div>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-xl font-light font-mono text-amber-500`}>950°C</div>
-                <div className="text-[9px] tracking-wider uppercase text-slate-400">EXHAUST</div>
+              <div>
+                <div className="text-base sm:text-xl font-light text-[var(--text)] tabular-nums">950°C</div>
+                <div className="text-[0.75rem] text-[var(--muted)]">Exhaust gas</div>
               </div>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-xl font-light font-mono ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>25 kW</div>
-                <div className="text-[9px] tracking-wider uppercase text-slate-400">TURBINE</div>
+              <div>
+                <div className="text-base sm:text-xl font-light text-[var(--text)] tabular-nums">25 kW</div>
+                <div className="text-[0.75rem] text-[var(--muted)]">Turbine shaft</div>
               </div>
             </div>
 
-            <p className={`text-[11px] sm:text-xs font-mono leading-relaxed mb-3 max-w-lg transition-all duration-300 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+            <p className="font-serif text-[1rem] leading-[1.5] text-[var(--muted)] text-pretty mb-3">
               High-enthalpy exhaust gas expands across an Inconel 713C turbine wheel, transferring 25 kW of kinetic shaft power to a forged A356-T6 aluminum compressor wheel. The divergent volute scroll converts Mach 0.8 airflow into 2.4 bar static boost.
             </p>
-
-            {/* Info-Heavy Technical Specifications Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-mono mb-3">
-              <div className={`p-2.5 rounded-lg border backdrop-blur-sm transition-all duration-200 ${
-                isLight ? 'bg-white/80 border-slate-200/90 text-slate-700 shadow-sm' : 'bg-[#080f1d]/75 border-white/10 text-white/75'
-              }`}>
-                <div className={`font-bold flex items-center gap-1.5 mb-0.5 ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                  DIVIDED PULSE VOLUTE
-                </div>
-                <div className="leading-snug text-slate-400">
-                  Separates alternating exhaust pulses (1-4 vs 2-3) to banish pulse collision and turbo lag.
-                </div>
-              </div>
-
-              <div className={`p-2.5 rounded-lg border backdrop-blur-sm transition-all duration-200 ${
-                isLight ? 'bg-white/80 border-slate-200/90 text-slate-700 shadow-sm' : 'bg-[#080f1d]/75 border-white/10 text-white/75'
-              }`}>
-                <div className={`font-bold flex items-center gap-1.5 mb-0.5 ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  HYDRODYNAMIC OIL WEDGE
-                </div>
-                <div className="leading-snug text-slate-400">
-                  Fully-floating bronze journal bearing spinning on a 0.025 mm pressurized 4.5-bar oil film.
-                </div>
-              </div>
-            </div>
-
-            {/* Technical Subsystem Tags */}
-            <div className={`flex flex-wrap gap-1.5 text-[9px] font-mono tracking-wider ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>INCONEL 713C</span>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>A356-T6 BILLET</span>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>WASTEGATE CONTROL</span>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>THERMAL RADIANT SHIELD</span>
-            </div>
           </motion.div>
 
           {/* 11. ELECTRIC MOTOR ASSEMBLED */}
@@ -2778,85 +2840,40 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               filter: motorTitleBlur,
               display: motorTitleDisplay,
             }}
-            className="absolute inset-y-0 right-0 flex flex-col justify-center max-w-lg text-right px-4 pointer-events-none"
+            className="absolute inset-y-0 right-0 flex flex-col justify-center max-w-lg text-right pointer-events-none"
           >
-            <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full w-fit ml-auto mb-2 transition-all duration-300 ${
-              isLight ? 'bg-sky-50/90 border border-sky-200 text-[#0284c7]' : 'bg-[#0284c7]/10 border border-[#0284c7]/30 text-[#38bdf8]'
-            } text-[10px] font-mono tracking-widest uppercase`}>
-              <Zap className="w-3 h-3 text-cyan-400 animate-pulse" />
-              <span>04 // Electromechanical Dynamics</span>
-            </div>
-
-            <h2 className={`text-[clamp(2.2rem,4.5vw,4.2rem)] font-light leading-[0.92] tracking-tighter mb-3 transition-all duration-300 ${
-              isLight ? 'text-[#0f172a]' : 'text-white'
-            }`}>
-              BRUSHLESS <br />
-              <span className={isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}>DC MOTOR</span>
+            <p className="text-[0.8125rem] font-sans text-[var(--muted)] mb-2">
+              4 Electromechanical dynamics
+            </p>
+            <h2 className="font-sans font-light text-[clamp(2.25rem,5vw,4.5rem)] leading-[0.95] tracking-[-0.02em] text-[var(--text)] mb-4 text-balance">
+              Brushless DC motor
             </h2>
 
-            {/* 4-Stat Telemetry Strip */}
-            <div className={`grid grid-cols-4 gap-2 text-xs font-mono border-y py-2.5 my-3 transition-all duration-300 ${
-              isLight ? 'text-slate-500 border-slate-200/90' : 'text-white/50 border-white/10'
-            }`}>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-xl font-light font-mono ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>91.4%</div>
-                <div className="text-[9px] tracking-wider uppercase text-slate-400">EFFICIENCY</div>
+            <div className="grid grid-cols-4 gap-2 text-[0.8125rem] font-sans border-y border-[var(--line)] py-3 my-4">
+              <div>
+                <div className="text-base sm:text-xl font-light text-[var(--text)] tabular-nums">91.4%</div>
+                <div className="text-[0.75rem] text-[var(--muted)]">Efficiency</div>
               </div>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-xl font-light font-mono ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>1.4 T</div>
-                <div className="text-[9px] tracking-wider uppercase text-slate-400">FLUX DENSITY</div>
+              <div>
+                <div className="text-base sm:text-xl font-light text-[var(--text)] tabular-nums">1.4 T</div>
+                <div className="text-[0.75rem] text-[var(--muted)]">Flux density</div>
               </div>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-xl font-light font-mono ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>850 W</div>
-                <div className="text-[9px] tracking-wider uppercase text-slate-400">PEAK POWER</div>
+              <div>
+                <div className="text-base sm:text-xl font-light text-[var(--text)] tabular-nums">850 W</div>
+                <div className="text-[0.75rem] text-[var(--muted)]">Peak power</div>
               </div>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-xl font-light font-mono ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>12N14P</div>
-                <div className="text-[9px] tracking-wider uppercase text-slate-400">TOPOLOGY</div>
+              <div>
+                <div className="text-base sm:text-xl font-light text-[var(--text)] tabular-nums">12N14P</div>
+                <div className="text-[0.75rem] text-[var(--muted)]">Topology</div>
               </div>
             </div>
 
-            <p className={`text-[11px] sm:text-xs font-mono leading-relaxed mb-3 max-w-md ml-auto transition-all duration-300 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-              Permanent magnet synchronous outrunner motor utilizing electronic commutation and 3-phase sinusoidal AC waveforms to generate a revolving magnetic field (RMF), delivering high torque density with zero brush friction.
+            <p className="font-serif text-[1rem] leading-[1.5] text-[var(--muted)] text-pretty ml-auto">
+              Permanent magnet synchronous outrunner motor utilizing electronic commutation to deliver high torque density with zero brush friction.
             </p>
-
-            {/* Info-Heavy Technical Specifications Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-mono text-left mb-3">
-              <div className={`p-2.5 rounded-lg border backdrop-blur-sm transition-all duration-200 ${
-                isLight ? 'bg-white/80 border-slate-200/90 text-slate-700 shadow-sm' : 'bg-[#080f1d]/75 border-white/10 text-white/75'
-              }`}>
-                <div className={`font-bold flex items-center gap-1.5 mb-0.5 ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                  0.20mm LAMINATIONS
-                </div>
-                <div className="leading-snug text-slate-400">
-                  Insulated silicon steel stack suppresses eddy current losses (P_eddy ∝ t²) for &gt;91% conversion.
-                </div>
-              </div>
-
-              <div className={`p-2.5 rounded-lg border backdrop-blur-sm transition-all duration-200 ${
-                isLight ? 'bg-white/80 border-slate-200/90 text-slate-700 shadow-sm' : 'bg-[#080f1d]/75 border-white/10 text-white/75'
-              }`}>
-                <div className={`font-bold flex items-center gap-1.5 mb-0.5 ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  N52H RARE-EARTH POLES
-                </div>
-                <div className="leading-snug text-slate-400">
-                  14 sintered curved neodymium magnets focused across an ultra-tight 0.25 mm dynamic air gap.
-                </div>
-              </div>
-            </div>
-
-            {/* Technical Subsystem Tags */}
-            <div className={`flex flex-wrap justify-end gap-1.5 text-[9px] font-mono tracking-wider ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>CLASS H COPPER (200°C)</span>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>ABEC-7 TRIBOLOGY</span>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>FOC COMMUTATION</span>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>40,000 RPM MAX</span>
-            </div>
           </motion.div>
 
-          {/* 11b. ELECTRIC MOTOR DECONSTRUCTED - RIGHT-FLANK ENGINEERING CONSOLE */}
+          {/* 11b. ELECTRIC MOTOR DECONSTRUCTED */}
           <motion.div
             style={{
               opacity: motorDeconstructOpacity,
@@ -2864,129 +2881,20 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               filter: motorDeconstructBlur,
               display: motorDeconstructDisplay,
             }}
-            className="absolute inset-y-0 right-0 flex flex-col justify-center items-end text-right max-w-lg px-4 sm:px-8 pointer-events-auto"
+            className="absolute inset-y-0 right-0 flex flex-col justify-center items-end text-right max-w-lg pointer-events-auto"
           >
-            {/* Phase Badge */}
-            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full transition-all duration-300 ${
-              isLight ? 'bg-blue-50/90 border border-blue-200 text-[#0284c7]' : 'bg-[#0284c7]/10 border border-[#0284c7]/30 text-[#38bdf8]'
-            } text-[10px] font-mono tracking-widest uppercase mb-2`}>
-              <Cpu className="w-3 h-3 text-[#38bdf8] animate-pulse" />
-              <span>Phase 04 // Deconstructed</span>
-            </div>
-
-            <h3 className={`text-2xl sm:text-3xl font-light tracking-tight mb-1 transition-all duration-300 ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>
-              12-POLE STATOR INTERFACE
+            <p className="text-[0.8125rem] font-sans text-[var(--muted)] mb-2">
+              Deconstructed interface
+            </p>
+            <h3 className="font-sans font-light text-[clamp(2rem,4vw,3.5rem)] leading-[0.95] tracking-[-0.02em] text-[var(--text)] mb-3 text-balance">
+              12-pole stator assembly
             </h3>
-            <p className={`text-[11px] sm:text-xs font-mono max-w-md mb-2.5 transition-all duration-300 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+            <p className="font-serif text-[1rem] leading-[1.5] text-[var(--muted)] text-pretty max-w-md mb-3">
               Rotational commutation decoupled into discrete electromagnetic sub-assemblies. Continuous 3-phase AC excitation generating 91.4% peak energy conversion.
             </p>
-
-            {/* 4-Stat Telemetry Strip */}
-            <div className={`grid grid-cols-4 gap-2 text-xs font-mono border-y py-2.5 my-2 w-full max-w-md transition-all duration-300 ${
-              isLight ? 'text-slate-500 border-slate-200/90' : 'text-white/50 border-white/10'
-            }`}>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-lg font-light font-mono ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>91.4%</div>
-                <div className="text-[8px] tracking-wider uppercase text-slate-400">EFFICIENCY</div>
-              </div>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-lg font-light font-mono ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>1.40 T</div>
-                <div className="text-[8px] tracking-wider uppercase text-slate-400">FLUX DENSITY</div>
-              </div>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-lg font-light font-mono ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>850 W</div>
-                <div className="text-[8px] tracking-wider uppercase text-slate-400">PEAK POWER</div>
-              </div>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-lg font-light font-mono ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>12N14P</div>
-                <div className="text-[8px] tracking-wider uppercase text-slate-400">TOPOLOGY</div>
-              </div>
-            </div>
-
-            {/* Electromechanical Specifications Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-mono text-left w-full max-w-md my-2">
-              <div className={`p-2.5 rounded-lg border backdrop-blur-sm transition-all duration-200 ${
-                isLight ? 'bg-white/80 border-slate-200/90 text-slate-700 shadow-sm' : 'bg-[#080f1d]/75 border-white/10 text-white/75'
-              }`}>
-                <div className={`font-bold flex items-center gap-1.5 mb-0.5 ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                  0.20mm LAMINATIONS
-                </div>
-                <div className="leading-snug text-slate-400">
-                  Insulated 20PNF1500 silicon steel suppressing eddy current dissipation (P_eddy ∝ t²).
-                </div>
-              </div>
-
-              <div className={`p-2.5 rounded-lg border backdrop-blur-sm transition-all duration-200 ${
-                isLight ? 'bg-white/80 border-slate-200/90 text-slate-700 shadow-sm' : 'bg-[#080f1d]/75 border-white/10 text-white/75'
-              }`}>
-                <div className={`font-bold flex items-center gap-1.5 mb-0.5 ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  CLASS H WINDINGS
-                </div>
-                <div className="leading-snug text-slate-400">
-                  200°C thermal index OFC copper needle-wound for &gt;78% slot fill factor.
-                </div>
-              </div>
-
-              <div className={`p-2.5 rounded-lg border backdrop-blur-sm transition-all duration-200 ${
-                isLight ? 'bg-white/80 border-slate-200/90 text-slate-700 shadow-sm' : 'bg-[#080f1d]/75 border-white/10 text-white/75'
-              }`}>
-                <div className={`font-bold flex items-center gap-1.5 mb-0.5 ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                  AIR-GAP TOLERANCE
-                </div>
-                <div className="leading-snug text-slate-400">
-                  0.25 mm dynamic clearance with ±0.008 mm concentricity eliminating torque cogging.
-                </div>
-              </div>
-
-              <div className={`p-2.5 rounded-lg border backdrop-blur-sm transition-all duration-200 ${
-                isLight ? 'bg-white/80 border-slate-200/90 text-slate-700 shadow-sm' : 'bg-[#080f1d]/75 border-white/10 text-white/75'
-              }`}>
-                <div className={`font-bold flex items-center gap-1.5 mb-0.5 ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  ABEC-7 TRIBOLOGY
-                </div>
-                <div className="leading-snug text-slate-400">
-                  Cryogenic martensitic 52100 bearing races supporting up to 40,000 RPM.
-                </div>
-              </div>
-            </div>
-
-            {/* Live Electrical Telemetry Box */}
-            <div className={`w-full max-w-md p-2.5 rounded-lg border backdrop-blur-sm my-1 text-left font-mono text-[9px] transition-all duration-200 ${
-              isLight ? 'bg-white/85 border-slate-200 text-slate-700 shadow-sm' : 'bg-[#060b17]/80 border-white/10 text-white/75'
-            }`}>
-              <div className={`flex justify-between items-center text-[8px] tracking-widest font-bold uppercase mb-1.5 border-b pb-1 ${
-                isLight ? 'text-[#0284c7] border-slate-200' : 'text-[#38bdf8] border-white/10'
-              }`}>
-                <span>ELECTRICAL COMMUTATION</span>
-                <span>3-PHASE FOC TOPOLOGY</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <span className="text-slate-400 block text-[8px]">MOTOR KV</span>
-                  <span className={`font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>920 RPM/V</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[8px]">PHASE RESISTANCE</span>
-                  <span className={`font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>0.042 Ω</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[8px]">STATIC THRUST</span>
-                  <span className={`font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>4.2 kg Max</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Subsystem Tags */}
-            <div className={`flex flex-wrap justify-end gap-1.5 text-[9px] font-mono tracking-wider mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>CNC 6061-T6 BELL</span>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>NdFeB N52H POLES</span>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>DIN 471 CIRCLIP</span>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>ZERO COGGING</span>
-            </div>
+            <p className="font-serif italic text-[0.875rem] text-[var(--muted)]">
+              Insulated 0.20mm silicon steel suppressing eddy current losses.
+            </p>
           </motion.div>
 
           {/* 12. BALLPOINT PEN */}
@@ -2998,205 +2906,97 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               scale: penScale,
               display: penDisplay,
             }}
-            className="absolute inset-y-0 left-0 flex flex-col justify-center max-w-xl px-4 pointer-events-auto"
+            className="absolute inset-y-0 left-0 flex flex-col justify-center max-w-xl pointer-events-auto"
           >
-            <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full w-fit mb-2 transition-all duration-300 ${
-              isLight ? 'bg-blue-50/90 border border-blue-200 text-[#2563eb]' : 'bg-[#2563eb]/10 border border-[#2563eb]/30 text-[#38bdf8]'
-            } text-[10px] font-mono tracking-widest uppercase`}>
-              <Layers className="w-3 h-3 text-cyan-400" />
-              <span>05 // Micro-Scale Fluidics &amp; Kinematics</span>
-            </div>
-
-            <h2 className={`text-[clamp(2.2rem,4.5vw,4.2rem)] font-light leading-[0.92] tracking-tighter mb-3 transition-all duration-300 ${
-              isLight ? 'text-[#0f172a]' : 'text-white'
-            }`}>
-              BALLPOINT <br />
-              <span className={isLight ? 'text-[#2563eb]' : 'text-[#38bdf8]'}>MECHANISM</span>
+            <p className="text-[0.8125rem] font-sans text-[var(--muted)] mb-2">
+              5 Micro-scale fluidics
+            </p>
+            <h2 className="font-sans font-light text-[clamp(2.25rem,5vw,4.5rem)] leading-[0.95] tracking-[-0.02em] text-[var(--text)] mb-4 text-balance">
+              Ballpoint mechanism
             </h2>
 
-            {/* 4-Stat Telemetry Strip */}
-            <div className={`grid grid-cols-4 gap-2 text-xs font-mono border-y py-2.5 my-3 transition-all duration-300 ${
-              isLight ? 'text-slate-500 border-slate-200/90' : 'text-white/50 border-white/10'
-            }`}>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-xl font-light font-mono ${isLight ? 'text-[#2563eb]' : 'text-[#38bdf8]'}`}>Ø 1.0mm</div>
-                <div className="text-[9px] tracking-wider uppercase text-slate-400">CARBIDE BALL</div>
+            <div className="grid grid-cols-4 gap-2 text-[0.8125rem] font-sans border-y border-[var(--line)] py-3 my-4">
+              <div>
+                <div className="text-base sm:text-xl font-light text-[var(--text)] tabular-nums">Ø 1.0mm</div>
+                <div className="text-[0.75rem] text-[var(--muted)]">Carbide ball</div>
               </div>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-xl font-light font-mono ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>±0.5 µm</div>
-                <div className="text-[9px] tracking-wider uppercase text-slate-400">SPHERICITY</div>
+              <div>
+                <div className="text-base sm:text-xl font-light text-[var(--text)] tabular-nums">±0.5 µm</div>
+                <div className="text-[0.75rem] text-[var(--muted)]">Sphericity</div>
               </div>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-xl font-light font-mono ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>10k cP</div>
-                <div className="text-[9px] tracking-wider uppercase text-slate-400">THIXOTROPIC</div>
+              <div>
+                <div className="text-base sm:text-xl font-light text-[var(--text)] tabular-nums">10k cP</div>
+                <div className="text-[0.75rem] text-[var(--muted)]">Thixotropic</div>
               </div>
-              <div className="transition-transform duration-200 hover:translate-y-[-1px]">
-                <div className={`text-base sm:text-xl font-light font-mono ${isLight ? 'text-[#2563eb]' : 'text-[#38bdf8]'}`}>3.5 N</div>
-                <div className="text-[9px] tracking-wider uppercase text-slate-400">CLICK LATCH</div>
+              <div>
+                <div className="text-base sm:text-xl font-light text-[var(--text)] tabular-nums">3.5 N</div>
+                <div className="text-[0.75rem] text-[var(--muted)]">Click latch</div>
               </div>
             </div>
 
-            <p className={`text-[11px] sm:text-xs font-mono leading-relaxed mb-3 max-w-lg transition-all duration-300 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-              High-viscosity paste ink is metered via a tungsten carbide sphere rolling in a Swiss-machined CuZn39Pb3 brass socket. Non-Newtonian shear thinning enables smooth laydown while capillary forces prevent leakage.
+            <p className="font-serif text-[1rem] leading-[1.5] text-[var(--muted)] text-pretty">
+              High-viscosity paste ink is metered via a tungsten carbide sphere rolling in a brass socket. Non-Newtonian shear thinning enables smooth laydown.
             </p>
-
-            {/* Info-Heavy Technical Specifications Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-mono mb-3">
-              <div className={`p-2.5 rounded-lg border backdrop-blur-sm transition-all duration-200 ${
-                isLight ? 'bg-white/80 border-slate-200/90 text-slate-700 shadow-sm' : 'bg-[#080f1d]/75 border-white/10 text-white/75'
-              }`}>
-                <div className={`font-bold flex items-center gap-1.5 mb-0.5 ${isLight ? 'text-[#2563eb]' : 'text-[#38bdf8]'}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                  THIXOTROPIC FLUIDICS
-                </div>
-                <div className="leading-snug text-slate-400">
-                  Viscosity drops from 10,000 cP under rolling shear (τ = μ·γ̇) to flow, then solidifies instantly upon paper contact.
-                </div>
-              </div>
-
-              <div className={`p-2.5 rounded-lg border backdrop-blur-sm transition-all duration-200 ${
-                isLight ? 'bg-white/80 border-slate-200/90 text-slate-700 shadow-sm' : 'bg-[#080f1d]/75 border-white/10 text-white/75'
-              }`}>
-                <div className={`font-bold flex items-center gap-1.5 mb-0.5 ${isLight ? 'text-[#2563eb]' : 'text-[#38bdf8]'}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  BISTABLE ROTARY CAM
-                </div>
-                <div className="leading-snug text-slate-400">
-                  Self-lubricating POM rotary cam converts axial plunger push into 45° stepped indexing with ASTM A228 spring return.
-                </div>
-              </div>
-            </div>
-
-            {/* Technical Subsystem Tags */}
-            <div className={`flex flex-wrap gap-1.5 text-[9px] font-mono tracking-wider ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>WC-6Co CARBIDE</span>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>0.005mm CLEARANCE</span>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>CAPILLARY GROOVES</span>
-              <span className={`px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>&gt;100k CLICK FATIGUE</span>
-            </div>
           </motion.div>
 
-          {/* 13. THE BRIDGE: THOSE WERE OUR OBJECTS */}
+          {/* 13. THE BRIDGE */}
           <motion.div
             style={{ opacity: bridgeOpacity, y: bridgeY, filter: bridgeBlur, display: bridgeDisplay }}
-            className="absolute inset-0 flex flex-col justify-center items-center text-center px-4 pointer-events-none"
+            className="absolute inset-0 flex flex-col justify-center items-center text-center pointer-events-none"
           >
-            <div className="space-y-5 max-w-2xl">
-              <div className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full transition-all duration-300 ${
-                isLight ? 'bg-blue-50/80 border border-blue-200/80 text-[#2563eb]' : 'bg-white/5 border border-white/10 text-[#3b82f6]'
-              } text-[10px] font-mono tracking-widest uppercase`}>
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#00f2ad]" />
-                <span>Archive Sequence Complete</span>
-              </div>
-              <h2 className={`text-[clamp(2.8rem,6.5vw,5.5rem)] font-light leading-[0.92] tracking-tighter font-heading transition-all duration-300 ${
-                isLight ? 'text-[#0f172a]' : 'text-white'
-              }`}>
-                THOSE WERE <br />
-                <span className={isLight ? 'text-[#2563eb]' : 'text-[#38bdf8]'}>OUR OBJECTS.</span>
+            <div className="space-y-4 max-w-2xl">
+              <p className="text-[0.8125rem] font-sans text-[var(--muted)]">Archive sequence complete</p>
+              <h2 className="font-sans font-light text-[clamp(2.8rem,6.5vw,5.5rem)] leading-[0.92] tracking-[-0.02em] text-[var(--text)]">
+                Those were our objects.
               </h2>
-              <p className={`text-xl sm:text-2xl font-light tracking-wide pt-1 transition-all duration-300 ${
-                isLight ? 'text-slate-600' : 'text-white/60'
-              }`}>
+              <p className="font-serif text-xl sm:text-2xl text-[var(--muted)]">
                 Now try yours.
               </p>
             </div>
           </motion.div>
 
-          {/* 14. HOW THE SYSTEM WORKS (Sequential Storytelling, Not Card Grid) */}
+          {/* 14. HOW THE SYSTEM WORKS */}
           <motion.div
             style={{ opacity: howItWorksOpacity, y: howItWorksY, filter: howItWorksBlur, display: howItWorksDisplay, pointerEvents: howItWorksPointerEvents }}
-            className="absolute inset-0 flex flex-col justify-center items-center px-4 pointer-events-none"
+            className="absolute inset-0 flex flex-col justify-center items-center pointer-events-none"
           >
             <div className="max-w-4xl w-full">
               <div className="text-center space-y-2 mb-8">
-                <p className={`text-xs font-mono tracking-[0.3em] uppercase ${isLight ? 'text-[#2563eb]' : 'text-[#3b82f6]'}`}>
-                  The Pipeline
-                </p>
-                <h2 className={`text-3xl sm:text-5xl font-light tracking-tight font-heading ${
-                  isLight ? 'text-[#0f172a]' : 'text-white'
-                }`}>
-                  HOW THE ENGINE TAKES IT APART
+                <p className="text-[0.8125rem] font-sans text-[var(--muted)]">Deconstruction pipeline</p>
+                <h2 className="font-sans font-light text-3xl sm:text-5xl tracking-tight text-[var(--text)]">
+                  How the engine resolves CAD
                 </h2>
               </div>
 
-              {/* Sequential 4-Stage Narrative */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {/* Step 1 */}
-                <div className={`p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden ${
-                  isLight
-                    ? 'bg-white/90 border-slate-200/90 shadow-sm'
-                    : 'bg-[#080f1d]/90 border-white/10'
-                }`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className={`text-xs font-mono font-bold tracking-widest ${isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'}`}>
-                      01 // UPLOAD
-                    </span>
-                    <Upload className={`w-4 h-4 ${isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'}`} />
-                  </div>
-                  <h3 className={`text-base font-bold font-heading mb-1.5 ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>
-                    YOUR GLB / GLTF
-                  </h3>
-                  <p className={`text-xs font-mono leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-5 rounded-[2px] border border-[var(--line)] bg-[var(--current-ground,var(--carbon))]">
+                  <span className="text-[0.75rem] font-sans tabular-nums text-[var(--muted)] block mb-2">01 Upload</span>
+                  <h3 className="text-base font-sans font-medium text-[var(--text)] mb-1">Your GLB / GLTF</h3>
+                  <p className="text-[0.875rem] font-serif text-[var(--muted)] leading-relaxed">
                     Drop any 3D asset directly from your desktop into the viewport.
                   </p>
                 </div>
 
-                {/* Step 2 */}
-                <div className={`p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden ${
-                  isLight
-                    ? 'bg-white/90 border-slate-200/90 shadow-sm'
-                    : 'bg-[#080f1d]/90 border-white/10'
-                }`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className={`text-xs font-mono font-bold tracking-widest ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`}>
-                      02 // ANALYZE
-                    </span>
-                    <Cpu className={`w-4 h-4 ${isLight ? 'text-[#0284c7]' : 'text-[#38bdf8]'}`} />
-                  </div>
-                  <h3 className={`text-base font-bold font-heading mb-1.5 ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>
-                    RESOLVE GEOMETRY
-                  </h3>
-                  <p className={`text-xs font-mono leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                <div className="p-5 rounded-[2px] border border-[var(--line)] bg-[var(--current-ground,var(--carbon))]">
+                  <span className="text-[0.75rem] font-sans tabular-nums text-[var(--muted)] block mb-2">02 Analyze</span>
+                  <h3 className="text-base font-sans font-medium text-[var(--text)] mb-1">Resolve geometry</h3>
+                  <p className="text-[0.875rem] font-serif text-[var(--muted)] leading-relaxed">
                     In-browser CAD engine maps mesh hierarchies, centroids, and roles.
                   </p>
                 </div>
 
-                {/* Step 3 */}
-                <div className={`p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden ${
-                  isLight
-                    ? 'bg-white/90 border-slate-200/90 shadow-sm'
-                    : 'bg-[#080f1d]/90 border-white/10'
-                }`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className={`text-xs font-mono font-bold tracking-widest ${isLight ? 'text-[#2563eb]' : 'text-[#3b82f6]'}`}>
-                      03 // DECONSTRUCT
-                    </span>
-                    <Layers className={`w-4 h-4 ${isLight ? 'text-[#2563eb]' : 'text-[#3b82f6]'}`} />
-                  </div>
-                  <h3 className={`text-base font-bold font-heading mb-1.5 ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>
-                    EXPLODED VECTORS
-                  </h3>
-                  <p className={`text-xs font-mono leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                    Components calculate outward radial vectors for synchronized stage explosion.
+                <div className="p-5 rounded-[2px] border border-[var(--line)] bg-[var(--current-ground,var(--carbon))]">
+                  <span className="text-[0.75rem] font-sans tabular-nums text-[var(--muted)] block mb-2">03 Deconstruct</span>
+                  <h3 className="text-base font-sans font-medium text-[var(--text)] mb-1">Exploded vectors</h3>
+                  <p className="text-[0.875rem] font-serif text-[var(--muted)] leading-relaxed">
+                    Components calculate outward radial vectors for synchronized explosion.
                   </p>
                 </div>
 
-                {/* Step 4 */}
-                <div className={`p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden ${
-                  isLight
-                    ? 'bg-white/90 border-slate-200/90 shadow-sm'
-                    : 'bg-[#080f1d]/90 border-white/10'
-                }`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className={`text-xs font-mono font-bold tracking-widest ${isLight ? 'text-[#0284c7]' : 'text-[#00f2ad]'}`}>
-                      04 // EXPLORE
-                    </span>
-                    <Sparkles className={`w-4 h-4 ${isLight ? 'text-[#0284c7]' : 'text-[#00f2ad]'}`} />
-                  </div>
-                  <h3 className={`text-base font-bold font-heading mb-1.5 ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>
-                    INTERACTIVE STUDIO
-                  </h3>
-                  <p className={`text-xs font-mono leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                <div className="p-5 rounded-[2px] border border-[var(--line)] bg-[var(--current-ground,var(--carbon))]">
+                  <span className="text-[0.75rem] font-sans tabular-nums text-[var(--muted)] block mb-2">04 Explore</span>
+                  <h3 className="text-base font-sans font-medium text-[var(--text)] mb-1">Interactive studio</h3>
+                  <p className="text-[0.875rem] font-serif text-[var(--muted)] leading-relaxed">
                     Inspect tolerances, query material classifications, and animate reassembly.
                   </p>
                 </div>
@@ -3204,29 +3004,23 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             </div>
           </motion.div>
 
-          {/* 15. YOUR OBJECT // INTERACTIVE UPLOAD CLIMAX + SYNTHESIS SEARCH */}
+          {/* 15. YOUR OBJECT // UPLOAD & SEARCH */}
           <motion.div
             style={{ opacity: uploadOpacity, y: uploadY, filter: uploadBlur, display: uploadDisplay, pointerEvents: uploadPointerEvents }}
-            className="absolute inset-0 flex flex-col justify-center items-center text-center px-4 pointer-events-none overflow-y-auto"
+            className="absolute inset-0 flex flex-col justify-center items-center text-center pointer-events-none overflow-y-auto"
           >
-            <div className="max-w-2xl w-full space-y-5 my-auto pointer-events-auto">
-              <div className="space-y-1.5">
-                <p className={`text-xs font-mono tracking-[0.35em] uppercase ${isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'}`}>
-                  The Climax
-                </p>
-                <h2 className={`text-3xl sm:text-5xl font-light tracking-tight font-heading ${
-                  isLight ? 'text-[#0f172a]' : 'text-white'
-                }`}>
-                  YOUR OBJECT.
+            <div className="max-w-2xl w-full space-y-6 my-auto pointer-events-auto">
+              <div className="space-y-2">
+                <p className="text-[0.8125rem] font-sans text-[var(--muted)]">System ingestion</p>
+                <h2 className="font-sans font-light text-3xl sm:text-5xl tracking-tight text-[var(--text)]">
+                  Analyze your specimen
                 </h2>
-                <p className={`text-xs sm:text-sm font-mono max-w-lg mx-auto ${
-                  isLight ? 'text-slate-600' : 'text-white/70'
-                }`}>
-                  DROP A .GLB / .GLTF FILE &bull; OR ENTER ANY PHYSICAL MECHANISM TO DECONSTRUCT.
+                <p className="font-serif text-[1rem] text-[var(--muted)] max-w-lg mx-auto">
+                  Drop any .glb or .gltf assembly or enter mechanical queries below.
                 </p>
               </div>
 
-              {/* Interactive Living CAD Dropzone */}
+              {/* Upload Dropzone */}
               <div
                 data-upload-zone="true"
                 data-upload-active="true"
@@ -3237,31 +3031,19 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                 onMouseEnter={() => { uploadAuraWeightRef.current = 0.85; }}
                 onMouseLeave={() => { if (!isDragOver) uploadAuraWeightRef.current = 0; }}
                 onClick={() => fileInputRef.current?.click()}
-                className={`upload-dropzone group relative p-6 sm:p-8 rounded-2xl border-2 transition-all duration-300 cursor-pointer overflow-hidden ${
+                className={`relative p-8 rounded-[2px] border transition-colors duration-150 cursor-pointer ${
                   isDragOver
-                    ? isLight
-                      ? 'border-[#2563eb] bg-[#2563eb]/10 shadow-[0_0_60px_rgba(37,99,235,0.3)] scale-[1.02]'
-                      : 'border-[#00f2ad] bg-[#00f2ad]/10 shadow-[0_0_80px_rgba(0,242,173,0.35)] scale-[1.02]'
-                    : isLight
-                      ? 'border-slate-300/80 bg-white/95 hover:border-[#2563eb]/60 shadow-[0_12px_36px_rgba(15,23,42,0.06)] hover:scale-[1.005]'
-                      : 'border-white/15 bg-[#080d1a]/95 hover:border-[#00f2ad]/50 shadow-[0_20px_50px_rgba(0,0,0,0.85)] hover:scale-[1.005]'
+                    ? 'border-[var(--text)] bg-[var(--line)]'
+                    : 'border-[var(--line)] bg-[var(--current-ground,var(--carbon))] hover:border-[var(--text)]'
                 }`}
               >
-                {/* CAD Corner Crosshairs */}
-                <div className={`absolute top-2.5 left-2.5 text-[9px] font-mono select-none ${isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'}`}>┌ +</div>
-                <div className={`absolute top-2.5 right-2.5 text-[9px] font-mono select-none ${isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'}`}>+ ┐</div>
-                <div className={`absolute bottom-2.5 left-2.5 text-[9px] font-mono select-none ${isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'}`}>└ +</div>
-                <div className={`absolute bottom-2.5 right-2.5 text-[9px] font-mono select-none ${isLight ? 'text-[#2563eb]' : 'text-[#00f2ad]'}`}>+ ┘</div>
-
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept=".glb,.gltf"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    console.log(`[CLIENT][ImmersiveExperience.input.onChange] FIRED with file="${file?.name}" timestamp=${new Date().toISOString()}`);
                     if (file) {
-                      console.log(`[CLIENT][ImmersiveExperience.input.onChange] Calling onUploadModel with "${file.name}"`);
                       onUploadModel(file);
                     }
                     e.target.value = '';
@@ -3269,39 +3051,22 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                   className="hidden"
                 />
 
-                <div className="flex flex-col items-center gap-3 relative z-10">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${
-                    isDragOver
-                      ? isLight ? 'bg-[#2563eb] text-white shadow-lg shadow-blue-500/30' : 'bg-[#00f2ad] text-[#080d1a] shadow-[0_0_30px_#00f2ad]'
-                      : isLight ? 'bg-blue-50 border border-blue-200 text-[#2563eb]' : 'bg-[#00f2ad]/10 border border-[#00f2ad]/30 text-[#00f2ad]'
-                  }`}>
-                    <Upload className="w-6 h-6 animate-pulse" />
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-10 h-10 rounded-[2px] border border-[var(--line)] flex items-center justify-center text-[var(--text)]">
+                    <Upload className="w-4 h-4" />
                   </div>
-
                   <div>
-                    <div className={`text-sm sm:text-base font-mono font-bold tracking-tight mb-0.5 ${isLight ? 'text-[#0f172a]' : 'text-white'}`}>
-                      DROP YOUR 3D CAD MODEL
+                    <div className="text-[1rem] font-sans font-medium text-[var(--text)] mb-1">
+                      Drop your 3D CAD model
                     </div>
-                    <div className={`text-xs font-mono ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                      Release file anywhere inside or <span className={isLight ? 'text-[#2563eb] underline font-semibold' : 'text-[#00f2ad] underline font-semibold'}>browse local disk</span>
+                    <div className="text-[0.875rem] font-serif text-[var(--muted)]">
+                      Release file here or <span className="underline text-[var(--text)]">browse local disk</span>
                     </div>
-                  </div>
-
-                  <div className={`inline-flex items-center gap-2 px-3 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-widest font-semibold ${
-                    isLight
-                      ? 'bg-slate-100 text-slate-700 border border-slate-200'
-                      : 'bg-white/5 text-[#00f2ad] border border-[#00f2ad]/30'
-                  }`}>
-                    <span>.GLB</span>
-                    <span>&bull;</span>
-                    <span>.GLTF</span>
-                    <span>&bull;</span>
-                    <span>Instant Client Decomposition</span>
                   </div>
                 </div>
               </div>
 
-              {/* High-Tech Terminal Search / AI Mechanism Synthesis Form */}
+              {/* Mechanism Synthesis Search Form */}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -3309,49 +3074,28 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                     onSearchCustom(searchQuery.trim());
                   }
                 }}
-                className={`rounded-2xl border p-2 sm:p-2.5 flex items-center gap-2.5 transition-all w-full max-w-full ${
-                  isLight
-                    ? 'bg-white border-slate-200 shadow-sm focus-within:border-[#2563eb]'
-                    : 'bg-[#060b17]/95 border-white/15 shadow-lg focus-within:border-[#38bdf8]'
-                }`}
+                className="rounded-[2px] border border-[var(--line)] p-2 flex items-center gap-2 w-full bg-[var(--current-ground,var(--carbon))]"
               >
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ml-1 ${
-                  isLight ? 'bg-blue-50 text-[#2563eb]' : 'bg-white/5 text-[#38bdf8]'
-                }`}>
-                  <Terminal className="w-4 h-4" />
-                </div>
-
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Or enter mechanism: e.g. Mechanical Escapement, V8 Crankshaft..."
-                  className={`flex-1 min-w-0 bg-transparent px-2 py-1.5 text-xs sm:text-sm focus:outline-none font-mono ${
-                    isLight ? 'text-[#0f172a] placeholder-slate-400' : 'text-white placeholder-white/35'
-                  }`}
+                  className="flex-1 min-w-0 bg-transparent px-3 py-1.5 text-[0.875rem] font-sans text-[var(--text)] placeholder-[var(--muted)] focus:outline-none"
                 />
 
                 <button
                   type="submit"
                   disabled={!searchQuery.trim()}
-                  className={`px-3.5 sm:px-4 py-2 rounded-xl font-mono text-xs tracking-wider transition-all flex items-center gap-1.5 sm:gap-2 shrink-0 touch-manipulation ${
-                    searchQuery.trim()
-                      ? isLight
-                        ? 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] shadow-sm cursor-pointer'
-                        : 'bg-[#3b82f6] text-white hover:bg-[#2563eb] shadow-[0_0_20px_rgba(59,130,246,0.4)] cursor-pointer'
-                      : isLight
-                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                        : 'bg-white/5 text-white/30 cursor-not-allowed'
-                  }`}
+                  className="btn-plate btn-plate-filled text-[0.8125rem]"
                 >
-                  <span>Analyze</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  Analyze
                 </button>
               </form>
 
               {/* Quick Click Prompts */}
-              <div className="flex flex-wrap items-center justify-center gap-2 pt-0.5">
-                <span className={`text-[10px] font-mono uppercase tracking-wider ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                <span className="text-[0.8125rem] font-sans text-[var(--muted)]">
                   Suggested:
                 </span>
                 {['Mechanical Escapement', 'Twin-Scroll Turbo', 'BLDC Motor', 'Drone Gimbal'].map((prompt) => (
@@ -3362,11 +3106,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                       setSearchQuery(prompt);
                       onSearchCustom?.(prompt);
                     }}
-                    className={`px-2.5 py-1 rounded-md border text-[10px] font-mono transition-all cursor-pointer ${
-                      isLight
-                        ? 'bg-white hover:bg-blue-50 text-slate-600 hover:text-[#2563eb] border-slate-200 shadow-sm'
-                        : 'bg-white/5 hover:bg-[#3b82f6]/20 hover:text-[#38bdf8] border-white/10 text-white/70'
-                    }`}
+                    className="px-2.5 py-1 rounded-[2px] border border-[var(--line)] text-[0.8125rem] font-sans text-[var(--muted)] hover:text-[var(--text)] hover:border-[var(--text)] transition-colors cursor-pointer"
                   >
                     + {prompt}
                   </button>
@@ -3374,95 +3114,69 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               </div>
 
               {/* Direct Launch Built-in Objects */}
-              <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
                 <button
+                  type="button"
                   onClick={() => onSelectObject(objects[0])}
-                  className={`px-5 py-2.5 rounded-xl font-mono text-xs tracking-wider font-semibold transition-all flex items-center gap-2 cursor-pointer ${
-                    isLight
-                      ? 'bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-sm'
-                      : 'bg-[#3b82f6] hover:bg-[#2563eb] text-white shadow-[0_0_20px_rgba(59,130,246,0.3)]'
-                  }`}
+                  className="btn-plate btn-plate-filled"
                 >
-                  <span>Explore Swiss Watch</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  Explore Swiss watch
                 </button>
-
                 <button
+                  type="button"
                   onClick={() => onSelectObject(objects[1])}
-                  className={`px-5 py-2.5 rounded-xl font-mono text-xs tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                    isLight
-                      ? 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 shadow-sm'
-                      : 'bg-white/5 hover:bg-white/10 border border-white/15 text-white'
-                  }`}
+                  className="btn-plate"
                 >
-                  <span>Explore Drone</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  Explore Drone
                 </button>
-
                 <button
+                  type="button"
                   onClick={() => onSelectObject(objects[2])}
-                  className={`px-5 py-2.5 rounded-xl font-mono text-xs tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                    isLight
-                      ? 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 shadow-sm'
-                      : 'bg-white/5 hover:bg-white/10 border border-white/15 text-white'
-                  }`}
+                  className="btn-plate"
                 >
-                  <span>Explore Turbo</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  Explore Turbo
                 </button>
               </div>
             </div>
           </motion.div>
         </div>
 
-        {/* Bottom Sequence Indicators */}
-        <div className={`flex flex-col sm:flex-row gap-2.5 justify-between items-start sm:items-end text-[11px] font-mono tracking-wider pb-[env(safe-area-inset-bottom)] ${
-          isLight ? 'text-slate-500' : 'text-white/50'
-        }`}>
-          <div className="space-y-1">
-            <div className={`text-[9px] uppercase tracking-widest ${isLight ? 'text-[#2563eb]' : 'text-[#3b82f6]'}`}>Exploration Sequence</div>
-            <div className={`font-semibold text-[10px] sm:text-[11px] truncate max-w-[280px] xs:max-w-none ${isLight ? 'text-slate-800' : 'text-white/80'}`}>01 HOROLOGY → 02 AEROSPACE → 03 KINEMATICS</div>
+        {/* ------------------------------------------------------------------ */}
+        {/* Bottom Sequence Indicators & Actions (Section 5) */}
+        {/* ------------------------------------------------------------------ */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-end text-[0.8125rem] font-sans pb-[env(safe-area-inset-bottom)] pointer-events-none w-full">
+          {/* Chapters List */}
+          <div className="flex items-baseline gap-4 sm:gap-6 flex-wrap select-none">
+            <span className="text-[var(--muted)]">Chapters</span>
+            <span className={`tabular-nums transition-colors duration-150 ${activeChapter === 1 ? 'text-[var(--text)] font-medium' : 'text-[var(--muted)]'}`}>
+              <span className="opacity-70 mr-1.5">1</span>Horology
+            </span>
+            <span className={`tabular-nums transition-colors duration-150 ${activeChapter === 2 ? 'text-[var(--text)] font-medium' : 'text-[var(--muted)]'}`}>
+              <span className="opacity-70 mr-1.5">2</span>Aerospace
+            </span>
+            <span className={`tabular-nums transition-colors duration-150 ${activeChapter === 3 ? 'text-[var(--text)] font-medium' : 'text-[var(--muted)]'}`}>
+              <span className="opacity-70 mr-1.5">3</span>Kinematics
+            </span>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 pointer-events-auto flex-wrap">
-            {/* Motion Pause / Resume Control */}
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 pointer-events-auto flex-wrap">
             <button
+              type="button"
               onClick={toggleMotionPause}
               title={isMotionPaused ? "Resume mechanical micro-motion (Space)" : "Pause mechanical micro-motion (Space)"}
               aria-label={isMotionPaused ? "Resume mechanical micro-motion" : "Pause mechanical micro-motion"}
-              className={`px-3 py-2 rounded-lg text-xs font-mono transition-all flex items-center gap-2 cursor-pointer select-none touch-manipulation ${
-                isLight
-                  ? isMotionPaused
-                    ? 'bg-amber-50 border border-amber-300 text-amber-800 shadow-sm'
-                    : 'bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 shadow-sm'
-                  : isMotionPaused
-                    ? 'bg-amber-500/15 border border-amber-500/30 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
-                    : 'bg-white/5 hover:bg-white/10 border border-white/10 text-white/80'
-              }`}
+              className="btn-plate"
             >
-              {isMotionPaused ? (
-                <>
-                  <Play className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                  <span className="font-semibold tracking-wider text-[10px]">RESUME MOTION</span>
-                </>
-              ) : (
-                <>
-                  <Pause className="w-3.5 h-3.5 text-blue-400" />
-                  <span className="tracking-wider text-[10px]">PAUSE MOTION</span>
-                </>
-              )}
+              <span>{isMotionPaused ? 'Resume motion' : 'Pause motion'}</span>
             </button>
 
             <button
+              type="button"
               onClick={() => onSelectObject(activeObjectRef.current || objects[0])}
-              className={`px-4 py-2 rounded-lg text-xs font-mono transition-all flex items-center gap-2 cursor-pointer touch-manipulation ${
-                isLight
-                  ? 'bg-white hover:bg-blue-50 border border-slate-200 text-slate-800 shadow-sm'
-                  : 'bg-white/5 hover:bg-[#3b82f6]/20 border border-white/10 text-white'
-              }`}
+              className="btn-plate btn-plate-filled"
             >
-              <span>Launch Studio</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>Launch studio</span>
             </button>
           </div>
         </div>
