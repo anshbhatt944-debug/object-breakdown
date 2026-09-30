@@ -3,9 +3,8 @@ import * as THREE from 'three';
 import { ObjectBreakdownData, ViewMode3D, ComponentNode } from '../../../types/objectData';
 import { load3DModelForObject, loadUploaded3DModel, applyViewModeToModel, LoadedComponentMeshInfo } from './ModelLoader';
 import { fitCameraToObject, computeModelFramingSet, CameraFramingResult } from './cameraUtils';
-import { Box } from 'lucide-react';
-import { iphone14ProReferenceAnnotations } from '../../../data/smartphoneReference';
 import { solveAnnotationLayout, AnnotationItem } from '../../../utils/annotationSolver';
+import { Box } from 'lucide-react';
 
 function findComponentNodeInTree(nodes: ComponentNode[], id: string): ComponentNode | null {
   for (const n of nodes) {
@@ -885,10 +884,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
           cameraRotationRef.current.target.set(0, 0, 0);
         }
 
-        if (objectData.id === 'smartphone') {
-          cameraRotationRef.current.spherical.theta = Math.PI / 2;
-          cameraRotationRef.current.spherical.phi = Math.PI / 2.08;
-        } else if (objectData.id === 'car-engine') {
+        if (objectData.id === 'car-engine') {
           cameraRotationRef.current.spherical.theta = -Math.PI / 4;
           cameraRotationRef.current.spherical.phi = Math.PI / 2.8;
         } else if (objectData.id === 'jet-turbine') {
@@ -1014,7 +1010,6 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
       }
       const kTime = kinematicTimeRef.current;
       const currentModelId = objectDataRef.current?.id || '';
-      const isSmartphone = currentModelId === 'smartphone';
       const isWatch = currentModelId === 'wristwatch';
       const explode = explodeAmountRef.current;
 
@@ -1225,42 +1220,10 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
         const height = containerRef.current.clientHeight;
         const items: AnnotationItem[] = [];
 
-        if (isSmartphone && activeRootGroupRef.current) {
-          const root = activeRootGroupRef.current;
-          const box = new THREE.Box3().setFromObject(root);
-          const size = box.getSize(new THREE.Vector3());
-          const center = box.getCenter(new THREE.Vector3());
-
-          const cameraLocal = root.worldToLocal(cameraRef.current.position.clone());
-          const viewingFront = cameraLocal.z >= 0;
-
-          const visibleRefs = iphone14ProReferenceAnnotations.filter((ref) => {
-            if (ref.side === 'edge') return true;
-            return ref.side === (viewingFront ? 'front' : 'back');
-          });
-
-          const maxVisible = explode < 0.20 ? 4 : explode < 0.55 ? 8 : visibleRefs.length;
-          for (const ref of visibleRefs.slice(0, maxVisible)) {
-            const local = new THREE.Vector3(
-              center.x + (ref.anchor[0] * 0.5) * size.x,
-              center.y + (ref.anchor[1] * 0.5) * size.y,
-              center.z + (ref.anchor[2] * 0.5) * size.z,
-            );
-            items.push({
-              id: ref.nodeId,
-              name: ref.label,
-              category: ref.category,
-              worldPosition: root.localToWorld(local.clone()),
-              isVirtual: true,
-              side: ref.side,
-              modelId: 'smartphone',
-            });
-          }
-        } else {
-          const selectedId = selectedComponentIdRef.current;
-          const currentObj = objectDataRef.current;
-          const entries = Array.from(componentMapRef.current.entries());
-          const targets = entries.filter(([id, info]) => {
+        const selectedId = selectedComponentIdRef.current;
+        const currentObj = objectDataRef.current;
+        const entries = Array.from(componentMapRef.current.entries());
+        const targets = entries.filter(([id, info]) => {
             if (!info.mesh.visible) return false;
             if (selectedId && id === selectedId) return true;
 
@@ -1315,7 +1278,6 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
               isSelected: selectedComponentIdRef.current === id,
             });
           }
-        }
 
         const solved = solveAnnotationLayout(
           items,
@@ -1598,22 +1560,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     >
       <canvas ref={canvasRef} className="w-full h-full block" />
 
-      {objectData.id === 'smartphone' && !isLoading && (
-        <div className="absolute top-2 left-6 z-20 pointer-events-none">
-          <div className={`px-2.5 py-1 rounded-lg border backdrop-blur-md shadow-sm flex items-center gap-2 ${
-            theme === 'light'
-              ? 'border-blue-200 bg-white/90 text-slate-800'
-              : 'border-[#38bdf8]/20 bg-[#080f1d]/85 text-white'
-          }`}>
-            <span className={`text-[9px] font-mono-cad uppercase tracking-[0.15em] font-bold ${
-              theme === 'light' ? 'text-[#0284c7]' : 'text-[#38bdf8]'
-            }`}>TECHNICAL MAP //</span>
-            <span className={`text-[9px] font-mono-cad ${
-              theme === 'light' ? 'text-slate-600' : 'text-white/50'
-            }`}>Reference Callouts (Exterior CAD Asset)</span>
-          </div>
-        </div>
-      )}
+
 
       {/* Loading Indicator */}
       {isLoading && (

@@ -3,30 +3,29 @@ import { ballpointPenData } from './objects/ballpointPen';
 import { wristwatchData } from './objects/wristwatch';
 import { electricMotorData } from './objects/electricMotor';
 import { mechanicalKeyboardData } from './objects/mechanicalKeyboard';
-import { smartphoneData } from './objects/smartphone';
 import { carEngineData } from './objects/carEngine';
 import { jetTurbineData } from './objects/jetTurbine';
 import { droneData } from './objects/drone';
 import { generateCustomObjectBreakdown } from './aiObjectGenerator';
 
 export const ALL_OBJECTS: ObjectBreakdownData[] = [
-  ballpointPenData,
-  smartphoneData,
-  mechanicalKeyboardData,
-  wristwatchData,
-  electricMotorData,
-  carEngineData,
   jetTurbineData,
+  wristwatchData,
   droneData,
+  carEngineData,
+  electricMotorData,
+  ballpointPenData,
+  mechanicalKeyboardData,
 ];
 
 export const POPULAR_OBJECT_IDS = [
-  'ballpoint-pen',
-  'smartphone',
-  'mechanical-keyboard',
+  'jet-turbine',
   'wristwatch',
-  'electric-motor',
+  'drone',
   'car-engine',
+  'electric-motor',
+  'ballpoint-pen',
+  'mechanical-keyboard',
 ];
 
 export function getObjectById(id: string): ObjectBreakdownData | undefined {

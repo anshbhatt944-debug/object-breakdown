@@ -3080,7 +3080,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Or enter mechanism: e.g. Mechanical Escapement, V8 Crankshaft..."
+                  placeholder="Or enter mechanism: e.g. High-Bypass Turbofan Engine, Mechanical Wristwatch..."
                   className="flex-1 min-w-0 bg-transparent px-3 py-1.5 text-[0.875rem] font-sans text-[var(--text)] placeholder-[var(--muted)] focus:outline-none"
                 />
 
@@ -3094,48 +3094,37 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               </form>
 
               {/* Quick Click Prompts */}
-              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1 max-w-3xl">
                 <span className="text-[0.8125rem] font-sans text-[var(--muted)]">
                   Suggested:
                 </span>
-                {['Mechanical Escapement', 'Twin-Scroll Turbo', 'BLDC Motor', 'Drone Gimbal'].map((prompt) => (
+                {objects.map((obj) => (
                   <button
-                    key={prompt}
+                    key={obj.id}
                     type="button"
                     onClick={() => {
-                      setSearchQuery(prompt);
-                      onSearchCustom?.(prompt);
+                      setSearchQuery(obj.name);
+                      onSelectObject(obj);
                     }}
                     className="px-2.5 py-1 rounded-[3px] border border-[var(--line)] text-[0.8125rem] font-sans text-[var(--muted)] hover:text-[var(--text)] hover:border-[var(--text)] hover:bg-[color-mix(in_srgb,var(--text)_8%,transparent)] active:scale-[0.98] transition-all cursor-pointer select-none"
                   >
-                    + {prompt}
+                    + {obj.name}
                   </button>
                 ))}
               </div>
 
               {/* Direct Launch Built-in Objects */}
-              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => onSelectObject(objects[0])}
-                  className="btn-plate btn-plate-filled"
-                >
-                  <span className="relative z-10 pointer-events-none">Explore Swiss watch</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onSelectObject(objects[1])}
-                  className="btn-plate"
-                >
-                  <span className="relative z-10 pointer-events-none">Explore Drone</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onSelectObject(objects[2])}
-                  className="btn-plate"
-                >
-                  <span className="relative z-10 pointer-events-none">Explore Turbo</span>
-                </button>
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-2.5 max-w-3xl">
+                {objects.map((obj, idx) => (
+                  <button
+                    key={obj.id}
+                    type="button"
+                    onClick={() => onSelectObject(obj)}
+                    className={`btn-plate ${idx === 0 ? 'btn-plate-filled' : ''}`}
+                  >
+                    <span className="relative z-10 pointer-events-none">Explore {obj.name}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </motion.div>

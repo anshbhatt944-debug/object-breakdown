@@ -17,10 +17,13 @@ export const FooterCta: React.FC<FooterCtaProps> = ({ onSearch }) => {
   };
 
   const samplePrompts = [
-    'Mechanical Watch Escapement',
-    'Turbofan Jet Engine',
-    'Quadcopter Drone Gimbal',
-    'Brushless DC Motor',
+    'High-Bypass Turbofan Engine',
+    'Mechanical Wristwatch',
+    'Quadcopter Drone',
+    'Turbocharged Car Engine',
+    'Brushless DC Motor (BLDC)',
+    'Ballpoint Pen',
+    'Mechanical Keyboard',
   ];
 
   return (
@@ -73,7 +76,7 @@ export const FooterCta: React.FC<FooterCtaProps> = ({ onSearch }) => {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="e.g. Mechanical Escapement, V8 Crankshaft..."
+              placeholder="e.g. High-Bypass Turbofan Engine, Mechanical Wristwatch..."
               className="flex-1 min-w-0 bg-transparent px-2 text-sm sm:text-base text-[var(--text)] placeholder-[var(--muted)] focus:outline-none font-sans"
             />
 

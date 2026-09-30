@@ -295,7 +295,7 @@ export const wristwatchData: ObjectBreakdownData = {
           failureModes: [
             {
               mode: 'Magnetization of hairspring coils',
-              cause: 'Proximity to laptop speakers, MRI, or magnetic smartphone cases.',
+              cause: 'Proximity to laptop speakers, MRI, or magnetic electronic cases and neodymium magnets.',
               mitigation: 'Use monocrystalline silicon hairsprings (anti-magnetic).',
               severity: 'High',
             },

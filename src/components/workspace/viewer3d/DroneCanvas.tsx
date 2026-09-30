@@ -383,13 +383,8 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
         cameraRotationRef.current.spherical.radius = fallbackDist;
       }
       
-      if (objectData.id === 'smartphone') {
-        cameraRotationRef.current.spherical.theta = Math.PI / 2;
-        cameraRotationRef.current.spherical.phi = Math.PI / 2.08;
-      } else {
-        cameraRotationRef.current.spherical.theta = Math.PI / 4;
-        cameraRotationRef.current.spherical.phi = Math.PI / 2.6;
-      }
+      cameraRotationRef.current.spherical.theta = Math.PI / 4;
+      cameraRotationRef.current.spherical.phi = Math.PI / 2.6;
       updateCameraPosition();
 
       // Pre-cache flat interactive mesh array for instant, allocation-free raycasting

@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { ObjectBreakdownData, DepthLevel } from './types/objectData';
-import { wristwatchData } from './data/objects/wristwatch';
-import { droneData } from './data/objects/drone';
-import { carEngineData } from './data/objects/carEngine';
-import { jetTurbineData } from './data/objects/jetTurbine';
-import { electricMotorData } from './data/objects/electricMotor';
+import { ALL_OBJECTS, searchOrGenerateObject, getObjectById } from './data/objectRegistry';
 import { ballpointPenData } from './data/objects/ballpointPen';
-import { searchOrGenerateObject, getObjectById } from './data/objectRegistry';
 import * as uploadAnalysis from './data/uploadAnalysis';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Upload } from 'lucide-react';
@@ -330,13 +325,7 @@ export const App: React.FC = () => {
       {/* Main Landing Sections */}
       <main className="flex-1">
         <ImmersiveExperience
-          objects={[
-            wristwatchData,
-            droneData,
-            carEngineData,
-            electricMotorData,
-            ballpointPenData,
-          ]}
+          objects={ALL_OBJECTS}
           onSelectObject={handleLaunchObject}
           onUploadModel={handleUploadModel}
           onSearchCustom={handleSearchQuery}

@@ -22,7 +22,7 @@
 ### SLIDE 2: The Core Problem — "The Black Box Era"
 - **Slide Title**: The Problem: Everyday Objects Are Sealed Black Boxes
 - **Key Points**:
-  - **Hermetic Enclosures**: From smartphones to turbofans, modern products conceal their internal mechanics behind seamless casings.
+  - **Hermetic Enclosures**: From consumer devices to turbofans, modern products conceal their internal mechanics behind seamless casings.
   - **Disconnected Education**: Engineering students and technical designers study 2D static diagrams and dry CAD wireframes disconnected from real motion.
   - **Heavy CAD Software Barrier**: Traditional tools (SolidWorks, CATIA, NX) require expensive workstation licenses, multi-gigabyte installs, and high barrier to entry.
   - **Lack of Interactive Narrative**: Static diagrams fail to communicate *how* parts mechanically mesh, compress, combust, or synchronize in dynamic motion.

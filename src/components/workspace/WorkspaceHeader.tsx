@@ -1,11 +1,6 @@
 import React from 'react';
 import { ObjectBreakdownData, DepthLevel } from '../../types/objectData';
-import { wristwatchData } from '../../data/objects/wristwatch';
-import { droneData } from '../../data/objects/drone';
-import { carEngineData } from '../../data/objects/carEngine';
-import { jetTurbineData } from '../../data/objects/jetTurbine';
-import { electricMotorData } from '../../data/objects/electricMotor';
-import { ballpointPenData } from '../../data/objects/ballpointPen';
+import { ALL_OBJECTS } from '../../data/objectRegistry';
 import {
   Layers,
   ChevronLeft,
@@ -14,15 +9,6 @@ import {
   Scale,
   Upload,
 } from 'lucide-react';
-
-const ALL_OBJECTS: ObjectBreakdownData[] = [
-  ballpointPenData,
-  wristwatchData,
-  droneData,
-  carEngineData,
-  jetTurbineData,
-  electricMotorData,
-];
 
 interface WorkspaceHeaderProps {
   currentObject: ObjectBreakdownData;

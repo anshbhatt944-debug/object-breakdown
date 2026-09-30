@@ -38,27 +38,6 @@ export interface ModelAssetConfig {
 }
 
 export const MODEL_ASSETS: Record<string, ModelAssetConfig> = {
-  // ==========================================
-  // 1. SMARTPHONE (Real iPhone 14 Pro GLB)
-  // ==========================================
-  'smartphone': {
-    objectId: 'smartphone',
-    displayName: 'Smartphone',
-    type: 'gltf',
-    modelPath: '/models/smartphone/iphone_14_pro.glb',
-    targetMaxDimension: 4.8,
-    initialRotation: [0, 0, 0],
-    initialOffset: [0, 0, 0],
-    defaultCameraDistance: 5.4,
-    meshMappings: {
-      'defaultMaterial': {
-        componentId: 'iphone-frame',
-        displayName: 'Smartphone Exterior / Structural Frame',
-        category: 'Structural Enclosure',
-        explodeVector: [0, 0, 0],
-      },
-    },
-  },
 
   // ==========================================
   // 2. BALLPOINT PEN (Real Lamy Logo GLB)

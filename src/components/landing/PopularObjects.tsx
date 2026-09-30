@@ -23,14 +23,13 @@ export const PopularObjects: React.FC<PopularObjectsProps> = ({ onSelectObjectBy
       );
     }
     if (selectedCategory === 'ELECTRONICS') {
-      return obj.id === 'smartphone' || obj.id === 'mechanical-keyboard';
+      return obj.id === 'mechanical-keyboard' || obj.id === 'electric-motor';
     }
     if (selectedCategory === 'AEROSPACE') {
       return obj.id === 'jet-turbine' || obj.id === 'drone';
     }
     if (selectedCategory === 'CONSUMER') {
       return (
-        obj.id === 'smartphone' ||
         obj.id === 'ballpoint-pen' ||
         obj.id === 'mechanical-keyboard' ||
         obj.id === 'wristwatch'

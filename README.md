@@ -121,7 +121,7 @@ The deployed demo uses a shared API key so anyone can try the upload-analysis fe
 
 ## Preloaded vs. uploaded objects
 
-- **Preloaded objects** (watch, camera, drone, smartphone, pen, keyboard, car engine, electric motor, jet turbine) use hand-structured engineering data, so they're predictable, polished, and good for demoing the workspace itself.
+- **Preloaded objects** (watch, drone, pen, keyboard, car engine, electric motor, jet turbine) use hand-structured engineering data, so they're predictable, polished, and good for demoing the workspace itself.
 - **Uploaded objects** are analyzed live through the Groq pipeline above — same workspace, dynamically generated data.
 
 ## Limitations
