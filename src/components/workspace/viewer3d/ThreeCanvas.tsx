@@ -861,6 +861,12 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
             framingSet.assembledFraming.distance = Math.max(framingSet.assembledFraming.distance * 1.35, 8.8);
             framingSet.explodedFraming.distance = Math.max(framingSet.explodedFraming.distance * 1.25, 11.5);
           }
+          // Jet turbine is a long axial assembly — needs significantly more camera distance
+          // to avoid filling the viewport and looking "too scaled up"
+          if (objectData.id === 'jet-turbine') {
+            framingSet.assembledFraming.distance = Math.max(framingSet.assembledFraming.distance * 1.65, 13.5);
+            framingSet.explodedFraming.distance = Math.max(framingSet.explodedFraming.distance * 1.6, 18.5);
+          }
           assembledFramingRef.current = framingSet.assembledFraming;
           explodedFramingRef.current = framingSet.explodedFraming;
 
@@ -885,6 +891,10 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
         } else if (objectData.id === 'car-engine') {
           cameraRotationRef.current.spherical.theta = -Math.PI / 4;
           cameraRotationRef.current.spherical.phi = Math.PI / 2.8;
+        } else if (objectData.id === 'jet-turbine') {
+          // 3/4 view slightly above — shows the full engine profile with breathing room
+          cameraRotationRef.current.spherical.theta = Math.PI / 3.5;
+          cameraRotationRef.current.spherical.phi = Math.PI / 2.4;
         } else {
           cameraRotationRef.current.spherical.theta = Math.PI / 4;
           cameraRotationRef.current.spherical.phi = Math.PI / 2.6;
@@ -1119,6 +1129,59 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
           } else if (currentModelId === 'mechanical-keyboard') {
             if (id === 'pbt-keycap' || id === 'switch-stem') {
               info.mesh.position.y += Math.sin(kTime * 3.5) * 0.04 * (1 - localProgress);
+            }
+          } else if (currentModelId === 'jet-turbine') {
+            const isPlaying = isPlayingMechanismRef.current;
+            if (isPlaying) {
+              if (id === 'fan-module' || id === 'blades_0') {
+                // High-bypass titanium fan module spins smoothly around its true local Y spindle axis
+                meshesToAnimate.forEach((m) => {
+                  const baseRot = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
+                  m.rotation.x = baseRot.x;
+                  m.rotation.z = baseRot.z;
+                  m.rotation.y = baseRot.y + kTime * 4.5;
+                });
+              } else if (id === 'coaxial-drive-shaft' || id === 'tube_0') {
+                // Dual-spool concentric LP/HP drive shaft spins around its local Z centerline axis
+                meshesToAnimate.forEach((m) => {
+                  const baseRot = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
+                  m.rotation.x = baseRot.x;
+                  m.rotation.y = baseRot.y;
+                  m.rotation.z = baseRot.z + kTime * 6.0;
+                });
+              } else if (id === 'turbine-nozzle-guide-vanes' || id === 'fins_0') {
+                // High pressure turbine rotor spins around its local Z centerline axis
+                meshesToAnimate.forEach((m) => {
+                  const baseRot = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
+                  m.rotation.x = baseRot.x;
+                  m.rotation.y = baseRot.y;
+                  m.rotation.z = baseRot.z + kTime * 6.8;
+                });
+              } else if (
+                id === 'vsv-actuation-ring' ||
+                id === 'flaps_ring_0' ||
+                id === 'unison-linkages' ||
+                id === 'flaps_stabiliser_0'
+              ) {
+                // Variable Stator Vane unison ring & bellcranks modulate
+                meshesToAnimate.forEach((m) => {
+                  const baseRot = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
+                  m.rotation.x = baseRot.x;
+                  m.rotation.y = baseRot.y;
+                  m.rotation.z = baseRot.z + Math.sin(kTime * 2.5) * 0.04;
+                });
+              } else if (
+                id === 'vsv-bleed-flaps' ||
+                id === 'flaps_0'
+              ) {
+                // Variable bleed flaps pitch rotation
+                meshesToAnimate.forEach((m) => {
+                  const baseRot = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
+                  m.rotation.y = baseRot.y;
+                  m.rotation.z = baseRot.z;
+                  m.rotation.x = baseRot.x + Math.sin(kTime * 2.5) * 0.08;
+                });
+              }
             }
           }
         }
@@ -1583,16 +1646,18 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
                   <path
                     d={ann.pathD}
                     fill="none"
-                    stroke={active ? (theme === 'light' ? '#c2410c' : '#e27228') : (theme === 'light' ? '#94a3b8' : 'rgba(240, 244, 250, 0.65)')}
-                    strokeOpacity={active ? 1 : 0.75}
-                    strokeWidth={active ? 1.5 : 1}
+                    stroke={active ? '#e27228' : (theme === 'light' ? '#8c827a' : '#c5bdb5')}
+                    strokeOpacity={active ? 1 : 0.55}
+                    strokeWidth={active ? 1.6 : 1.1}
                     strokeDasharray={active ? undefined : '2 2'}
                   />
                   <circle
                     cx={ann.anchorX}
                     cy={ann.anchorY}
-                    r={active ? 3.5 : 2}
-                    fill={active ? (theme === 'light' ? '#c2410c' : '#e27228') : (theme === 'light' ? '#94a3b8' : 'rgba(240, 244, 250, 0.65)')}
+                    r={active ? 4 : 2.5}
+                    fill={active ? '#e27228' : (theme === 'light' ? '#1D1713' : '#EFEAE2')}
+                    stroke={active ? (theme === 'light' ? '#fff' : '#181513') : 'none'}
+                    strokeWidth={active ? 1.5 : 0}
                   />
                 </g>
               );
@@ -1623,7 +1688,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
                     e.stopPropagation();
                     onSelectComponent(isSelected ? null : ann.nodeId);
                   }}
-                  className={`three-label pointer-events-auto cursor-pointer w-full px-3 py-2 text-xs font-mono-cad border transition-all ${
+                  className={`three-label pointer-events-auto cursor-pointer w-full px-2.5 py-1.5 text-xs transition-all ${
                     isSelected
                       ? 'three-label-selected'
                       : isHovered
@@ -1632,14 +1697,14 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
                   }`}
                 >
                   <div className="flex items-start gap-2">
-                    <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center text-[9px] font-bold annotation-index ${isSelected ? 'annotation-index-active' : ''}`}>
+                    <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-[9px] font-mono font-bold annotation-index ${isSelected ? 'annotation-index-active' : ''}`}>
                       {String(idx + 1).padStart(2, '0')}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="three-label-name font-semibold tracking-wide leading-tight truncate">{ann.name}</div>
-                      <div className="three-label-meta mt-1 text-[9px] uppercase tracking-[0.12em] flex items-center gap-1.5 truncate">
+                      <div className="three-label-name text-[11px] font-sans font-medium tracking-wide leading-tight truncate">{ann.name}</div>
+                      <div className="three-label-meta mt-0.5 text-[8.5px] font-mono uppercase tracking-[0.12em] flex items-center gap-1.5 truncate">
                         {ann.category}
-                        {ann.isVirtual && <span className="text-[8px] text-amber-300/90 border border-amber-300/20 rounded px-1 py-0.5">REFERENCE</span>}
+                        {ann.isVirtual && <span className="text-[8px] text-amber-500/90 border border-amber-500/30 rounded px-1 py-0.2">REF</span>}
                       </div>
                     </div>
                   </div>
