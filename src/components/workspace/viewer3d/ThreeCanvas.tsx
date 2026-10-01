@@ -602,6 +602,8 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
 
   // Flat cached interactive mesh list for allocation-free, high-performance raycasting
   const interactiveMeshesRef = useRef<THREE.Mesh[]>([]);
+  const meshToComponentMapRef = useRef<Map<THREE.Object3D, string>>(new Map());
+  const maxDragDistanceRef = useRef<number>(0);
 
   // Update camera position helper
   const updateCameraPosition = useCallback(() => {
@@ -898,18 +900,48 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
         updateCameraPosition();
       }
 
-      // Pre-cache flat interactive mesh array for instant, allocation-free raycasting
+      // Pre-cache flat interactive mesh array and fast O(1) mesh-to-component lookup map
       const interactiveList: THREE.Mesh[] = [];
-      result.componentMap.forEach((info) => {
+      const meshToCompMap = new Map<THREE.Object3D, string>();
+
+      result.componentMap.forEach((info, compId) => {
+        meshToCompMap.set(info.mesh, compId);
+        info.mesh.userData.componentId = compId;
+
+        const meshesForInfo: THREE.Mesh[] = [];
         if (info.sourceMeshes && info.sourceMeshes.length > 0) {
-          interactiveList.push(...info.sourceMeshes);
+          info.sourceMeshes.forEach((m) => {
+            meshesForInfo.push(m);
+            m.traverse((child) => {
+              if ((child as THREE.Mesh).isMesh && child !== m) meshesForInfo.push(child as THREE.Mesh);
+            });
+          });
         } else {
           info.mesh.traverse((child) => {
-            if ((child as THREE.Mesh).isMesh) interactiveList.push(child as THREE.Mesh);
+            if ((child as THREE.Mesh).isMesh) meshesForInfo.push(child as THREE.Mesh);
           });
         }
+
+        meshesForInfo.forEach((m) => {
+          meshToCompMap.set(m, compId);
+          m.userData.componentId = compId;
+          if (!interactiveList.includes(m)) {
+            interactiveList.push(m);
+          }
+        });
       });
+
+      // Also map any progressive subparts
+      progressiveSubpartsRef.current.forEach((subpart) => {
+        meshToCompMap.set(subpart.mesh, subpart.parentId);
+        subpart.mesh.userData.componentId = subpart.parentId;
+        if (!interactiveList.includes(subpart.mesh)) {
+          interactiveList.push(subpart.mesh);
+        }
+      });
+
       interactiveMeshesRef.current = interactiveList;
+      meshToComponentMapRef.current = meshToCompMap;
 
       setIsLoading(false);
     });
@@ -959,29 +991,37 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
       const isHidden = hiddenComponentIds.has(id);
       const isIsolated = isolatedComponentId ? isolatedComponentId === id : true;
 
-      info.mesh.visible = !isHidden && isIsolated;
+      const shouldBeVisible = !isHidden && isIsolated;
+      info.mesh.visible = shouldBeVisible;
 
-      // Update mesh emissive highlighting in-place
-      info.mesh.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-          const mesh = child as THREE.Mesh;
-          if (mesh.material) {
-            const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
-            if ((mat as THREE.MeshStandardMaterial).emissive) {
-              const stdMat = mat as THREE.MeshStandardMaterial;
-              if (isSelected) {
-                stdMat.emissive.set('#e27228');
-                stdMat.emissiveIntensity = 0.14;
-              } else if (isHovered) {
-                stdMat.emissive.set('#e27228');
-                stdMat.emissiveIntensity = 0.06;
-              } else {
-                stdMat.emissive.set('#000000');
-                stdMat.emissiveIntensity = 0.0;
+      const meshes = (info.sourceMeshes && info.sourceMeshes.length > 0)
+        ? info.sourceMeshes
+        : [info.mesh];
+
+      meshes.forEach((meshOrGroup) => {
+        meshOrGroup.visible = shouldBeVisible;
+        meshOrGroup.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            const mesh = child as THREE.Mesh;
+            mesh.visible = shouldBeVisible;
+            if (mesh.material) {
+              const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+              if ((mat as THREE.MeshStandardMaterial).emissive) {
+                const stdMat = mat as THREE.MeshStandardMaterial;
+                if (isSelected) {
+                  stdMat.emissive.set('#e27228');
+                  stdMat.emissiveIntensity = 0.14;
+                } else if (isHovered) {
+                  stdMat.emissive.set('#e27228');
+                  stdMat.emissiveIntensity = 0.06;
+                } else {
+                  stdMat.emissive.set('#000000');
+                  stdMat.emissiveIntensity = 0.0;
+                }
               }
             }
           }
-        }
+        });
       });
     });
   }, [selectedComponentId, isolatedComponentId, hiddenComponentIds]);
@@ -1021,11 +1061,13 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
         const isSupplemental = Boolean(info.mesh.userData?.supplemental);
         const hiddenByUser = hiddenComponentIdsRef.current.has(id);
         const isolatedOut = isolatedComponentIdRef.current ? isolatedComponentIdRef.current !== id : false;
-        if (isSupplemental && explode < info.explodeStart) {
-          info.mesh.visible = false;
-        } else if (!hiddenByUser && !isolatedOut) {
-          info.mesh.visible = true;
+        let isVisible = true;
+        if (hiddenByUser || isolatedOut) {
+          isVisible = false;
+        } else if (isSupplemental && explode < info.explodeStart) {
+          isVisible = false;
         }
+        info.mesh.visible = isVisible;
 
         const range = Math.max(0.001, info.explodeEnd - info.explodeStart);
         const localProgress = Math.max(
@@ -1036,6 +1078,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
 
         const meshesToAnimate = (info.sourceMeshes && info.sourceMeshes.length > 0) ? info.sourceMeshes : [info.mesh];
         meshesToAnimate.forEach((m) => {
+          m.visible = isVisible;
           const baseP = (m.userData?.basePosition as THREE.Vector3) || info.basePosition;
           const baseR = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
           const baseS = (m.userData?.baseScale as THREE.Vector3) || info.baseScale;
@@ -1202,6 +1245,9 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
         subpart.mesh.visible = parentVisible;
       });
 
+      // Synchronize world matrices after all kinematic, exploded, and subpart transforms
+      activeRootGroupRef.current?.updateMatrixWorld(true);
+
       if (uploadedMixerRef.current && isPlayingMechanismRef.current) {
         uploadedMixerRef.current.update(delta);
       }
@@ -1340,34 +1386,44 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     // Reset previous hover
     if (activeHoverIdRef.current) {
       const prev = componentMapRef.current.get(activeHoverIdRef.current);
-      if (prev && selectedComponentId !== activeHoverIdRef.current) {
-        prev.mesh.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            const mat = (child as THREE.Mesh).material;
-            const targetMat = Array.isArray(mat) ? mat[0] : mat;
-            if ((targetMat as THREE.MeshStandardMaterial)?.emissive) {
-              (targetMat as THREE.MeshStandardMaterial).emissive.set('#000000');
-              (targetMat as THREE.MeshStandardMaterial).emissiveIntensity = 0.0;
+      if (prev && selectedComponentIdRef.current !== activeHoverIdRef.current) {
+        const meshesToReset = (prev.sourceMeshes && prev.sourceMeshes.length > 0)
+          ? prev.sourceMeshes
+          : [prev.mesh];
+        meshesToReset.forEach((meshOrGroup) => {
+          meshOrGroup.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              const mat = (child as THREE.Mesh).material;
+              const targetMat = Array.isArray(mat) ? mat[0] : mat;
+              if ((targetMat as THREE.MeshStandardMaterial)?.emissive) {
+                (targetMat as THREE.MeshStandardMaterial).emissive.set('#000000');
+                (targetMat as THREE.MeshStandardMaterial).emissiveIntensity = 0.0;
+              }
             }
-          }
+          });
         });
       }
     }
 
     // Set new hover
     activeHoverIdRef.current = targetId;
-    if (targetId && selectedComponentId !== targetId) {
+    if (targetId && selectedComponentIdRef.current !== targetId) {
       const current = componentMapRef.current.get(targetId);
       if (current) {
-        current.mesh.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            const mat = (child as THREE.Mesh).material;
-            const targetMat = Array.isArray(mat) ? mat[0] : mat;
-            if ((targetMat as THREE.MeshStandardMaterial)?.emissive) {
-              (targetMat as THREE.MeshStandardMaterial).emissive.set('#e27228');
-              (targetMat as THREE.MeshStandardMaterial).emissiveIntensity = 0.06;
+        const meshesToHighlight = (current.sourceMeshes && current.sourceMeshes.length > 0)
+          ? current.sourceMeshes
+          : [current.mesh];
+        meshesToHighlight.forEach((meshOrGroup) => {
+          meshOrGroup.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              const mat = (child as THREE.Mesh).material;
+              const targetMat = Array.isArray(mat) ? mat[0] : mat;
+              if ((targetMat as THREE.MeshStandardMaterial)?.emissive) {
+                (targetMat as THREE.MeshStandardMaterial).emissive.set('#e27228');
+                (targetMat as THREE.MeshStandardMaterial).emissiveIntensity = 0.06;
+              }
             }
-          }
+          });
         });
       }
     }
@@ -1392,33 +1448,86 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     }, 20);
   };
 
-  // Raycast helper for both clean touch tap and mouse click selection
-  const performRaycastSelect = (clientX: number, clientY: number) => {
-    if (!containerRef.current || !cameraRef.current || !sceneRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
+  const resolveComponentId = (object: THREE.Object3D): string | null => {
+    let curr: THREE.Object3D | null = object;
+    while (curr && curr !== sceneRef.current) {
+      if (meshToComponentMapRef.current.has(curr)) {
+        return meshToComponentMapRef.current.get(curr)!;
+      }
+      if (curr.userData?.componentId && componentMapRef.current.has(curr.userData.componentId)) {
+        return curr.userData.componentId;
+      }
+      if (componentMapRef.current.has(curr.name)) {
+        return curr.name;
+      }
+      curr = curr.parent;
+    }
+    return null;
+  };
+
+  // Bulletproof raycasting helper: accurate in both assembled & exploded states
+  const getIntersectedComponentId = (clientX: number, clientY: number): string | null => {
+    if (!containerRef.current || !cameraRef.current || !sceneRef.current || !activeRootGroupRef.current) return null;
+    const canvas = canvasRef.current || containerRef.current;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return null;
+
     const mouse = mouseRef.current.set(
-      ((clientX - rect.left) / rect.width) * 2 - 1,
-      -((clientY - rect.top) / rect.height) * 2 + 1
+      Math.max(-1, Math.min(1, ((clientX - rect.left) / rect.width) * 2 - 1)),
+      Math.max(-1, Math.min(1, -((clientY - rect.top) / rect.height) * 2 + 1))
     );
 
     const raycaster = raycasterRef.current;
     raycaster.setFromCamera(mouse, cameraRef.current);
 
-    const root = activeRootGroupRef.current;
-    if (!root) return;
+    // Synchronize all world matrices with current explode and animation positions
+    activeRootGroupRef.current.updateMatrixWorld(true);
 
-    const targets = interactiveMeshesRef.current.length > 0 ? interactiveMeshesRef.current : root.children;
+    const targets = interactiveMeshesRef.current.length > 0 ? interactiveMeshesRef.current : activeRootGroupRef.current.children;
     const intersects = raycaster.intersectObjects(targets, true);
-    if (intersects.length > 0) {
-      let hitMesh: THREE.Object3D | null = intersects[0].object;
-      while (hitMesh && hitMesh !== sceneRef.current) {
-        if (componentMapRef.current.has(hitMesh.name)) {
-          onSelectComponent(hitMesh.name === selectedComponentIdRef.current ? null : hitMesh.name);
-          return;
+    if (!intersects || intersects.length === 0) return null;
+
+    for (let i = 0; i < intersects.length; i++) {
+      const hit = intersects[i];
+      if (!hit?.object) continue;
+
+      // Verify full hierarchical visibility of this hit object
+      let isVisible = true;
+      let p: THREE.Object3D | null = hit.object;
+      while (p && p !== sceneRef.current) {
+        if (!p.visible) {
+          isVisible = false;
+          break;
         }
-        hitMesh = hitMesh.parent;
+        p = p.parent;
       }
+      if (!isVisible) continue;
+
+      const compId = resolveComponentId(hit.object);
+      if (!compId) continue;
+
+      // Skip if hidden by user or isolated out
+      if (hiddenComponentIdsRef.current.has(compId)) continue;
+      if (isolatedComponentIdRef.current && isolatedComponentIdRef.current !== compId) continue;
+
+      // Skip supplemental internals that are not yet revealed
+      const info = componentMapRef.current.get(compId);
+      if (info) {
+        if (Boolean(info.mesh.userData?.supplemental) && explodeAmountRef.current < info.explodeStart) {
+          continue;
+        }
+      }
+
+      return compId;
     }
+
+    return null;
+  };
+
+  // Raycast helper for both clean touch tap and mouse click selection
+  const performRaycastSelect = (clientX: number, clientY: number) => {
+    const targetId = getIntersectedComponentId(clientX, clientY);
+    onSelectComponent(targetId === selectedComponentIdRef.current ? null : targetId);
   };
 
   // Pointer Interaction Handlers with Full Mobile Multi-Touch (Rotate + Pinch-to-Zoom + Tap)
@@ -1426,6 +1535,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     pointerDownPosRef.current = { x: e.clientX, y: e.clientY };
     pointerDownTimeRef.current = performance.now();
+    maxDragDistanceRef.current = 0;
 
     if (activePointersRef.current.size === 1) {
       isDraggingRef.current = true;
@@ -1444,6 +1554,9 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     if (activePointersRef.current.has(e.pointerId)) {
       activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     }
+
+    const moveDist = Math.hypot(e.clientX - pointerDownPosRef.current.x, e.clientY - pointerDownPosRef.current.y);
+    maxDragDistanceRef.current = Math.max(maxDragDistanceRef.current, moveDist);
 
     // Two-finger pinch zoom for mobile touch
     if (activePointersRef.current.size === 2 && pinchStartDistRef.current !== null) {
@@ -1474,35 +1587,8 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     if (e.pointerType === 'touch') return;
 
     // Instant raycast hover detection against pre-cached interactive meshes
-    if (!containerRef.current || !cameraRef.current || !sceneRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const mouse = mouseRef.current.set(
-      ((e.clientX - rect.left) / rect.width) * 2 - 1,
-      -((e.clientY - rect.top) / rect.height) * 2 + 1
-    );
-
-    const raycaster = raycasterRef.current;
-    raycaster.setFromCamera(mouse, cameraRef.current);
-
-    const root = activeRootGroupRef.current;
-    if (!root) {
-      setMeshHoverState(null);
-      return;
-    }
-
-    const targets = interactiveMeshesRef.current.length > 0 ? interactiveMeshesRef.current : root.children;
-    const intersects = raycaster.intersectObjects(targets, true);
-    if (intersects.length > 0) {
-      let hitMesh: THREE.Object3D | null = intersects[0].object;
-      while (hitMesh && hitMesh !== sceneRef.current) {
-        if (componentMapRef.current.has(hitMesh.name)) {
-          setMeshHoverState(hitMesh.name);
-          return;
-        }
-        hitMesh = hitMesh.parent;
-      }
-    }
-    setMeshHoverState(null);
+    const targetId = getIntersectedComponentId(e.clientX, e.clientY);
+    setMeshHoverState(targetId);
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -1523,7 +1609,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
 
     // Tap-to-select detection for touch devices
-    if (wasPointerInMap) {
+    if (wasPointerInMap && e.pointerType === 'touch') {
       const moveDist = Math.hypot(
         e.clientX - pointerDownPosRef.current.x,
         e.clientY - pointerDownPosRef.current.y
@@ -1537,8 +1623,10 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    // Avoid double firing if pointerup already handled the tap
+    // Avoid double firing if touch pointerup already handled the tap
     if (performance.now() - lastTapTimeRef.current < 300) return;
+    // If the mouse was dragged (e.g. orbiting camera), ignore click
+    if (maxDragDistanceRef.current > 6) return;
     performRaycastSelect(e.clientX, e.clientY);
   };
 

@@ -180,6 +180,8 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
 
   // Flat cached interactive mesh list for allocation-free, high-performance raycasting
   const interactiveMeshesRef = useRef<THREE.Mesh[]>([]);
+  const meshToComponentMapRef = useRef<Map<THREE.Object3D, string>>(new Map());
+  const maxDragDistanceRef = useRef<number>(0);
 
   // Update camera position helper
   const updateCameraPosition = useCallback(() => {
@@ -387,18 +389,47 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
       cameraRotationRef.current.spherical.phi = Math.PI / 2.6;
       updateCameraPosition();
 
-      // Pre-cache flat interactive mesh array for instant, allocation-free raycasting
+      // Pre-cache flat interactive mesh array and fast O(1) mesh-to-component lookup map
       const interactiveList: THREE.Mesh[] = [];
-      result.componentMap.forEach((info) => {
+      const meshToCompMap = new Map<THREE.Object3D, string>();
+
+      result.componentMap.forEach((info, compId) => {
+        meshToCompMap.set(info.mesh, compId);
+        info.mesh.userData.componentId = compId;
+
+        const meshesForInfo: THREE.Mesh[] = [];
         if (info.sourceMeshes && info.sourceMeshes.length > 0) {
-          interactiveList.push(...info.sourceMeshes);
+          info.sourceMeshes.forEach((m) => {
+            meshesForInfo.push(m);
+            m.traverse((child) => {
+              if ((child as THREE.Mesh).isMesh && child !== m) meshesForInfo.push(child as THREE.Mesh);
+            });
+          });
         } else {
           info.mesh.traverse((child) => {
-            if ((child as THREE.Mesh).isMesh) interactiveList.push(child as THREE.Mesh);
+            if ((child as THREE.Mesh).isMesh) meshesForInfo.push(child as THREE.Mesh);
           });
         }
+
+        meshesForInfo.forEach((m) => {
+          meshToCompMap.set(m, compId);
+          m.userData.componentId = compId;
+          if (!interactiveList.includes(m)) {
+            interactiveList.push(m);
+          }
+        });
       });
+
+      // Clear all initial SkinnedMesh bounding volumes so Three.js dynamically computes them
+      interactiveList.forEach((m) => {
+        if ((m as THREE.SkinnedMesh).isSkinnedMesh) {
+          (m as any).boundingSphere = null;
+          (m as any).boundingBox = null;
+        }
+      });
+
       interactiveMeshesRef.current = interactiveList;
+      meshToComponentMapRef.current = meshToCompMap;
 
       setIsLoading(false);
     });
@@ -531,6 +562,14 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
           animationMixerRef.current.setTime(clampedExplode * peakTime);
           activeRootGroupRef.current?.updateMatrixWorld(true);
           lastDroneExplodeRef.current = clampedExplode;
+
+          // Invalidate cached skinned bounding volumes so raycasting evaluates current exploded bone transforms!
+          interactiveMeshesRef.current.forEach((m) => {
+            if ((m as THREE.SkinnedMesh).isSkinnedMesh) {
+              (m as any).boundingSphere = null;
+              (m as any).boundingBox = null;
+            }
+          });
         }
 
         // Propeller rotation is active ONLY when isPlayingMechanism is true
@@ -716,32 +755,40 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     // Reset previous hover
     if (activeHoverIdRef.current) {
       const prev = componentMapRef.current.get(activeHoverIdRef.current);
-      if (prev && selectedComponentId !== activeHoverIdRef.current) {
+      if (prev && selectedComponentIdRef.current !== activeHoverIdRef.current) {
         const meshes = prev.sourceMeshes || (() => { const out: THREE.Mesh[] = []; prev.mesh.traverse((c) => { if ((c as THREE.Mesh).isMesh) out.push(c as THREE.Mesh); }); return out; })();
         meshes.forEach((mesh) => {
-          const mat = mesh.material;
-          const targetMat = Array.isArray(mat) ? mat[0] : mat;
-          if ((targetMat as THREE.MeshStandardMaterial)?.emissive) {
-            (targetMat as THREE.MeshStandardMaterial).emissive.set('#000000');
-            (targetMat as THREE.MeshStandardMaterial).emissiveIntensity = 0.0;
-          }
+          mesh.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              const mat = (child as THREE.Mesh).material;
+              const targetMat = Array.isArray(mat) ? mat[0] : mat;
+              if ((targetMat as THREE.MeshStandardMaterial)?.emissive) {
+                (targetMat as THREE.MeshStandardMaterial).emissive.set('#000000');
+                (targetMat as THREE.MeshStandardMaterial).emissiveIntensity = 0.0;
+              }
+            }
+          });
         });
       }
     }
 
     // Set new hover
     activeHoverIdRef.current = targetId;
-    if (targetId && selectedComponentId !== targetId) {
+    if (targetId && selectedComponentIdRef.current !== targetId) {
       const current = componentMapRef.current.get(targetId);
       if (current) {
         const meshes = current.sourceMeshes || (() => { const out: THREE.Mesh[] = []; current.mesh.traverse((c) => { if ((c as THREE.Mesh).isMesh) out.push(c as THREE.Mesh); }); return out; })();
         meshes.forEach((mesh) => {
-          const mat = mesh.material;
-          const targetMat = Array.isArray(mat) ? mat[0] : mat;
-          if ((targetMat as THREE.MeshStandardMaterial)?.emissive) {
-            (targetMat as THREE.MeshStandardMaterial).emissive.set('#38bdf8');
-            (targetMat as THREE.MeshStandardMaterial).emissiveIntensity = 0.07;
-          }
+          mesh.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              const mat = (child as THREE.Mesh).material;
+              const targetMat = Array.isArray(mat) ? mat[0] : mat;
+              if ((targetMat as THREE.MeshStandardMaterial)?.emissive) {
+                (targetMat as THREE.MeshStandardMaterial).emissive.set('#38bdf8');
+                (targetMat as THREE.MeshStandardMaterial).emissiveIntensity = 0.07;
+              }
+            }
+          });
         });
       }
     }
@@ -766,33 +813,97 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     }, 20);
   };
 
-  // Raycast helper for both clean touch tap and mouse click selection
-  const performRaycastSelect = (clientX: number, clientY: number) => {
-    if (!containerRef.current || !cameraRef.current || !sceneRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
+  const resolveComponentId = (object: THREE.Object3D): string | null => {
+    let curr: THREE.Object3D | null = object;
+    while (curr && curr !== sceneRef.current) {
+      if (meshToComponentMapRef.current.has(curr)) {
+        return meshToComponentMapRef.current.get(curr)!;
+      }
+      if (curr.userData?.componentId && componentMapRef.current.has(curr.userData.componentId)) {
+        return curr.userData.componentId;
+      }
+      if (componentMapRef.current.has(curr.name)) {
+        return curr.name;
+      }
+      curr = curr.parent;
+    }
+    return null;
+  };
+
+  // Bulletproof raycasting helper: accurate in both assembled & exploded states
+  const getIntersectedComponentId = (clientX: number, clientY: number): string | null => {
+    if (!containerRef.current || !cameraRef.current || !sceneRef.current || !activeRootGroupRef.current) return null;
+    const canvas = canvasRef.current || containerRef.current;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return null;
+
     const mouse = mouseRef.current.set(
-      ((clientX - rect.left) / rect.width) * 2 - 1,
-      -((clientY - rect.top) / rect.height) * 2 + 1
+      Math.max(-1, Math.min(1, ((clientX - rect.left) / rect.width) * 2 - 1)),
+      Math.max(-1, Math.min(1, -((clientY - rect.top) / rect.height) * 2 + 1))
     );
 
     const raycaster = raycasterRef.current;
     raycaster.setFromCamera(mouse, cameraRef.current);
 
-    const root = activeRootGroupRef.current;
-    if (!root) return;
-
-    const intersects = raycaster.intersectObjects(root.children, true);
-    if (intersects.length > 0) {
-      let hitMesh: THREE.Object3D | null = intersects[0].object;
-      while (hitMesh && hitMesh !== sceneRef.current) {
-        const componentId = hitMesh.userData?.componentId || (componentMapRef.current.has(hitMesh.name) ? hitMesh.name : null);
-        if (componentId && componentMapRef.current.has(componentId)) {
-          onSelectComponent(componentId === selectedComponentIdRef.current ? null : componentId);
-          return;
-        }
-        hitMesh = hitMesh.parent;
+    // Sync bone time if explode changed between frames
+    if (animationMixerRef.current && explodedAnimationRef.current) {
+      const peakTime = Math.max(
+        0.001,
+        Math.min(
+          explodedAnimationPeakTimeRef.current ?? 2.0,
+          explodedAnimationRef.current.duration
+        )
+      );
+      const clampedExplode = Math.max(0, Math.min(1, explodeAmountRef.current));
+      if (Math.abs(clampedExplode - lastDroneExplodeRef.current) > 0.0001) {
+        animationMixerRef.current.setTime(clampedExplode * peakTime);
+        lastDroneExplodeRef.current = clampedExplode;
+        interactiveMeshesRef.current.forEach((m) => {
+          if ((m as THREE.SkinnedMesh).isSkinnedMesh) {
+            (m as any).boundingSphere = null;
+            (m as any).boundingBox = null;
+          }
+        });
       }
     }
+
+    activeRootGroupRef.current.updateMatrixWorld(true);
+
+    const targets = interactiveMeshesRef.current.length > 0 ? interactiveMeshesRef.current : activeRootGroupRef.current.children;
+    const intersects = raycaster.intersectObjects(targets, true);
+    if (!intersects || intersects.length === 0) return null;
+
+    for (let i = 0; i < intersects.length; i++) {
+      const hit = intersects[i];
+      if (!hit?.object) continue;
+
+      let isVisible = true;
+      let p: THREE.Object3D | null = hit.object;
+      while (p && p !== sceneRef.current) {
+        if (!p.visible) {
+          isVisible = false;
+          break;
+        }
+        p = p.parent;
+      }
+      if (!isVisible) continue;
+
+      const compId = resolveComponentId(hit.object);
+      if (!compId) continue;
+
+      if (hiddenComponentIdsRef.current.has(compId)) continue;
+      if (isolatedComponentIdRef.current && isolatedComponentIdRef.current !== compId) continue;
+
+      return compId;
+    }
+
+    return null;
+  };
+
+  // Raycast helper for both clean touch tap and mouse click selection
+  const performRaycastSelect = (clientX: number, clientY: number) => {
+    const targetId = getIntersectedComponentId(clientX, clientY);
+    onSelectComponent(targetId === selectedComponentIdRef.current ? null : targetId);
   };
 
   // Pointer Interaction Handlers with Full Mobile Multi-Touch (Rotate + Pinch-to-Zoom + Tap)
@@ -800,6 +911,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     pointerDownPosRef.current = { x: e.clientX, y: e.clientY };
     pointerDownTimeRef.current = performance.now();
+    maxDragDistanceRef.current = 0;
 
     if (activePointersRef.current.size === 1) {
       isDraggingRef.current = true;
@@ -818,6 +930,9 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     if (activePointersRef.current.has(e.pointerId)) {
       activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     }
+
+    const moveDist = Math.hypot(e.clientX - pointerDownPosRef.current.x, e.clientY - pointerDownPosRef.current.y);
+    maxDragDistanceRef.current = Math.max(maxDragDistanceRef.current, moveDist);
 
     // Two-finger pinch zoom for mobile touch
     if (activePointersRef.current.size === 2 && pinchStartDistRef.current !== null) {
@@ -848,36 +963,8 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     if (e.pointerType === 'touch') return;
 
     // Instant raycast hover detection against pre-cached interactive meshes
-    if (!containerRef.current || !cameraRef.current || !sceneRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const mouse = mouseRef.current.set(
-      ((e.clientX - rect.left) / rect.width) * 2 - 1,
-      -((e.clientY - rect.top) / rect.height) * 2 + 1
-    );
-
-    const raycaster = raycasterRef.current;
-    raycaster.setFromCamera(mouse, cameraRef.current);
-
-    const root = activeRootGroupRef.current;
-    if (!root) {
-      setMeshHoverState(null);
-      return;
-    }
-
-    const targets = interactiveMeshesRef.current.length > 0 ? interactiveMeshesRef.current : root.children;
-    const intersects = raycaster.intersectObjects(targets, true);
-    if (intersects.length > 0) {
-      let hitMesh: THREE.Object3D | null = intersects[0].object;
-      while (hitMesh && hitMesh !== sceneRef.current) {
-        const componentId = hitMesh.userData?.componentId || (componentMapRef.current.has(hitMesh.name) ? hitMesh.name : null);
-        if (componentId && componentMapRef.current.has(componentId)) {
-          setMeshHoverState(componentId);
-          return;
-        }
-        hitMesh = hitMesh.parent;
-      }
-    }
-    setMeshHoverState(null);
+    const targetId = getIntersectedComponentId(e.clientX, e.clientY);
+    setMeshHoverState(targetId);
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -898,7 +985,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
 
     // Tap-to-select detection for touch devices
-    if (wasPointerInMap) {
+    if (wasPointerInMap && e.pointerType === 'touch') {
       const moveDist = Math.hypot(
         e.clientX - pointerDownPosRef.current.x,
         e.clientY - pointerDownPosRef.current.y
@@ -914,6 +1001,8 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
   const handleClick = (e: React.MouseEvent) => {
     // Avoid double firing if pointerup already handled the tap
     if (performance.now() - lastTapTimeRef.current < 300) return;
+    // If the mouse was dragged (e.g. orbiting camera), ignore click
+    if (maxDragDistanceRef.current > 6) return;
     performRaycastSelect(e.clientX, e.clientY);
   };
 

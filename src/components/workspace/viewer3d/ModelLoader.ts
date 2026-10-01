@@ -110,6 +110,7 @@ function registerMesh(
   const explodeEnd = mapping?.explodeEnd ?? Math.min(1, explodeStart + 0.52);
 
   mesh.name = compId;
+  mesh.userData.componentId = compId;
   mesh.userData.basePosition = mesh.position.clone();
   mesh.userData.baseRotation = mesh.rotation.clone();
   mesh.userData.baseScale = mesh.scale.clone();
@@ -120,6 +121,7 @@ function registerMesh(
       existing.sourceMeshes = [existing.mesh as THREE.Mesh];
     }
     existing.sourceMeshes.push(mesh);
+    mesh.userData.componentId = compId;
     existing.originalMaterials.set(
       mesh,
       Array.isArray(mesh.material)
@@ -189,9 +191,11 @@ function registerUploadedGroup(
 ) {
   const group = new THREE.Group();
   group.name = component.id;
+  group.userData.componentId = component.id;
   root.add(group);
   const originalMats = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
   meshes.forEach((mesh) => {
+    mesh.userData.componentId = component.id;
     originalMats.set(mesh, Array.isArray(mesh.material) ? mesh.material.map((m) => m.clone()) : mesh.material.clone());
     group.attach(mesh);
     mesh.castShadow = true;
@@ -220,6 +224,7 @@ function registerUploadedGroup(
     revealThreshold: threshold,
     assemblyDepth: depth,
     originalMaterials: originalMats,
+    sourceMeshes: meshes,
   });
 }
 
@@ -605,14 +610,18 @@ function addPenEngineeringInternals(
     // Keep supplemental internals in their native Y-axis orientation so they remain
     // coaxial with the pen instead of creating a rod through the barrel.
     group.name = def.id;
+    group.userData.componentId = def.id;
     group.userData.supplemental = true;
     group.visible = false;
     rootGroup.add(group);
 
     const originalMaterials = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
+    const childMeshes: THREE.Mesh[] = [];
     group.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
+        mesh.userData.componentId = def.id;
+        childMeshes.push(mesh);
         const material = mesh.material as THREE.Material | THREE.Material[];
         originalMaterials.set(
           mesh,
@@ -638,6 +647,7 @@ function addPenEngineeringInternals(
       revealThreshold: def.revealThreshold,
       assemblyDepth: def.assemblyDepth,
       originalMaterials,
+      sourceMeshes: childMeshes,
     });
   });
 }
@@ -668,12 +678,17 @@ function buildProceduralFallback(
     const explodeVec = new THREE.Vector3(...node.explodeVector);
 
     group.position.copy(basePos);
+    group.name = node.id;
+    group.userData.componentId = node.id;
     rootGroup.add(group);
 
     const originalMats = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
+    const childMeshes: THREE.Mesh[] = [];
     group.traverse((c) => {
       if ((c as THREE.Mesh).isMesh) {
         const mesh = c as THREE.Mesh;
+        mesh.userData.componentId = node.id;
+        childMeshes.push(mesh);
         const material = mesh.material as THREE.Material | THREE.Material[];
         originalMats.set(
           mesh,
@@ -699,6 +714,7 @@ function buildProceduralFallback(
       revealThreshold: node.revealThreshold,
       assemblyDepth: node.assemblyDepth,
       originalMaterials: originalMats,
+      sourceMeshes: childMeshes,
     });
   });
 }
@@ -776,13 +792,20 @@ export async function load3DModelForObject(
     info.basePosition.copy(info.mesh.position);
     info.baseRotation.copy(info.mesh.rotation);
     info.baseScale.copy(info.mesh.scale);
+    info.explodedRotation.copy(info.mesh.rotation);
     info.mesh.position.copy(info.basePosition);
     info.mesh.rotation.copy(info.baseRotation);
+    info.mesh.userData.componentId = info.componentId;
     if (info.sourceMeshes) {
       info.sourceMeshes.forEach((m) => {
-        if (m.userData?.basePosition) {
-          m.userData.basePosition.copy(m.position);
-        }
+        m.userData.componentId = info.componentId;
+        if (!m.userData) m.userData = {};
+        if (!m.userData.basePosition) m.userData.basePosition = new THREE.Vector3();
+        if (!m.userData.baseRotation) m.userData.baseRotation = new THREE.Euler();
+        if (!m.userData.baseScale) m.userData.baseScale = new THREE.Vector3(1, 1, 1);
+        m.userData.basePosition.copy(m.position);
+        m.userData.baseRotation.copy(m.rotation);
+        m.userData.baseScale.copy(m.scale);
       });
     }
   });

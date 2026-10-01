@@ -276,11 +276,13 @@ function registerDroneComponentGroups(
     // used for metadata while sourceMeshes remain in their original GLTF tree.
     const proxy = new THREE.Group();
     proxy.name = mapping.componentId;
+    proxy.userData.componentId = mapping.componentId;
     proxy.userData.logicalComponent = true;
     proxy.userData.nativeAnimated = true;
 
     const originalMaterials = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
     meshes.forEach((mesh) => {
+      mesh.userData.componentId = mapping.componentId;
       // The drone uses its own viewer and does not render a shadow-map pass.
       // Avoid keeping per-mesh shadow flags enabled on this dense skinned asset.
       mesh.castShadow = false;
