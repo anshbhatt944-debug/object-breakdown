@@ -33,7 +33,7 @@ export const App: React.FC = () => {
         if (found) return found;
       }
     }
-    return ballpointPenData;
+    return ALL_OBJECTS[0];
   });
 
   const [uploadedModel, setUploadedModel] = useState<{
@@ -330,6 +330,7 @@ export const App: React.FC = () => {
           onUploadModel={handleUploadModel}
           onSearchCustom={handleSearchQuery}
           theme={theme}
+          onActiveObjectChange={(obj) => setCurrentObject(obj)}
         />
       </main>
 

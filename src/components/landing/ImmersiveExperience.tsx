@@ -5,6 +5,7 @@ import Lenis from 'lenis';
 import { ObjectBreakdownData } from '../../types/objectData';
 import { electricMotorData } from '../../data/objects/electricMotor';
 import { jetTurbineData } from '../../data/objects/jetTurbine';
+import { getObjectById } from '../../data/objectRegistry';
 import {
   load3DModelForObject,
   LoadedObjectResult,
@@ -33,6 +34,7 @@ interface ImmersiveExperienceProps {
   onUploadModel: (file: File) => void;
   onSearchCustom?: (query: string) => void;
   theme?: 'light' | 'dark';
+  onActiveObjectChange?: (obj: ObjectBreakdownData) => void;
 }
 
 export interface ProjectedAnnotation {
@@ -253,6 +255,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
   onUploadModel,
   onSearchCustom,
   theme = 'dark',
+  onActiveObjectChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -269,10 +272,41 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2(-999, -999));
   const modelsMapRef = useRef<Map<string, LoadedObjectResult>>(new Map());
 
+  // Reliable ID-based lookup for all specimen objects
+  const getObject = useCallback(
+    (id: string): ObjectBreakdownData => {
+      return objects.find((o) => o.id === id) || getObjectById(id) || objects[0];
+    },
+    [objects]
+  );
+
+  const jetTurbineObj = getObject('jet-turbine');
+  const watchObj = getObject('wristwatch');
+  const droneObj = getObject('drone');
+  const engineObj = getObject('car-engine');
+  const motorObj = getObject('electric-motor');
+  const penObj = getObject('ballpoint-pen');
+
   // Active Object & Model Tracking for State-Based Routing (Wristwatch, Drone, Engine, Motor, Pen)
-  const activeObjectRef = useRef<ObjectBreakdownData | null>(null);
+  const activeObjectRef = useRef<ObjectBreakdownData | null>(jetTurbineObj);
   const activeModelRef = useRef<LoadedObjectResult | null>(null);
-  const activeModelIdRef = useRef<string | null>(null);
+  const activeModelIdRef = useRef<string | null>('jet-turbine');
+  const lastReportedObjIdRef = useRef<string | null>(null);
+
+  const setActiveModelAndObject = (
+    model: LoadedObjectResult | null,
+    obj: ObjectBreakdownData | null,
+    modelId: string | null
+  ) => {
+    activeModelRef.current = model;
+    activeObjectRef.current = obj;
+    activeModelIdRef.current = modelId;
+
+    if (obj && obj.id !== lastReportedObjIdRef.current) {
+      lastReportedObjIdRef.current = obj.id;
+      onActiveObjectChange?.(obj);
+    }
+  };
 
   // Machine Plate Ground & Seam Refs (Section 3 & 7)
   const watchGroundRef = useRef<HTMLDivElement>(null);
@@ -553,6 +587,11 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           const modelBounds = new THREE.Box3().setFromObject(loaded.rootGroup);
           modelBounds.expandByScalar(0.75);
           loaded.rootGroup.userData.modelBounds = modelBounds;
+          loaded.rootGroup.userData.objectId = obj.id;
+          loaded.rootGroup.userData.objectData = obj;
+          loaded.rootGroup.traverse((child) => {
+            child.userData.objectId = obj.id;
+          });
 
           scene.add(loaded.rootGroup);
           modelsMapRef.current.set(obj.id, loaded);
@@ -1057,9 +1096,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       if (p < 0.14) {
         if (p < 0.045) {
           // Hero boot: High-Bypass Turbofan FULLY EXPLODED horizontally across the panoramic viewport
-          activeObjectRef.current = jetTurbineData;
-          activeModelRef.current = turbofanModel || null;
-          activeModelIdRef.current = 'jet-turbine';
+          setActiveModelAndObject(turbofanModel || null, jetTurbineObj, 'jet-turbine');
           if (watchModel) {
             watchModel.rootGroup.visible = false;
           }
@@ -1123,9 +1160,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             turbofanModel.rootGroup.visible = false;
           }
 
-          activeObjectRef.current = objects[0];
-          activeModelRef.current = watchModel || null;
-          activeModelIdRef.current = 'wristwatch';
+          setActiveModelAndObject(watchModel || null, watchObj, 'wristwatch');
 
           camera.position.set(
             watchAssembledCenter.x,
@@ -1150,9 +1185,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       // ----------------------------------------------------------------------
       else if (p >= 0.14 && p < 0.20) {
         currentEditorialSide = 'left';
-        activeObjectRef.current = objects[0];
-        activeModelRef.current = watchModel || null;
-        activeModelIdRef.current = 'wristwatch';
+        setActiveModelAndObject(watchModel || null, watchObj, 'wristwatch');
 
         if (watchModel) {
           watchModel.rootGroup.visible = true;
@@ -1179,9 +1212,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       // ----------------------------------------------------------------------
       else if (p >= 0.20 && p < 0.26) {
         currentEditorialSide = 'right';
-        activeObjectRef.current = objects[0];
-        activeModelRef.current = watchModel || null;
-        activeModelIdRef.current = 'wristwatch';
+        setActiveModelAndObject(watchModel || null, watchObj, 'wristwatch');
 
         const localP = (p - 0.20) / 0.06;
         const easedP = smoothstep(0, 1, localP);
@@ -1216,9 +1247,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       else if (p >= 0.26 && p < 0.36) {
         (window as unknown as { __lastChapter?: string }).__lastChapter = 'Chapter 05 (Watch)';
         currentEditorialSide = 'left';
-        activeObjectRef.current = objects[0];
-        activeModelRef.current = watchModel || null;
-        activeModelIdRef.current = 'wristwatch';
+        setActiveModelAndObject(watchModel || null, watchObj, 'wristwatch');
 
         const explodeP = (p - 0.26) / 0.10;
         const easedExplode = smoothstep(0, 1, explodeP);
@@ -1265,13 +1294,9 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         const transP = (p - 0.36) / 0.07;
 
         if (transP < 0.45) {
-          activeObjectRef.current = objects[0];
-          activeModelRef.current = watchModel || null;
-          activeModelIdRef.current = 'wristwatch';
+          setActiveModelAndObject(watchModel || null, watchObj, 'wristwatch');
         } else {
-          activeObjectRef.current = objects[1];
-          activeModelRef.current = droneModel || null;
-          activeModelIdRef.current = 'drone';
+          setActiveModelAndObject(droneModel || null, droneObj, 'drone');
         }
 
         // Phase 1: Watch recedes smoothly into atmospheric depth along centered axis (transP: 0 to 0.42)
@@ -1323,9 +1348,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       // ----------------------------------------------------------------------
       else if (p >= 0.43 && p < 0.50) {
         currentEditorialSide = 'left';
-        activeObjectRef.current = objects[1];
-        activeModelRef.current = droneModel || null;
-        activeModelIdRef.current = 'drone';
+        setActiveModelAndObject(droneModel || null, droneObj, 'drone');
 
         if (droneModel) {
           droneModel.rootGroup.visible = true;
@@ -1358,9 +1381,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       else if (p >= 0.50 && p < 0.62) {
         (window as unknown as { __lastChapter?: string }).__lastChapter = 'Chapter 08 (Drone)';
         currentEditorialSide = 'right';
-        activeObjectRef.current = objects[1];
-        activeModelRef.current = droneModel || null;
-        activeModelIdRef.current = 'drone';
+        setActiveModelAndObject(droneModel || null, droneObj, 'drone');
 
         const droneExplodeP = (p - 0.50) / 0.12;
         const easedExplode = smoothstep(0, 1, droneExplodeP);
@@ -1412,13 +1433,9 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         const easedTrans = smoothstep(0, 1, transP);
 
         if (transP < 0.45) {
-          activeObjectRef.current = objects[1];
-          activeModelRef.current = droneModel || null;
-          activeModelIdRef.current = 'drone';
+          setActiveModelAndObject(droneModel || null, droneObj, 'drone');
         } else {
-          activeObjectRef.current = objects[2];
-          activeModelRef.current = engineModel || null;
-          activeModelIdRef.current = 'car-engine';
+          setActiveModelAndObject(engineModel || null, engineObj, 'car-engine');
         }
 
         if (droneModel && transP < 0.8) {
@@ -1451,9 +1468,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       // ----------------------------------------------------------------------
       else if (p >= 0.67 && p < 0.72) {
         currentEditorialSide = 'left';
-        activeObjectRef.current = objects[2];
-        activeModelRef.current = engineModel || null;
-        activeModelIdRef.current = 'car-engine';
+        setActiveModelAndObject(engineModel || null, engineObj, 'car-engine');
 
         const engineExplodeP = (p - 0.67) / 0.05;
         const easedEngine = smoothstep(0, 1, engineExplodeP);
@@ -1506,13 +1521,9 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         const easedTrans = smoothstep(0, 1, transP);
 
         if (transP < 0.45) {
-          activeObjectRef.current = objects[2];
-          activeModelRef.current = engineModel || null;
-          activeModelIdRef.current = 'car-engine';
+          setActiveModelAndObject(engineModel || null, engineObj, 'car-engine');
         } else {
-          activeObjectRef.current = objects[3];
-          activeModelRef.current = motorModel || null;
-          activeModelIdRef.current = 'electric-motor';
+          setActiveModelAndObject(motorModel || null, motorObj, 'electric-motor');
         }
 
         if (engineModel && transP < 0.8) {
@@ -1549,9 +1560,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       // ----------------------------------------------------------------------
       else if (p >= 0.75 && p < 0.79) {
         currentEditorialSide = 'right';
-        activeObjectRef.current = objects[3];
-        activeModelRef.current = motorModel || null;
-        activeModelIdRef.current = 'electric-motor';
+        setActiveModelAndObject(motorModel || null, motorObj, 'electric-motor');
 
         const motorExplodeP = (p - 0.75) / 0.04;
         const easedMotor = smoothstep(0, 1, motorExplodeP);
@@ -1617,13 +1626,9 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         const easedTrans = smoothstep(0, 1, transP);
 
         if (transP < 0.45) {
-          activeObjectRef.current = objects[3];
-          activeModelRef.current = motorModel || null;
-          activeModelIdRef.current = 'electric-motor';
+          setActiveModelAndObject(motorModel || null, motorObj, 'electric-motor');
         } else {
-          activeObjectRef.current = objects[4];
-          activeModelRef.current = penModel || null;
-          activeModelIdRef.current = 'ballpoint-pen';
+          setActiveModelAndObject(penModel || null, penObj, 'ballpoint-pen');
         }
 
         if (motorModel && transP < 0.8) {
@@ -1654,9 +1659,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       // ----------------------------------------------------------------------
       else if (p >= 0.805 && p < 0.85) {
         currentEditorialSide = 'left';
-        activeObjectRef.current = objects[4];
-        activeModelRef.current = penModel || null;
-        activeModelIdRef.current = 'ballpoint-pen';
+        setActiveModelAndObject(penModel || null, penObj, 'ballpoint-pen');
 
         // Progressive Explosion on Scroll:
         // p in [0.805, 0.820]: Arrives completely UN-EXPLODED (assembled)
@@ -1705,9 +1708,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       // CHAPTER 12 → 13: Pen Recedes // The Bridge: "Those Were Our Objects" (p: 0.85 - 0.885)
       // ----------------------------------------------------------------------
       else if (p >= 0.85 && p < 0.885) {
-        activeObjectRef.current = objects[4];
-        activeModelRef.current = penModel || null;
-        activeModelIdRef.current = 'ballpoint-pen';
+        setActiveModelAndObject(penModel || null, penObj, 'ballpoint-pen');
 
         const transP = (p - 0.85) / 0.035;
         const easedTrans = smoothstep(0, 1, transP);
@@ -1726,9 +1727,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       // CHAPTER 13: HOW THE ENGINE TAKES IT APART — 3D Visual Demonstration (p: 0.885 - 0.945)
       // ----------------------------------------------------------------------
       else if (p >= 0.885 && p < 0.945) {
-        activeObjectRef.current = objects[1];
-        activeModelRef.current = droneModel || null;
-        activeModelIdRef.current = 'drone';
+        setActiveModelAndObject(droneModel || null, droneObj, 'drone');
 
         if (droneModel) {
           droneModel.rootGroup.visible = true;
@@ -1772,7 +1771,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       // CHAPTER 14: THE UPLOAD CLIMAX — "YOUR OBJECT" (p: 0.945 - 1.00)
       // ----------------------------------------------------------------------
       else if (p >= 0.945) {
-        activeModelRef.current = null;
+        setActiveModelAndObject(null, null, null);
 
         const uploadRecedeP = Math.min((p - 0.945) / 0.035, 1);
         const easedRecede = smoothstep(0, 1, uploadRecedeP);
@@ -2389,13 +2388,10 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
     const cx = typeof clientX === 'number' ? clientX : window.innerWidth / 2;
     const cy = typeof clientY === 'number' ? clientY : window.innerHeight / 2;
 
-    if (!camera || !scene || !activeModel || !activeObj || !activeModel.rootGroup.visible) {
+    if (!camera || !scene) {
       console.log('[handleCanvasClick BAILED]', {
         hasCamera: !!camera,
         hasScene: !!scene,
-        hasActiveModel: !!activeModel,
-        hasActiveObj: !!activeObj,
-        isVisible: activeModel?.rootGroup.visible,
       });
       return;
     }
@@ -2408,28 +2404,77 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouseVec, camera);
 
-    const interactiveMeshes: THREE.Mesh[] = activeModel.rootGroup.userData.interactiveList || [];
-    let hits: THREE.Intersection[] = [];
+    // 1. Raycast across all currently visible models in the scene to find exact clicked specimen
+    let bestHit: { objectId: string; distance: number } | null = null;
+    for (const [modelId, model] of modelsMapRef.current.entries()) {
+      if (model.rootGroup.visible) {
+        const interactiveMeshes: THREE.Mesh[] = model.rootGroup.userData.interactiveList || [];
+        let hits: THREE.Intersection[] = [];
 
-    if (interactiveMeshes.length > 0) {
-      hits = raycaster.intersectObjects(interactiveMeshes, true);
-    }
-    if (hits.length === 0) {
-      hits = raycaster.intersectObjects(activeModel.rootGroup.children, true);
-    }
-    if (hits.length === 0) {
-      hits = raycaster.intersectObject(activeModel.rootGroup, true);
+        if (interactiveMeshes.length > 0) {
+          hits = raycaster.intersectObjects(interactiveMeshes, true);
+        }
+        if (hits.length === 0) {
+          hits = raycaster.intersectObjects(model.rootGroup.children, true);
+        }
+        if (hits.length === 0) {
+          hits = raycaster.intersectObject(model.rootGroup, true);
+        }
+
+        if (hits.length > 0) {
+          if (!bestHit || hits[0].distance < bestHit.distance) {
+            const hitMesh = hits[0].object;
+            const hitObjectId =
+              (hitMesh.userData?.objectId as string) ||
+              (model.rootGroup.userData?.objectId as string) ||
+              modelId;
+            bestHit = { objectId: hitObjectId, distance: hits[0].distance };
+          }
+        }
+      }
     }
 
-    console.log('[handleCanvasClick HIT CHECK]', {
-      activeObjName: activeObj.name,
-      hitsCount: hits.length,
-      cx,
-      cy
-    });
+    if (bestHit) {
+      const targetObj = objects.find((o) => o.id === bestHit.objectId) || getObjectById(bestHit.objectId);
+      if (targetObj) {
+        console.log('[handleCanvasClick DIRECT HIT]', {
+          hitId: bestHit.objectId,
+          targetObjName: targetObj.name,
+          cx,
+          cy,
+        });
+        onSelectObject(targetObj);
+        return;
+      }
+    }
 
-    if (hits.length > 0) {
-      onSelectObject(activeObj);
+    // 2. Broad-phase / proximity fallback for the active model:
+    // If ray hits active model bounding box or click was within active model region
+    if (activeModel && activeObj && activeModel.rootGroup.visible) {
+      const box = new THREE.Box3().setFromObject(activeModel.rootGroup);
+      box.expandByScalar(0.75);
+      const hitPoint = new THREE.Vector3();
+      const intersectsBoundingBox = raycaster.ray.intersectBox(box, hitPoint);
+
+      const screenCenter = new THREE.Vector3();
+      activeModel.rootGroup.getWorldPosition(screenCenter);
+      screenCenter.project(camera);
+      const screenX = ((screenCenter.x + 1) * window.innerWidth) / 2;
+      const screenY = ((-screenCenter.y + 1) * window.innerHeight) / 2;
+      const distPx = Math.hypot(cx - screenX, cy - screenY);
+      const maxProximityPx = Math.min(window.innerWidth, window.innerHeight) * 0.45;
+
+      if (intersectsBoundingBox || distPx < maxProximityPx) {
+        console.log('[handleCanvasClick ACTIVE MODEL BOUNDS/PROXIMITY]', {
+          activeObjName: activeObj.name,
+          distPx,
+          intersectsBoundingBox: !!intersectsBoundingBox,
+          cx,
+          cy,
+        });
+        onSelectObject(activeObj);
+        return;
+      }
     }
   };
 
