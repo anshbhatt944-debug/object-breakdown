@@ -1077,22 +1077,41 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
         const easedProgress = smoothStep(localProgress);
 
         const meshesToAnimate = (info.sourceMeshes && info.sourceMeshes.length > 0) ? info.sourceMeshes : [info.mesh];
-        meshesToAnimate.forEach((m) => {
-          m.visible = isVisible;
-          const baseP = (m.userData?.basePosition as THREE.Vector3) || info.basePosition;
-          const baseR = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
-          const baseS = (m.userData?.baseScale as THREE.Vector3) || info.baseScale;
+        const isGroup = Boolean((info.mesh as THREE.Group).isGroup);
 
-          _scratchPos.copy(baseP).addScaledVector(info.explodeVector, easedProgress);
-          _scratchRot.copy(baseR);
-          _scratchRot.x += (info.explodedRotation.x - baseR.x) * easedProgress;
-          _scratchRot.y += (info.explodedRotation.y - baseR.y) * easedProgress;
-          _scratchRot.z += (info.explodedRotation.z - baseR.z) * easedProgress;
+        if (isGroup) {
+          info.mesh.visible = isVisible;
+          _scratchPos.copy(info.basePosition).addScaledVector(info.explodeVector, easedProgress);
+          _scratchRot.copy(info.baseRotation);
+          _scratchRot.x += (info.explodedRotation.x - info.baseRotation.x) * easedProgress;
+          _scratchRot.y += (info.explodedRotation.y - info.baseRotation.y) * easedProgress;
+          _scratchRot.z += (info.explodedRotation.z - info.baseRotation.z) * easedProgress;
 
-          m.position.copy(_scratchPos);
-          m.rotation.copy(_scratchRot);
-          m.scale.copy(baseS);
-        });
+          info.mesh.position.copy(_scratchPos);
+          info.mesh.rotation.copy(_scratchRot);
+          info.mesh.scale.copy(info.baseScale);
+
+          meshesToAnimate.forEach((m) => {
+            m.visible = isVisible;
+          });
+        } else {
+          meshesToAnimate.forEach((m) => {
+            m.visible = isVisible;
+            const baseP = (m.userData?.basePosition as THREE.Vector3) || info.basePosition;
+            const baseR = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
+            const baseS = (m.userData?.baseScale as THREE.Vector3) || info.baseScale;
+
+            _scratchPos.copy(baseP).addScaledVector(info.explodeVector, easedProgress);
+            _scratchRot.copy(baseR);
+            _scratchRot.x += (info.explodedRotation.x - baseR.x) * easedProgress;
+            _scratchRot.y += (info.explodedRotation.y - baseR.y) * easedProgress;
+            _scratchRot.z += (info.explodedRotation.z - baseR.z) * easedProgress;
+
+            m.position.copy(_scratchPos);
+            m.rotation.copy(_scratchRot);
+            m.scale.copy(baseS);
+          });
+        }
 
         // Mechanism motion is layered on top of the stable exploded pose.
         // Using kTime ensures that clicking ANIMATE OFF freezes micro-mechanics instantly in place.
