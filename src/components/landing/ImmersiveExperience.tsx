@@ -48,6 +48,7 @@ export interface ProjectedAnnotation {
   labelY: number;
   isLeft?: boolean;
   isSouth?: boolean;
+  isNorth?: boolean;
   elbowX: number;
   labelEdgeX: number;
   orderIndex?: number;
@@ -80,29 +81,32 @@ function computeAdaptiveAnnotationLayout(
   let rightItems: typeof items = [];
 
   if (editorialSide === 'hero') {
-    // Hero Panoramic Viewport with 3 Dedicated Spatial Sectors:
-    // 1. Back / Aft (Left Flank): Exhaust Mixer & HP Turbine Vanes (strictly upper-left y <= 330, above headline)
-    // 2. South of Model (Bottom-Center): HP Compressor Casing (open channel beneath engine core, between left headline and right buttons)
-    // 3. Front / Intake (Right Flank): Fan Module & Air Intake Cowling (upper-right flank)
-    const textBlockWidth = 260;
+    // Hero Panoramic Viewport with 3 Non-Obstructing Spatial Zones:
+    // 1. Back / Aft (Left Flank): Exhaust Mixer (01) & HP Turbine Vanes (02) strictly in upper-left (well above "Deconstruct the invisible")
+    // 2. North of Model (Top Area): Concentric Shaft (03), Bleed Manifolds (04), Compressor Casing (05), Kevlar Containment (06)
+    // 3. South of Model (User's Marked Spot): Fan Module (07), Intake Cowling (08), Bypass Stator Grid (09), Thrust Reverser (10), FADEC (11)
+    // Note: ZERO cards on the right flank to completely free the 3D model from any obstruction.
+    const textBlockWidth = 240;
     const result: ProjectedAnnotation[] = [];
 
-    // Deterministic identification by component ID to eliminate ALL sorting flicker
+    // Group items deterministically by component ID
     const backItems = items.filter(it => it.id === 'exhaust-mixer-nozzle' || it.id === 'turbine-nozzle-guide-vanes');
-    const southItems = items.filter(it => it.id === 'compressor-casing' || it.id === 'fan-containment-casing' || it.id === 'diffuser-combustor');
-    const frontItems = items.filter(it => it.id === 'fan-module' || it.id === 'inlet-cowl' || it.id === 'bypass-stator-grid');
+    const northItems = items.filter(it => it.id === 'coaxial-drive-shaft' || it.id === 'bleed-air-manifolds' || it.id === 'compressor-casing' || it.id === 'fan-containment-casing' || it.id === 'tcc-cooling-ring');
+    const frontItems = items.filter(it => it.id === 'fan-module' || it.id === 'inlet-cowl' || it.id === 'bypass-stator-grid' || it.id === 'thrust-reverser-actuators');
 
     let idx = 1;
 
-    // 1. Back (Left Flank, strictly upper-left above "Deconstruct the invisible")
-    const leftColX = Math.max(36, Math.min(midX - 340 - textBlockWidth, 64));
+    // 1. Back / Aft (Left Flank, strictly upper-left above "Deconstruct the invisible")
+    const leftColX = Math.max(36, Math.min(midX - 380 - textBlockWidth, 64));
+    const leftStartY = Math.max(125, Math.round(viewportH * 0.16));
     backItems.slice(0, 2).forEach((it, i) => {
-      const labelY = 175 + i * 90;
+      const labelY = leftStartY + i * 88;
       const labelEdgeX = leftColX + textBlockWidth;
       result.push({
         ...it,
         isLeft: true,
         isSouth: false,
+        isNorth: false,
         labelX: leftColX,
         labelY,
         labelEdgeX,
@@ -111,41 +115,96 @@ function computeAdaptiveAnnotationLayout(
       });
     });
 
-    // 2. South of the Model (Lower-Center open space beneath the engine core)
-    const southCard = southItems[0];
-    if (southCard) {
-      // Centered horizontally in the south channel: between left headline (x < 600) and right buttons (x > 1280)
-      const southX = Math.round(midX - textBlockWidth * 0.5 + 40);
-      const southY = Math.min(Math.round(viewportH * 0.58), 525);
-      const southTopEdgeX = southX + Math.round(textBlockWidth * 0.5);
-      result.push({
-        ...southCard,
-        isLeft: false,
-        isSouth: true,
-        labelX: southX,
-        labelY: southY,
-        labelEdgeX: southTopEdgeX,
-        elbowX: southTopEdgeX,
-        orderIndex: idx++,
-      });
+    // 2. North of Model (Top area: single or staggered row across wide open top)
+    const availableNorthLeft = leftColX + textBlockWidth + 28;
+    const availableNorthRight = viewportW - 48;
+    const availableNorthWidth = availableNorthRight - availableNorthLeft;
+    const topY = Math.max(76, Math.min(Math.round(viewportH * 0.088), 88));
+
+    const northCardsToPlace = northItems.slice(0, 4);
+    if (northCardsToPlace.length > 0) {
+      if (availableNorthWidth >= 1140 || northCardsToPlace.length <= 2) {
+        // Wide screen: single horizontal row across the top
+        const slotWidth = availableNorthWidth / northCardsToPlace.length;
+        northCardsToPlace.forEach((it, i) => {
+          const labelX = Math.round(availableNorthLeft + i * slotWidth + (slotWidth - textBlockWidth) * 0.5);
+          const labelEdgeX = labelX + Math.round(textBlockWidth * 0.5);
+          result.push({
+            ...it,
+            isLeft: false,
+            isSouth: false,
+            isNorth: true,
+            labelX,
+            labelY: topY,
+            labelEdgeX,
+            elbowX: labelEdgeX,
+            orderIndex: idx++,
+          });
+        });
+      } else {
+        // Moderate screen: staggered 2-tier layout so bounding boxes never collide
+        const halfCount = Math.ceil(northCardsToPlace.length / 2);
+        const slotWidth = availableNorthWidth / halfCount;
+        northCardsToPlace.forEach((it, i) => {
+          const col = Math.floor(i / 2);
+          const tier = i % 2;
+          const tierY = tier === 0 ? topY : topY + 70;
+          const labelX = Math.round(availableNorthLeft + col * slotWidth + (slotWidth - textBlockWidth) * 0.5);
+          const labelEdgeX = labelX + Math.round(textBlockWidth * 0.5);
+          result.push({
+            ...it,
+            isLeft: false,
+            isSouth: false,
+            isNorth: true,
+            labelX,
+            labelY: tierY,
+            labelEdgeX,
+            elbowX: labelEdgeX,
+            orderIndex: idx++,
+          });
+        });
+      }
     }
 
-    // 3. Front (Right Flank, upper-right)
-    const rightColX = Math.min(viewportW - textBlockWidth - 36, Math.max(midX + 360, viewportW - textBlockWidth - 64));
-    frontItems.slice(0, 2).forEach((it, i) => {
-      const labelY = 195 + i * 95;
-      const labelEdgeX = rightColX;
-      result.push({
-        ...it,
-        isLeft: false,
-        isSouth: false,
-        labelX: rightColX,
-        labelY,
-        labelEdgeX,
-        elbowX: labelEdgeX - 24,
-        orderIndex: idx++,
+    // 3. South of Model (User's Marked Spot: below engine, right of "Deconstruct the invisible", above bottom bar)
+    const headlineRight = Math.max(340, Math.min(viewportW * 0.36, 520));
+    const southLeft = Math.round(headlineRight + 28);
+    const southRight = Math.round(viewportW - 40);
+    const availableSouthWidth = Math.max(southRight - southLeft, 600);
+
+    const maxEngineY = items.length > 0 ? Math.max(...items.map(it => it.y)) : viewportH * 0.46;
+    const southStartY = Math.max(Math.round(maxEngineY + 44), Math.round(viewportH * 0.54));
+
+    // Sort front items from left to right along engine thrust axis
+    const southCards = frontItems.slice(0, 4).sort((a, b) => a.x - b.x);
+    if (southCards.length > 0) {
+      const cardWidth = Math.min(240, Math.max(200, Math.floor((availableSouthWidth - 40) / 4.2)));
+      const stepX = (availableSouthWidth - cardWidth) / 4;
+
+      // Slot 0 (over the text where the crossed card was) is completely empty.
+      // Remaining 4 cards stay in their exact slots 1, 2, 3, 4 (clear of all text).
+      // Bypass Guide Vanes (slot 2) is moved downwards to southStartY + 74 so it does not obstruct the engine casing.
+      southCards.forEach((it, i) => {
+        const slotIdx = i + 1; // slots 1, 2, 3, 4 (keeps original X positions)
+        const cardX = Math.round(southLeft + slotIdx * stepX);
+        // Only inlet-cowl on the far right (slot 4) stays upper; slot 2 (bypass guide vanes) is moved downwards
+        const isUpper = slotIdx === 4;
+        const cardY = isUpper ? southStartY : southStartY + 74;
+        const labelEdgeX = cardX + Math.round(cardWidth * 0.5);
+
+        result.push({
+          ...it,
+          isLeft: false,
+          isSouth: true,
+          isNorth: false,
+          labelX: cardX,
+          labelY: cardY,
+          labelEdgeX,
+          elbowX: labelEdgeX,
+          orderIndex: idx++,
+        });
       });
-    });
+    }
 
     return result;
   } else if (editorialSide === 'left') {
@@ -409,10 +468,11 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
     labelY: number;
     opacity: number;
     targetOpacity: number;
-    side: 'left' | 'right' | 'south' | null;
+    side: 'left' | 'right' | 'south' | 'north' | null;
     isSouth?: boolean;
+    isNorth?: boolean;
   }>>(
-    Array.from({ length: 12 }, () => ({
+    Array.from({ length: 16 }, () => ({
       currentId: null,
       x: 0,
       y: 0,
@@ -424,6 +484,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       targetOpacity: 0,
       side: null,
       isSouth: false,
+      isNorth: false,
     }))
   );
 
@@ -1106,32 +1167,42 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             turbofanModel.rootGroup.visible = true;
             // Positioned tastefully in the upper-middle zone:
             // Centered horizontally, elevated in Y so it sits comfortably above the bottom headline
-            turbofanModel.rootGroup.position.set(0, 1.45, 0);
+            turbofanModel.rootGroup.position.set(0.08, 1.62, 0);
             // Pure horizontal alignment: -PI/2 yaw aligns thrust axis (Z) exactly left→right
-            // Subtle pitch (0.14) gives an authentic engineering inspection angle
+            // Subtle pitch (0.10) gives an authentic engineering inspection angle
             const heroYaw = -Math.PI / 2 + Math.sin(elapsed * 0.25) * 0.008;
-            const heroPitch = 0.14 + Math.cos(elapsed * 0.2) * 0.004;
+            const heroPitch = 0.10 + Math.cos(elapsed * 0.2) * 0.004;
             turbofanModel.rootGroup.rotation.set(heroPitch, heroYaw, 0);
-            // Scale: scaled up gracefully to command presence without crowding (1.10)
-            turbofanModel.rootGroup.scale.copy(turbofanBase).multiplyScalar(1.10);
+            // Scale: scaled tastefully (1.08) to fit the whole model gracefully in the central band
+            turbofanModel.rootGroup.scale.copy(turbofanBase).multiplyScalar(1.08);
             // FULL horizontal explosion along engine thrust axis
             applyModelExplodeHorizontal(turbofanModel, 1.0);
             turbofanModel.rootGroup.updateMatrixWorld(true);
 
-            // Camera positioned to frame the panoramic engine spread
-            camera.position.set(0, 1.45, 15.6);
-            camera.lookAt(0, 1.10, 0);
+            // Camera positioned to frame the entire expanded engine tastefully across ~46% of screen
+            camera.position.set(0, 1.55, 17.5);
+            camera.lookAt(0, 1.15, 0);
 
-            // 5 precision engineering callouts:
-            // Back / Aft (Left Flank): Exhaust Mixer & HP Turbine Vanes
-            // South of Model (Bottom Center): HP Compressor Casing
-            // Front / Intake (Right Flank): Titanium Fan Module & Air Intake Cowling
+            // 11 precision engineering callouts arranged in 3 non-obstructing sectors:
+            // 1. Back / Aft (Left Flank): Exhaust Mixer (01) & HP Turbine Vanes (02)
+            // 2. North of Model (Top Area): Concentric Shaft (03), Bleed Manifolds (04), Compressor Casing (05), Kevlar Containment (06)
+            // 3. Front / Intake & Bypass (Right Flank): Fan Module (07), Intake Cowling (08), Bypass Stators (09), Thrust Reverser (10), FADEC (11)
             projectTargets(turbofanModel, [
+              // Aft / Left Flank (strictly upper-left above "Deconstruct the invisible")
               { id: 'exhaust-mixer-nozzle', label: 'EXHAUST MIXER', category: 'PROPULSION', description: '16-lobe convoluted core exhaust mixer.' },
               { id: 'turbine-nozzle-guide-vanes', label: 'HP TURBINE VANES', category: 'THERMODYNAMICS', description: 'CMSX-4 superalloy surviving 1,650°C.' },
+
+              // North of Model (Shaft, Bleed, Compressor, Containment)
+              { id: 'coaxial-drive-shaft', label: 'CONCENTRIC DRIVE SHAFT', category: 'ROTORDYNAMICS', description: 'Dual-spool concentric LP/HP torque transmission shaft.' },
+              { id: 'bleed-air-manifolds', label: 'BLEED AIR MANIFOLDS', category: 'PNEUMATICS', description: '5th & 9th stage titanium bleed air delivery manifolds.' },
               { id: 'compressor-casing', label: 'HP COMPRESSOR CASING', category: 'CORE COMPRESSION', description: '10-stage axial casing producing 42:1 pressure ratio.' },
+              { id: 'fan-containment-casing', label: 'KEVLAR CONTAINMENT', category: 'SAFETY CASING', description: 'Aramid-wrapped shield absorbing 160 kJ blade impact.' },
+
+              // Front / South Flank (Fan, Cowling, OGV Grid, Reverser)
               { id: 'fan-module', label: 'TITANIUM FAN MODULE', category: 'BYPASS PROPULSION', description: '22 hollow Ti-6Al-4V wide-chord blades.' },
               { id: 'inlet-cowl', label: 'AIR INTAKE COWLING', category: 'NACELLE', description: 'CFRP acoustic lip conditioning freestream air.' },
+              { id: 'bypass-stator-grid', label: 'BYPASS GUIDE VANES', category: 'AERODYNAMICS', description: 'Acoustic outlet guide vanes de-swirling bypass flow.' },
+              { id: 'thrust-reverser-actuators', label: 'THRUST REVERSER', category: 'HYDRAULIC ACTUATION', description: 'Synchronized hydraulic actuators translating cascades.' },
             ]);
           } else {
             camera.position.set(
@@ -1150,11 +1221,11 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             const heroRecede = smoothstep(0.09, 0.045, p);
             turbofanModel.rootGroup.visible = heroRecede > 0.02;
             turbofanModel.rootGroup.position.set(
-              0,
-              THREE.MathUtils.lerp(6.5, 1.45, heroRecede),
+              0.08,
+              THREE.MathUtils.lerp(6.5, 1.62, heroRecede),
               THREE.MathUtils.lerp(-20, 0, heroRecede)
             );
-            turbofanModel.rootGroup.scale.copy(turbofanBase).multiplyScalar(heroRecede * 1.10);
+            turbofanModel.rootGroup.scale.copy(turbofanBase).multiplyScalar(heroRecede * 1.08);
             applyModelExplodeHorizontal(turbofanModel, heroRecede * 1.0);
           } else if (turbofanModel) {
             turbofanModel.rootGroup.visible = false;
@@ -1792,7 +1863,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       // ----------------------------------------------------------------------
       if (annSlotElementsRef.current.length === 0) {
         const slots: typeof annSlotElementsRef.current = [];
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 16; i++) {
           const group = document.getElementById(`ann-svg-group-${i}`) as unknown as SVGGElement | null;
           const polyline = document.getElementById(`ann-polyline-${i}`) as unknown as SVGPolylineElement | null;
           const circle = document.getElementById(`ann-circle-${i}`) as unknown as SVGCircleElement | null;
@@ -1809,7 +1880,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       }
 
       const activeLayout = computeAdaptiveAnnotationLayout(
-        rawTargets.slice(0, 12),
+        rawTargets.slice(0, 16),
         window.innerWidth,
         window.innerHeight,
         currentEditorialSide
@@ -1855,7 +1926,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         const ann = assignedAnns[i];
 
         if (ann) {
-          const annSide: 'left' | 'right' | 'south' = ann.isSouth ? 'south' : (ann.isLeft ? 'left' : 'right');
+          const annSide: 'left' | 'right' | 'south' | 'north' = ann.isNorth ? 'north' : (ann.isSouth ? 'south' : (ann.isLeft ? 'left' : 'right'));
           const sideSwapped = smoothed.side !== null && smoothed.side !== annSide;
           const idChanged = smoothed.currentId !== null && smoothed.currentId !== ann.id;
 
@@ -1864,6 +1935,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             smoothed.currentId = ann.id;
             smoothed.side = annSide;
             smoothed.isSouth = !!ann.isSouth;
+            smoothed.isNorth = !!ann.isNorth;
             smoothed.x = ann.x;
             smoothed.y = ann.y;
             smoothed.elbowX = ann.elbowX;
@@ -1886,6 +1958,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               smoothed.currentId = ann.id;
               smoothed.side = annSide;
               smoothed.isSouth = !!ann.isSouth;
+              smoothed.isNorth = !!ann.isNorth;
               smoothed.x = ann.x;
               smoothed.y = ann.y;
               smoothed.elbowX = ann.elbowX;
@@ -1905,6 +1978,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           } else {
             // Same target and same flank: smoothly track position with exponential decay
             smoothed.isSouth = !!ann.isSouth;
+            smoothed.isNorth = !!ann.isNorth;
             const posDecay = 1.0 - Math.exp(-22.0 * safeDelta);
             smoothed.x += (ann.x - smoothed.x) * posDecay;
             smoothed.y += (ann.y - smoothed.y) * posDecay;
@@ -1936,6 +2010,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             smoothed.currentId = null;
             smoothed.side = null;
             smoothed.isSouth = false;
+            smoothed.isNorth = false;
           }
         }
 
@@ -1954,6 +2029,13 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             slot.polyline.setAttribute(
               'points',
               `${smoothed.x.toFixed(1)},${smoothed.y.toFixed(1)} ${smoothed.x.toFixed(1)},${midY.toFixed(1)} ${smoothed.labelEdgeX.toFixed(1)},${midY.toFixed(1)} ${smoothed.labelEdgeX.toFixed(1)},${smoothed.labelY.toFixed(1)}`
+            );
+          } else if (smoothed.isNorth) {
+            const cardBottomY = smoothed.labelY + 68;
+            const midY = smoothed.y - (smoothed.y - cardBottomY) * 0.45;
+            slot.polyline.setAttribute(
+              'points',
+              `${smoothed.x.toFixed(1)},${smoothed.y.toFixed(1)} ${smoothed.x.toFixed(1)},${midY.toFixed(1)} ${smoothed.labelEdgeX.toFixed(1)},${midY.toFixed(1)} ${smoothed.labelEdgeX.toFixed(1)},${cardBottomY.toFixed(1)}`
             );
           } else {
             slot.polyline.setAttribute(
@@ -2081,9 +2163,78 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
 
   // Helper: Horizontal-only explosion for the hero panoramic view
   // Constrains all component movement to primarily the Z-axis (engine thrust axis = horizontal after Y rotation)
-  // This creates the reference image's clean linear spread rather than chaotic scatter
+  // Recreates the reference CAD visualization's clean linear spread matching Image 2 exactly
   const applyModelExplodeHorizontal = (model: LoadedObjectResult, factor: number) => {
     const elapsed = kinematicTimeRef.current;
+
+    // Curated linear horizontal offsets along engine thrust axis matching Image 2 reference CAD
+    // Reduced spacing on both flanks (Mark 1: left unison-to-shaft gap; Mark 2: right casing-to-fan cage gap)
+    const HORIZONTAL_OFFSETS: Record<string, number> = {
+      // Aft / Left Modules (Positive local Z -> moves to screen Left; Mark 1 gap reduced)
+      'bolts_0': 10.5,
+      'casing-fasteners': 10.5,
+      'bolts_0_1': 10.5,
+      'bearing-sump-hardware': 10.5,
+      'plates_back_0': 8.8,
+      'exhaust-mixer-nozzle': 8.8,
+      'fins_0': 7.2,
+      'turbine-nozzle-guide-vanes': 7.2,
+      'flaps_ring_0': 5.8,
+      'vsv-actuation-ring': 5.8,
+      'clamps_0': 5.5,
+      'casing-clamps': 5.5,
+      'flaps_0': 5.2,
+      'vsv-bleed-flaps': 5.2,
+      'flaps_stabiliser_0': 4.8,
+      'unison-linkages': 4.8,
+
+      // Concentric Drive Shaft (bridges smoothly from turbine assembly into core)
+      'tube_0': 1.2,
+      'coaxial-drive-shaft': 1.2,
+
+      // Core Modules (Around Center)
+      'containers_spacers_0': 1.5,
+      'gearbox-isolators': 1.5,
+      'containers_0': 0.0,
+      'accessory-gearbox': 0.0,
+      'tubes002_0': -0.2,
+      'lube-scavenge-lines': -0.2,
+      'tubes001_0': 4.0,
+      'tcc-cooling-ring': 4.0,
+      'electronics_side_0': -0.3,
+      'avionics-sensors': -0.3,
+      'tubes_0': -0.4,
+      'bleed-air-manifolds': -0.4,
+      'electonics_side_1_0': -0.5,
+      'ignition-harness': -0.5,
+      'containers_small_0': -0.6,
+      'fadec-computer': -0.6,
+      'pipe_big_0': -0.8,
+      'bypass-starter-pipe': -0.8,
+      'turbine_hull_middle_0': -1.2,
+      'compressor-casing': -1.2,
+      'pistons_0': -1.5,
+      'thrust-reverser-actuators': -1.5,
+
+      // Front Casing & Nacelle (Negative local Z -> moves to screen Right)
+      'turbine_hull_0': -3.5,
+      'fan-containment-casing': -3.5,
+      'fins_outside_0': -3.5,
+      'nacelle-strakes': -3.5,
+      'plates_0': -4.8,
+      'combustor-heat-shields': -4.8,
+
+      // Front Fan & Intake Module (Mark 2 gap reduced: fan cage & blades brought closer to casing)
+      'grid_0': -6.8,
+      'bypass-stator-grid': -6.8,
+      'blades_0': -7.6,
+      'fan-module': -7.6,
+      'tube_middle_0': -8.2,
+      'diffuser-combustor': -8.2,
+      'tube_front_0': -9.2,
+      'inlet-cowl': -9.2,
+    };
+
     model.componentMap.forEach((info, id) => {
       if (info.nativeAnimated) return;
       const isSupplemental = Boolean(info.mesh.userData?.supplemental);
@@ -2095,7 +2246,8 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       else if (factor >= info.explodeEnd) localT = 1;
       else localT = smoothstep(info.explodeStart, info.explodeEnd, factor);
 
-      const horizVector = new THREE.Vector3(0, 0, info.explodeVector.z * 1.25);
+      const targetOffsetZ = HORIZONTAL_OFFSETS[id] ?? HORIZONTAL_OFFSETS[info.mesh.name] ?? (info.explodeVector.z * 1.5);
+      const horizVector = new THREE.Vector3(0, 0, targetOffsetZ);
 
       const meshes = (info.sourceMeshes && info.sourceMeshes.length > 0) ? info.sourceMeshes : [info.mesh];
       meshes.forEach((m) => {
@@ -2559,7 +2711,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       {/* Precision 3D-to-Screen SVG Leader Lines (Section 5 & 7) */}
       {/* -------------------------------------------------------------------- */}
       <svg ref={annotationSvgRef} className="fixed inset-0 w-full h-full z-[15] pointer-events-none">
-        {Array.from({ length: 12 }).map((_, i) => (
+        {Array.from({ length: 16 }).map((_, i) => (
           <g key={i} id={`ann-svg-group-${i}`} opacity="0" style={{ transition: 'opacity 220ms ease-out' }}>
             <polyline
               id={`ann-polyline-${i}`}
@@ -2588,7 +2740,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       {/* Precision Part Callouts — Refined Editorial Annotation Cards         */}
       {/* -------------------------------------------------------------------- */}
       <div ref={annotationContainerRef} className="fixed inset-0 pointer-events-none z-[16]">
-        {Array.from({ length: 12 }).map((_, i) => (
+        {Array.from({ length: 16 }).map((_, i) => (
           <div
             key={i}
             id={`ann-dom-slot-${i}`}
@@ -2603,7 +2755,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               transition: 'opacity 220ms ease-out',
             }}
           >
-            <div className="flex items-stretch rounded-[3px] bg-[var(--carbon)]/92 border border-[var(--text)]/18 shadow-[0_6px_28px_rgba(0,0,0,0.45)] backdrop-blur-xl w-[260px] hover:border-[var(--text)]/40 hover:shadow-[0_8px_36px_rgba(0,0,0,0.55)] transition-all duration-200 group overflow-hidden">
+            <div className="flex items-stretch rounded-[3px] bg-[var(--carbon)]/92 border border-[var(--text)]/18 shadow-[0_6px_28px_rgba(0,0,0,0.45)] backdrop-blur-xl w-[240px] hover:border-[var(--text)]/40 hover:shadow-[0_8px_36px_rgba(0,0,0,0.55)] transition-all duration-200 group overflow-hidden">
               {/* Left accent bar */}
               <div className="w-[3px] shrink-0 bg-[var(--text)]/25 group-hover:bg-[var(--text)]/50 transition-colors duration-200" />
               <div className="flex items-start gap-2 px-3 py-2.5 min-w-0 flex-1">

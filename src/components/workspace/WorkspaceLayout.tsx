@@ -135,6 +135,9 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     document.body.style.userSelect = 'none';
   };
 
+  const selectedComponentIdRef = useRef<string | null>(null);
+  selectedComponentIdRef.current = selectedComponentId;
+
   // Helper to find selected component node
   const findComponentNode = (id: string | null): ComponentNode | null => {
     if (!id) return null;
@@ -158,13 +161,16 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
       ?? buildGenericModelComponentNode(currentObject, selectedComponentId)
     : null;
 
-  // When a component is selected, auto-switch inspector to component tab and reset sheet stage to peek
+  // When a component is selected, auto-switch inspector to component tab.
+  // If the user clicks on the component again (or deselects it), return to the overview tab.
   const handleSelectComponent = (id: string | null) => {
-    setSelectedComponentId(id);
-    if (id) {
-      setActiveInspectorTab('component');
+    if (!id || id === selectedComponentIdRef.current) {
+      setSelectedComponentId(null);
+      setActiveInspectorTab('overview');
       setMobileSheetStage('peek');
     } else {
+      setSelectedComponentId(id);
+      setActiveInspectorTab('component');
       setMobileSheetStage('peek');
     }
   };
@@ -188,6 +194,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     setIsolatedComponentId(null);
     setHiddenComponentIds(new Set());
     setSelectedComponentId(null);
+    setActiveInspectorTab('overview');
     setIsPlayingMechanism(false);
     setMobileSheetStage('peek');
     setIsMobileControlsOpen(false);
