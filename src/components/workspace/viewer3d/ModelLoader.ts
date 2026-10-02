@@ -165,18 +165,31 @@ function colorForUploadedMesh(name: string, index: number) {
 }
 
 function prepareUploadedMeshMaterials(mesh: THREE.Mesh, semanticName: string, index: number) {
-  const materialList = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-  const hasUsefulMaterial = materialList.some((material) => {
-    if (!material) return false;
-    const anyMaterial = material as THREE.Material & { map?: THREE.Texture | null; color?: THREE.Color };
-    return Boolean(anyMaterial.map) || Boolean(anyMaterial.color && anyMaterial.color.getHex() !== 0xffffff);
-  });
-  if (!hasUsefulMaterial) {
+  if (!mesh.material) {
     mesh.material = new THREE.MeshStandardMaterial({
       color: colorForUploadedMesh(semanticName, index),
       roughness: /lens|glass|screen|display/i.test(semanticName) ? 0.22 : 0.48,
       metalness: /body|housing|lens|barrel|mount/i.test(semanticName) ? 0.35 : 0.08,
     });
+  } else if (Array.isArray(mesh.material)) {
+    if (mesh.material.length === 0) {
+      mesh.material = new THREE.MeshStandardMaterial({
+        color: colorForUploadedMesh(semanticName, index),
+        roughness: /lens|glass|screen|display/i.test(semanticName) ? 0.22 : 0.48,
+        metalness: /body|housing|lens|barrel|mount/i.test(semanticName) ? 0.35 : 0.08,
+      });
+    } else {
+      mesh.material = mesh.material.map((mat) => {
+        if (!mat) {
+          return new THREE.MeshStandardMaterial({
+            color: colorForUploadedMesh(semanticName, index),
+            roughness: 0.48,
+            metalness: 0.1,
+          });
+        }
+        return mat;
+      });
+    }
   }
   if (!mesh.geometry.getAttribute('normal')) mesh.geometry.computeVertexNormals();
 }
@@ -200,6 +213,9 @@ function registerUploadedGroup(
     group.attach(mesh);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
+    mesh.userData.basePosition = mesh.position.clone();
+    mesh.userData.baseRotation = mesh.rotation.clone();
+    mesh.userData.baseScale = mesh.scale.clone();
   });
 
   // Keep each AI semantic assembly intact. Its final exploded pose is planned
@@ -314,6 +330,7 @@ export async function loadUploaded3DModel(
   viewMode: ViewMode3D
 ): Promise<LoadedObjectResult> {
   const rootGroup = await loadGLTFGroup(url);
+  rootGroup.updateMatrixWorld(true);
   const componentMap = new Map<string, LoadedComponentMeshInfo>();
   const meshes: THREE.Mesh[] = [];
   rootGroup.traverse((child) => { if ((child as THREE.Mesh).isMesh) meshes.push(child as THREE.Mesh); });
