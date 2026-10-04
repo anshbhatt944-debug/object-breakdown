@@ -6,6 +6,7 @@ import { ThreeCanvas } from './viewer3d/ThreeCanvas';
 import { DroneCanvas } from './viewer3d/DroneCanvas';
 import { ViewportToolbar } from './viewer3d/ViewportToolbar';
 import { CalipersTool } from './viewer3d/CalipersTool';
+import { ViewModeHUD } from './viewer3d/ViewModeHUD';
 import { InspectorTabs, InspectorTabType } from './inspector/InspectorTabs';
 import { ComponentDetails } from './inspector/ComponentDetails';
 import { ObjectOverview } from './inspector/ObjectOverview';
@@ -315,6 +316,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               isolatedComponentId={isolatedComponentId}
               hiddenComponentIds={hiddenComponentIds}
               showLeaderLines={showLeaderLines}
+              showCalipers={showCalipers}
               theme={theme}
             />
           ) : (
@@ -340,6 +342,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   ? uploadedModel
                   : null
               }
+              showCalipers={showCalipers}
               theme={theme}
             />
           )}
@@ -349,8 +352,21 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             <CalipersTool
               selectedComponent={selectedNode}
               onClose={() => setShowCalipers(false)}
+              theme={theme}
+              objectId={currentObject.id}
+              onSelectComponent={handleSelectComponent}
             />
           )}
+
+          {/* Calibrated Physical ViewMode HUD (FEA Stress, FLIR Thermal, X-Ray, Wireframe) */}
+          <ViewModeHUD
+            viewMode={viewMode}
+            selectedComponent={selectedNode}
+            objectId={currentObject.id}
+            theme={theme}
+            hasCalipersOpen={showCalipers}
+            onClose={() => setViewMode('solid')}
+          />
 
           {/* Viewport Toolbar & Explode Slider */}
           <ViewportToolbar
