@@ -25,6 +25,8 @@ export interface SolverOptions {
   cardHeight?: number;
   verticalGap?: number;
   topMargin?: number;
+  topMarginLeft?: number;
+  topMarginRight?: number;
   bottomMargin?: number;
   leftMargin?: number;
   rightMargin?: number;
@@ -90,12 +92,9 @@ export function solveAnnotationLayout(
   const cardWidth = Math.min(options.cardWidth ?? 210, maxCardWidthAllowed);
   const cardHeight = isMobile ? Math.min(options.cardHeight ?? 46, 38) : (options.cardHeight ?? 46);
   const verticalGap = options.verticalGap ?? (isMobile ? 6 : 10);
-  const topMargin = options.topMargin ?? (isMobile ? 54 : 76); // Safely below top nav, badges & mode selector
+  const colMinYLeft = options.topMarginLeft ?? options.topMargin ?? (isMobile ? 54 : 76);
+  const colMinYRight = options.topMarginRight ?? options.topMargin ?? (isMobile ? 54 : 76);
   const bottomMargin = options.bottomMargin ?? (isMobile ? 120 : 144); // Safely above bottom explode toolbar & view modes
-
-  const minY = topMargin;
-  const maxY = Math.max(minY + cardHeight, height - bottomMargin - cardHeight);
-  const availableHeight = maxY - minY;
 
   // 1. Model Isolation Filter: Reject any items not belonging to the active model
   const validItems = activeModelId
@@ -154,10 +153,16 @@ export function solveAnnotationLayout(
     leftItems = leftItems.slice(0, half);
   }
 
-  // 4. Density Capping: Gracefully reduce density to prevent label pile-ups
-  const maxPerCol = Math.max(1, Math.floor(availableHeight / (cardHeight + verticalGap)));
+  // 4. Density Capping: Gracefully reduce density per column
+  const getAvailableHeight = (isLeft: boolean) => {
+    const minY = isLeft ? colMinYLeft : colMinYRight;
+    const maxY = Math.max(minY + cardHeight, height - bottomMargin - cardHeight);
+    return Math.max(cardHeight, maxY - minY);
+  };
 
-  const capColumn = (col: typeof leftItems) => {
+  const capColumn = (col: typeof leftItems, isLeft: boolean) => {
+    const availH = getAvailableHeight(isLeft);
+    const maxPerCol = Math.max(1, Math.floor(availH / (cardHeight + verticalGap)));
     if (col.length <= maxPerCol) return col;
     // Always preserve selected or hovered component
     const prioritized = [...col].sort((a, b) => {
@@ -168,8 +173,8 @@ export function solveAnnotationLayout(
     return prioritized.slice(0, maxPerCol).sort((a, b) => a.screenY - b.screenY);
   };
 
-  const solvedLeftItems = capColumn(leftItems);
-  const solvedRightItems = capColumn(rightItems);
+  const solvedLeftItems = capColumn(leftItems, true);
+  const solvedRightItems = capColumn(rightItems, false);
 
   // 5. Vertical non-overlapping spacing solver
   const solveColumn = (
@@ -179,11 +184,14 @@ export function solveAnnotationLayout(
     if (columnItems.length === 0) return [];
 
     const count = columnItems.length;
+    const colMinY = isLeft ? colMinYLeft : colMinYRight;
+    const colMaxY = Math.max(colMinY + cardHeight, height - bottomMargin - cardHeight);
+    const colAvailableHeight = Math.max(cardHeight, colMaxY - colMinY);
 
     // Effective gap calculation
     const effectiveGap =
       count > 1
-        ? Math.min(verticalGap, Math.max(4, (availableHeight - count * cardHeight) / (count - 1)))
+        ? Math.min(verticalGap, Math.max(3, (colAvailableHeight - count * cardHeight) / (count - 1)))
         : 0;
 
     // Strict X boundaries:
@@ -194,7 +202,7 @@ export function solveAnnotationLayout(
 
     // Initial positioning based on anchor Y
     const positions: number[] = columnItems.map((c) =>
-      THREE.MathUtils.clamp(c.screenY - cardHeight / 2, minY, maxY)
+      THREE.MathUtils.clamp(c.screenY - cardHeight / 2, colMinY, colMaxY)
     );
 
     // Forward relaxation pass: push down if overlapping
@@ -205,9 +213,9 @@ export function solveAnnotationLayout(
       }
     }
 
-    // Backward relaxation pass: pull up if overflowing maxY
-    if (positions[count - 1] > maxY) {
-      positions[count - 1] = maxY;
+    // Backward relaxation pass: pull up if overflowing colMaxY
+    if (positions[count - 1] > colMaxY) {
+      positions[count - 1] = colMaxY;
       for (let i = count - 2; i >= 0; i--) {
         const nextTop = positions[i + 1] - cardHeight - effectiveGap;
         if (positions[i] > nextTop) {
@@ -217,10 +225,10 @@ export function solveAnnotationLayout(
     }
 
     // Secondary clamp pass if top overflowed
-    if (positions[0] < minY) {
-      const shift = minY - positions[0];
+    if (positions[0] < colMinY) {
+      const shift = colMinY - positions[0];
       for (let i = 0; i < count; i++) {
-        positions[i] = Math.min(positions[i] + shift, maxY);
+        positions[i] = Math.min(positions[i] + shift, colMaxY);
       }
     }
 
