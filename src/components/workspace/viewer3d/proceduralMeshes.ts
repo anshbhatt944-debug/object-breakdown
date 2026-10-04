@@ -1,5 +1,11 @@
 import * as THREE from 'three';
 import { ComponentNode, ViewMode3D } from '../../../types/objectData';
+import {
+  getFEAStressMaterial,
+  getFLIRThermalMaterial,
+  getRadiographicXRayMaterial,
+  getCADWireframeMaterial,
+} from './engineeringViewModes';
 
 /**
  * Professional High-Fidelity 3D CAD Geometry & PBR Material Engine
@@ -195,50 +201,23 @@ export function createPBRMaterialForNode(
   objectId: string,
   viewMode: ViewMode3D,
   isSelected: boolean,
-  isHovered: boolean
+  isHovered: boolean,
+  theme: 'light' | 'dark' = 'dark'
 ): THREE.Material {
   if (viewMode === 'wireframe') {
-    return new THREE.MeshBasicMaterial({
-      color: isSelected ? '#00f2ad' : isHovered ? '#38bdf8' : '#475569',
-      wireframe: true,
-    });
+    return getCADWireframeMaterial(theme, isSelected, isHovered);
   }
 
   if (viewMode === 'xray') {
-    return new THREE.MeshPhysicalMaterial({
-      color: isSelected ? '#00f2ad' : new THREE.Color(node.defaultColor || '#38bdf8'),
-      transparent: true,
-      opacity: 0.24,
-      roughness: 0.15,
-      metalness: 0.1,
-      transmission: 0.85,
-      ior: 1.45,
-      emissive: isSelected ? new THREE.Color('#00f2ad') : isHovered ? new THREE.Color('#0ea5e9') : new THREE.Color('#000000'),
-      emissiveIntensity: isSelected ? 0.6 : isHovered ? 0.25 : 0.0,
-      depthWrite: false,
-    });
+    return getRadiographicXRayMaterial(node, isSelected, isHovered);
   }
 
   if (viewMode === 'stress') {
-    const stressColor = getFEAStressColor(node.id);
-    return new THREE.MeshStandardMaterial({
-      color: stressColor,
-      roughness: 0.35,
-      metalness: 0.2,
-      emissive: stressColor,
-      emissiveIntensity: isSelected ? 0.6 : 0.25,
-    });
+    return getFEAStressMaterial(node.id, node.category, node.material?.tensileStrength, isSelected);
   }
 
   if (viewMode === 'thermal') {
-    const thermalColor = getThermalColor(node.id, objectId);
-    return new THREE.MeshStandardMaterial({
-      color: thermalColor,
-      roughness: 0.3,
-      metalness: 0.15,
-      emissive: thermalColor,
-      emissiveIntensity: isSelected ? 0.6 : 0.3,
-    });
+    return getFLIRThermalMaterial(node.id, objectId, isSelected);
   }
 
   // Realistic Solid CAD PBR Materials
@@ -741,20 +720,4 @@ function buildAuthenticGeometryForMeshKey(key: string, material: THREE.Material,
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   return mesh;
-}
-
-function getFEAStressColor(nodeId: string): THREE.Color {
-  const hash = Math.abs(nodeId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0));
-  const stressRatio = (hash % 100) / 100;
-  // Blue (low stress) -> Cyan -> Green -> Yellow -> Red (high stress)
-  const hue = (1.0 - stressRatio) * 0.65;
-  return new THREE.Color().setHSL(hue, 0.95, 0.5);
-}
-
-function getThermalColor(nodeId: string, objectId: string): THREE.Color {
-  const isHotSource = /combust|turbo|chip|soc|motor|stator|battery|friction|ball|leaf/i.test(nodeId);
-  if (isHotSource) {
-    return new THREE.Color('#f43f5e'); // Red/Orange ~85-180°C
-  }
-  return new THREE.Color('#38bdf8'); // Cool ambient ~25°C
 }
