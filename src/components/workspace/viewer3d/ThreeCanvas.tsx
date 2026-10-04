@@ -5,6 +5,7 @@ import { load3DModelForObject, loadUploaded3DModel, applyViewModeToModel, Loaded
 import { fitCameraToObject, computeModelFramingSet, CameraFramingResult } from './cameraUtils';
 import { solveAnnotationLayout, AnnotationItem } from '../../../utils/annotationSolver';
 import { Box } from 'lucide-react';
+import { createCADCaliperBox, disposeCADCaliperBox } from './cadCaliperHelper';
 
 function findComponentNodeInTree(nodes: ComponentNode[], id: string): ComponentNode | null {
   for (const n of nodes) {
@@ -29,6 +30,7 @@ interface ThreeCanvasProps {
   isolatedComponentId: string | null;
   hiddenComponentIds: Set<string>;
   showLeaderLines: boolean;
+  showCalipers?: boolean;
   uploadedModel?: { url: string; fileName: string } | null;
   theme?: 'light' | 'dark';
 }
@@ -509,6 +511,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   isolatedComponentId,
   hiddenComponentIds,
   showLeaderLines,
+  showCalipers = false,
   uploadedModel = null,
   theme = 'dark',
 }) => {
@@ -520,6 +523,12 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
 
   const showLeaderLinesRef = useRef(showLeaderLines);
   showLeaderLinesRef.current = showLeaderLines;
+
+  const showCalipersRef = useRef(showCalipers);
+  showCalipersRef.current = showCalipers;
+
+  const viewModeRef = useRef(viewMode);
+  viewModeRef.current = viewMode;
 
   const selectedComponentIdRef = useRef(selectedComponentId);
   selectedComponentIdRef.current = selectedComponentId;
@@ -559,6 +568,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   const componentMapRef = useRef<Map<string, LoadedComponentMeshInfo>>(new Map());
   const progressiveSubpartsRef = useRef<Map<string, ProgressiveSubpartInfo>>(new Map());
   const uploadedMixerRef = useRef<THREE.AnimationMixer | null>(null);
+  const caliperGroupRef = useRef<THREE.Group | null>(null);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [annotations, setAnnotations] = useState<LeaderLineAnnotation[]>([]);
@@ -826,8 +836,8 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
 
       scene.add(result.rootGroup);
 
-      // Apply initial view mode
-      applyViewModeToModel(result.componentMap, viewMode);
+      // Apply initial view mode with real material physics
+      applyViewModeToModel(result.componentMap, viewMode, theme, selectedComponentId, objectData.id);
 
       // Uploaded GLB/GLTF assets are framed from their real world-space bounds.
       // Preloaded objects keep their existing curated camera behavior unchanged.
@@ -979,9 +989,46 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   // Apply ViewMode changes to model (without reloading)
   useEffect(() => {
     if (componentMapRef.current.size > 0) {
-      applyViewModeToModel(componentMapRef.current, viewMode);
+      applyViewModeToModel(componentMapRef.current, viewMode, theme, selectedComponentId, objectData.id);
     }
-  }, [viewMode]);
+  }, [viewMode, theme, selectedComponentId, objectData.id]);
+
+  // 3D CAD Caliper Bounding Box update
+  useEffect(() => {
+    if (!sceneRef.current) return;
+
+    if (caliperGroupRef.current) {
+      sceneRef.current.remove(caliperGroupRef.current);
+      disposeCADCaliperBox(caliperGroupRef.current);
+      caliperGroupRef.current = null;
+    }
+
+    if (!showCalipers || isLoading) return;
+
+    // Strictly only render 3D caliper brackets when a specific component IS selected!
+    // Never wrap the entire exploded model in a giant bounding box that blocks the view of the model
+    if (!selectedComponentId || !componentMapRef.current.has(selectedComponentId)) {
+      return;
+    }
+
+    const target = componentMapRef.current.get(selectedComponentId)!.mesh;
+    target.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(target);
+    if (!box.isEmpty()) {
+      const accent = theme === 'light' ? '#C2410C' : '#e27228';
+      const caliper = createCADCaliperBox(box, accent);
+      sceneRef.current.add(caliper);
+      caliperGroupRef.current = caliper;
+    }
+
+    return () => {
+      if (caliperGroupRef.current && sceneRef.current) {
+        sceneRef.current.remove(caliperGroupRef.current);
+        disposeCADCaliperBox(caliperGroupRef.current);
+        caliperGroupRef.current = null;
+      }
+    };
+  }, [showCalipers, selectedComponentId, explodeAmount, theme, isLoading]);
 
   // Update In-Place Selection & Isolation Visibility
   useEffect(() => {
@@ -1344,6 +1391,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
             });
           }
 
+        const hasTopLeftOverlay = Boolean(showCalipersRef.current || viewModeRef.current !== 'solid');
         const solved = solveAnnotationLayout(
           items,
           cameraRef.current,
@@ -1352,8 +1400,9 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
             activeModelId: currentModelId,
             cardWidth: 210,
             cardHeight: 46,
-            verticalGap: 10,
-            topMargin: 76,
+            verticalGap: 8,
+            topMarginLeft: hasTopLeftOverlay ? 142 : 76,
+            topMarginRight: 76,
             bottomMargin: 144,
             leftMargin: 24,
             rightMargin: 24,
