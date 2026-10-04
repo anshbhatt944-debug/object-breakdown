@@ -5,6 +5,7 @@ import { load3DModelForObject, applyViewModeToModel, LoadedComponentMeshInfo } f
 import { fitCameraToObject, computeModelFramingSet, CameraFramingResult } from './cameraUtils';
 import { Box, Sparkles } from 'lucide-react';
 import { solveAnnotationLayout, AnnotationItem } from '../../../utils/annotationSolver';
+import { createCADCaliperBox, disposeCADCaliperBox } from './cadCaliperHelper';
 
 function disposeMaterial(mat: THREE.Material) {
   mat.dispose();
@@ -46,6 +47,7 @@ interface DroneCanvasProps {
   isolatedComponentId: string | null;
   hiddenComponentIds: Set<string>;
   showLeaderLines: boolean;
+  showCalipers?: boolean;
   theme?: 'light' | 'dark';
 }
 
@@ -83,6 +85,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
   isolatedComponentId,
   hiddenComponentIds,
   showLeaderLines,
+  showCalipers = false,
   theme = 'dark',
 }) => {
   const explodeAmountRef = useRef(explodeAmount);
@@ -93,6 +96,12 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
 
   const showLeaderLinesRef = useRef(showLeaderLines);
   showLeaderLinesRef.current = showLeaderLines;
+
+  const showCalipersRef = useRef(showCalipers);
+  showCalipersRef.current = showCalipers;
+
+  const viewModeRef = useRef(viewMode);
+  viewModeRef.current = viewMode;
 
   const selectedComponentIdRef = useRef(selectedComponentId);
   selectedComponentIdRef.current = selectedComponentId;
@@ -130,6 +139,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
   const explodedAnimationRef = useRef<THREE.AnimationClip | null>(null);
   const explodedAnimationPeakTimeRef = useRef<number | null>(null);
   const propellerMixerRef = useRef<THREE.AnimationMixer | null>(null);
+  const caliperGroupRef = useRef<THREE.Group | null>(null);
   // Cache the last authored exploded pose. Re-scrubbing a skinned animation and
   // forcing the full hierarchy to update every render frame is the main source
   // of orbit stutter on this GLB.
@@ -431,6 +441,9 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
       interactiveMeshesRef.current = interactiveList;
       meshToComponentMapRef.current = meshToCompMap;
 
+      // Apply initial view mode
+      applyViewModeToModel(result.componentMap, viewMode, theme, selectedComponentId, 'drone');
+
       setIsLoading(false);
     });
 
@@ -464,12 +477,50 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
     }
   }, [explodeAmount, updateCameraPosition]);
 
-  // Apply ViewMode changes to model (without reloading)
+  // Apply ViewMode changes to drone model
   useEffect(() => {
     if (componentMapRef.current.size > 0) {
-      applyViewModeToModel(componentMapRef.current, viewMode);
+      applyViewModeToModel(componentMapRef.current, viewMode, theme, selectedComponentId, 'drone');
     }
-  }, [viewMode]);
+  }, [viewMode, theme, selectedComponentId]);
+
+  // 3D CAD Caliper Bounding Box update
+  useEffect(() => {
+    if (!sceneRef.current) return;
+
+    if (caliperGroupRef.current) {
+      sceneRef.current.remove(caliperGroupRef.current);
+      disposeCADCaliperBox(caliperGroupRef.current);
+      caliperGroupRef.current = null;
+    }
+
+    if (!showCalipers || isLoading) return;
+
+    // Strictly only render 3D caliper brackets when a specific component IS selected!
+    // Never wrap the entire exploded model in a giant bounding box that blocks the view of the model
+    if (!selectedComponentId || !componentMapRef.current.has(selectedComponentId)) {
+      return;
+    }
+
+    const target = componentMapRef.current.get(selectedComponentId)!.mesh;
+    target.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(target);
+    if (!box.isEmpty()) {
+      const accent = theme === 'light' ? '#C2410C' : '#e27228';
+      const caliper = createCADCaliperBox(box, accent);
+      sceneRef.current.add(caliper);
+      caliperGroupRef.current = caliper;
+    }
+
+    return () => {
+      if (caliperGroupRef.current && sceneRef.current) {
+        sceneRef.current.remove(caliperGroupRef.current);
+        disposeCADCaliperBox(caliperGroupRef.current);
+        caliperGroupRef.current = null;
+      }
+    };
+  }, [showCalipers, selectedComponentId, explodeAmount, theme, isLoading]);
+
 
   // Update In-Place Selection & Isolation Visibility
   useEffect(() => {
@@ -694,6 +745,7 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
           });
         }
 
+        const hasTopLeftOverlay = Boolean(showCalipersRef.current || viewModeRef.current !== 'solid');
         const solved = solveAnnotationLayout(
           items,
           cameraRef.current,
@@ -702,8 +754,9 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
             activeModelId: 'drone',
             cardWidth: 210,
             cardHeight: 46,
-            verticalGap: 10,
-            topMargin: 76,
+            verticalGap: 8,
+            topMarginLeft: hasTopLeftOverlay ? 142 : 76,
+            topMarginRight: 76,
             bottomMargin: 144,
             leftMargin: 24,
             rightMargin: 24,
