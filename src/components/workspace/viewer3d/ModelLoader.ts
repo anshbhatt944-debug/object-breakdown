@@ -4,6 +4,12 @@ import { ObjectBreakdownData, ViewMode3D, ComponentNode } from '../../../types/o
 import { MODEL_ASSETS, ModelAssetConfig, ModelMeshMapping } from '../../../data/modelRegistry';
 import { isMeaningfulComponentName } from '../../../data/uploadAnalysis';
 import { createComponentMesh } from './proceduralMeshes';
+import {
+  getFEAStressMaterial,
+  getFLIRThermalMaterial,
+  getRadiographicXRayMaterial,
+  getCADWireframeMaterial,
+} from './engineeringViewModes';
 
 const gltfSceneCache = new Map<string, THREE.Group>();
 const gltfAnimationsCache = new Map<string, THREE.AnimationClip[]>();
@@ -26,6 +32,7 @@ export interface LoadedComponentMeshInfo {
   originalMaterials: Map<THREE.Mesh, THREE.Material | THREE.Material[]>;
   sourceMeshes?: THREE.Mesh[];
   nativeAnimated?: boolean;
+  color?: string;
 }
 
 export interface LoadedObjectResult {
@@ -837,12 +844,17 @@ export async function load3DModelForObject(
 
 /**
  * Applies view mode shaders (Solid, X-Ray, Wireframe, FEA Stress, Thermal)
+ * with real physical calibration across materials, thermodynamic heat zones, and FEA Von Mises stress.
  */
 export function applyViewModeToModel(
   componentMap: Map<string, LoadedComponentMeshInfo>,
-  viewMode: ViewMode3D
+  viewMode: ViewMode3D,
+  theme: 'light' | 'dark' = 'dark',
+  selectedComponentId: string | null = null,
+  objectId = ''
 ) {
   componentMap.forEach((info) => {
+    const isSelected = selectedComponentId === info.componentId;
     info.mesh.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
@@ -854,106 +866,16 @@ export function applyViewModeToModel(
             mesh.material = Array.isArray(originalMat) ? originalMat.map(m => m.clone()) : originalMat.clone();
           }
         } else if (viewMode === 'wireframe') {
-          mesh.material = new THREE.MeshBasicMaterial({
-            color: '#38bdf8',
-            wireframe: true,
-          });
+          mesh.material = getCADWireframeMaterial(theme, isSelected);
         } else if (viewMode === 'xray') {
-          mesh.material = new THREE.MeshPhysicalMaterial({
-            color: '#38bdf8',
-            transparent: true,
-            opacity: 0.28,
-            roughness: 0.1,
-            transmission: 0.82,
-            ior: 1.45,
-            depthWrite: false,
-          });
+          mesh.material = getRadiographicXRayMaterial(
+            { id: info.componentId, defaultColor: info.color },
+            isSelected
+          );
         } else if (viewMode === 'stress') {
-          const hash = Math.abs(info.componentId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0));
-          const hue = (1.0 - (hash % 100) / 100) * 0.65;
-          const stressColor = new THREE.Color().setHSL(hue, 0.95, 0.5);
-
-          mesh.material = new THREE.MeshStandardMaterial({
-            color: stressColor,
-            roughness: 0.35,
-            metalness: 0.2,
-            emissive: stressColor,
-            emissiveIntensity: 0.35,
-          });
+          mesh.material = getFEAStressMaterial(info.componentId, info.category, '', isSelected);
         } else if (viewMode === 'thermal') {
-          // Scientifically accurate thermodynamic temperature gradient (FLIR Ironbow / Heat Map telemetry)
-          const id = info.componentId.toLowerCase();
-          let hexColor = '#38bdf8';
-          let emissiveHex = '#0284c7';
-          let emissiveIntensity = 0.2;
-
-          // 1. Extreme Heat Zone: 1,600°C - 2,000°C (Core Combustion & HP Turbine)
-          if (/combust|diffuser|flame|ignit|heat-shield|spark/.test(id)) {
-            hexColor = '#ff3700'; // Blazing incandescent orange-red
-            emissiveHex = '#ff2200';
-            emissiveIntensity = 0.85;
-          } else if (/turbine|vane|nozzle-guide|hp-turbine|fins_0|exhaust-core/.test(id)) {
-            hexColor = '#ff1133'; // Fiery crimson glowing superalloy (1,650°C)
-            emissiveHex = '#e11d48';
-            emissiveIntensity = 0.75;
-          }
-          // 2. High Expansion & Exhaust Zone: 600°C - 1,100°C (LP Turbine, Exhaust Mixer, Tail Cone)
-          else if (/shaft|spool|drive-shaft|tube_0|piston|chra|rotor-bell/.test(id)) {
-            hexColor = '#ea580c'; // Deep thermal vermilion
-            emissiveHex = '#c2410c';
-            emissiveIntensity = 0.55;
-          } else if (/exhaust|mixer|tail-cone|nozzle|flaps|plates_back/.test(id)) {
-            hexColor = '#db2777'; // Thermal magenta/violet hot exhaust gas
-            emissiveHex = '#be185d';
-            emissiveIntensity = 0.45;
-          }
-          // 3. High-Pressure Compression & Bleed Air: 350°C - 600°C (HPC Casing, Bleed Manifolds)
-          else if (/compressor|bleed|manifold|vsv|stator-casing|stator-ring/.test(id)) {
-            hexColor = '#f59e0b'; // Radiant amber/gold
-            emissiveHex = '#d97706';
-            emissiveIntensity = 0.40;
-          } else if (/clamp|fastener|flange|bolt|hardware|bearing/.test(id)) {
-            hexColor = '#84cc16'; // Warm conductive soak (250°C)
-            emissiveHex = '#65a30d';
-            emissiveIntensity = 0.25;
-          }
-          // 4. Lubrication, Cooling & Electronics: 60°C - 150°C (AGB, FADEC, Oil Lines)
-          else if (/cool|tcc|intercooler|heat-sink|radiator/.test(id)) {
-            hexColor = '#06b6d4'; // Active cooling flow (120°C)
-            emissiveHex = '#0891b2';
-            emissiveIntensity = 0.28;
-          } else if (/gearbox|agb|lube|oil|scavenge|isolator|container/.test(id)) {
-            hexColor = '#10b981'; // Oil operating temperature (95°C)
-            emissiveHex = '#059669';
-            emissiveIntensity = 0.25;
-          } else if (/fadec|sensor|avionics|electronic|wire|cable|battery|esc|board|pcb/.test(id)) {
-            hexColor = '#0ea5e9'; // Controlled electronics ambient (70°C)
-            emissiveHex = '#0284c7';
-            emissiveIntensity = 0.22;
-          }
-          // 5. Bypass Air & Outer Casing: 20°C - 50°C (Fan Containment, Nacelle Strakes)
-          else if (/nacelle|hull|containment|strake|cowl-outer|casing/.test(id)) {
-            hexColor = '#38bdf8'; // Bypass stream air (30°C)
-            emissiveHex = '#0284c7';
-            emissiveIntensity = 0.16;
-          }
-          // 6. Ambient Cryogenic Freestream Intake: -50°C - +20°C (Inlet Cowl, Fan Blades, Bypass Grid)
-          else if (/inlet|cowl|fan|blade|grid|spinner|bullet|intake/.test(id)) {
-            hexColor = '#2563eb'; // Cryogenic / high-altitude ambient freestream (-40°C)
-            emissiveHex = '#1d4ed8';
-            emissiveIntensity = 0.18;
-          }
-
-          const color = new THREE.Color(hexColor);
-          const emissive = new THREE.Color(emissiveHex);
-
-          mesh.material = new THREE.MeshStandardMaterial({
-            color,
-            roughness: 0.35,
-            metalness: 0.15,
-            emissive,
-            emissiveIntensity,
-          });
+          mesh.material = getFLIRThermalMaterial(info.componentId, objectId, isSelected);
         }
       }
     });
