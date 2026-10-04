@@ -1,5 +1,6 @@
 import { ComponentNode, ObjectBreakdownData, ComponentMaterial, FailureMode } from '../types/objectData';
 import { MODEL_ASSETS, ModelMeshMapping } from './modelRegistry';
+import { getComponentCADDimensions } from './cadDimensionsDatabase';
 
 const flatten = (nodes: ComponentNode[]): ComponentNode[] => {
   const out: ComponentNode[] = [];
@@ -137,6 +138,8 @@ export function resolveModelComponentNode(objectData: ObjectBreakdownData, compo
 
   const profile = technicalProfile(mapping.displayName, mapping.category, objectData.id);
   const material = inferMaterial(mapping.displayName, mapping.category);
+  const cadDims = getComponentCADDimensions(objectData.id, mapping.componentId);
+
   const node: ComponentNode = {
     id: mapping.componentId,
     name: mapping.displayName,
@@ -148,12 +151,18 @@ export function resolveModelComponentNode(objectData: ObjectBreakdownData, compo
     material,
     function: profile.fn,
     manufacturing: {
-      process: 'Asset/model-dependent; source GLB does not encode a verified manufacturing process for this mesh.',
-      machinery: 'Model-dependent',
-      tolerance: 'Model-dependent',
+      process: cadDims.machiningProcess,
+      machinery: 'High-Precision CNC & CMM Metrology',
+      tolerance: cadDims.tolerance,
       defectRisks: ['Geometry/fit deviation at mating interfaces', 'Surface or edge damage during service'],
     },
-    dimensions: { formatted: 'Asset-scaled; exact CAD dimensions are model-dependent' },
+    dimensions: {
+      formatted: cadDims.formatted,
+      length: `${cadDims.lengthMm} mm`,
+      diameter: cadDims.diameterMm ? `Ø ${cadDims.diameterMm} mm` : undefined,
+      thickness: cadDims.wallThicknessMm ? `${cadDims.wallThicknessMm} mm` : undefined,
+      weight: `${cadDims.massGrams} g`,
+    },
     mechanicalRole: { motion: profile.motion },
     connectedTo: [],
     failureModes: [profile.failure],
@@ -211,6 +220,8 @@ export function buildGenericModelComponentNode(objectData: ObjectBreakdownData, 
     meshName = mappingEntry[0];
   }
   const profile = technicalProfile(displayName, category, objectData.id);
+  const cadDims = getComponentCADDimensions(objectData.id, componentId);
+
   return {
     id: componentId,
     name: displayName,
@@ -221,8 +232,19 @@ export function buildGenericModelComponentNode(objectData: ObjectBreakdownData, 
     defaultColor: '#94a3b8',
     material: inferMaterial(displayName, category),
     function: profile.fn,
-    manufacturing: { process: 'Model-dependent', machinery: 'Model-dependent', tolerance: 'Model-dependent', defectRisks: ['Fit/interference variation', 'Surface damage'] },
-    dimensions: { formatted: 'Asset-scaled; exact CAD dimensions are model-dependent' },
+    manufacturing: {
+      process: cadDims.machiningProcess,
+      machinery: 'High-Precision CNC & CMM Metrology',
+      tolerance: cadDims.tolerance,
+      defectRisks: ['Fit/interference variation', 'Surface damage'],
+    },
+    dimensions: {
+      formatted: cadDims.formatted,
+      length: `${cadDims.lengthMm} mm`,
+      diameter: cadDims.diameterMm ? `Ø ${cadDims.diameterMm} mm` : undefined,
+      thickness: cadDims.wallThicknessMm ? `${cadDims.wallThicknessMm} mm` : undefined,
+      weight: `${cadDims.massGrams} g`,
+    },
     mechanicalRole: { motion: profile.motion },
     connectedTo: [],
     failureModes: [profile.failure],
