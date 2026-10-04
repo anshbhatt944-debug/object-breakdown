@@ -4,6 +4,12 @@ import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.j
 import { ObjectBreakdownData, ViewMode3D, ComponentNode } from '../../../types/objectData';
 import { MODEL_ASSETS, ModelAssetConfig, ModelMeshMapping } from '../../../data/modelRegistry';
 import { createComponentMesh } from './proceduralMeshes';
+import {
+  getFEAStressMaterial,
+  getFLIRThermalMaterial,
+  getRadiographicXRayMaterial,
+  getCADWireframeMaterial,
+} from './engineeringViewModes';
 
 const gltfSceneCache = new Map<string, THREE.Group>();
 const gltfLoader = new GLTFLoader();
@@ -65,6 +71,7 @@ export interface LoadedComponentMeshInfo {
   sourceMeshes?: THREE.Mesh[];
   /** Native-animation components are driven by the GLB clip, not custom explode vectors. */
   nativeAnimated?: boolean;
+  color?: string;
 }
 
 export interface LoadedObjectResult {
@@ -737,64 +744,42 @@ export async function load3DModelForObject(
 
 /**
  * Applies view mode shaders (Solid, X-Ray, Wireframe, FEA Stress, Thermal)
+ * with real physical calibration across materials, thermodynamic heat zones, and FEA Von Mises stress.
  */
 export function applyViewModeToModel(
   componentMap: Map<string, LoadedComponentMeshInfo>,
-  viewMode: ViewMode3D
+  viewMode: ViewMode3D,
+  theme: 'light' | 'dark' = 'dark',
+  selectedComponentId: string | null = null,
+  objectId = 'drone'
 ) {
   componentMap.forEach((info) => {
+    const isSelected = selectedComponentId === info.componentId;
     const renderMeshes = info.sourceMeshes || (() => {
       const meshes: THREE.Mesh[] = [];
       info.mesh.traverse((child) => { if ((child as THREE.Mesh).isMesh) meshes.push(child as THREE.Mesh); });
       return meshes;
     })();
     renderMeshes.forEach((mesh) => {
-        const originalMat = info.originalMaterials.get(mesh);
+      const originalMat = info.originalMaterials.get(mesh);
 
-        if (viewMode === 'solid') {
-          // Restore original photorealistic PBR material
-          if (originalMat) {
-            mesh.material = Array.isArray(originalMat) ? originalMat.map(m => m.clone()) : originalMat.clone();
-          }
-        } else if (viewMode === 'wireframe') {
-          mesh.material = new THREE.MeshBasicMaterial({
-            color: '#38bdf8',
-            wireframe: true,
-          });
-        } else if (viewMode === 'xray') {
-          mesh.material = new THREE.MeshPhysicalMaterial({
-            color: '#38bdf8',
-            transparent: true,
-            opacity: 0.28,
-            roughness: 0.1,
-            transmission: 0.82,
-            ior: 1.45,
-            depthWrite: false,
-          });
-        } else if (viewMode === 'stress') {
-          const hash = Math.abs(info.componentId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0));
-          const hue = (1.0 - (hash % 100) / 100) * 0.65;
-          const stressColor = new THREE.Color().setHSL(hue, 0.95, 0.5);
-
-          mesh.material = new THREE.MeshStandardMaterial({
-            color: stressColor,
-            roughness: 0.35,
-            metalness: 0.2,
-            emissive: stressColor,
-            emissiveIntensity: 0.35,
-          });
-        } else if (viewMode === 'thermal') {
-          const isHot = /combust|turbo|chip|soc|motor|stator|battery|friction|ball|leaf|stem/i.test(info.componentId);
-          const color = isHot ? new THREE.Color('#f43f5e') : new THREE.Color('#38bdf8');
-
-          mesh.material = new THREE.MeshStandardMaterial({
-            color,
-            roughness: 0.3,
-            metalness: 0.15,
-            emissive: color,
-            emissiveIntensity: 0.35,
-          });
+      if (viewMode === 'solid') {
+        // Restore original photorealistic PBR material
+        if (originalMat) {
+          mesh.material = Array.isArray(originalMat) ? originalMat.map(m => m.clone()) : originalMat.clone();
         }
-      });
+      } else if (viewMode === 'wireframe') {
+        mesh.material = getCADWireframeMaterial(theme, isSelected);
+      } else if (viewMode === 'xray') {
+        mesh.material = getRadiographicXRayMaterial(
+          { id: info.componentId, defaultColor: info.color },
+          isSelected
+        );
+      } else if (viewMode === 'stress') {
+        mesh.material = getFEAStressMaterial(info.componentId, info.category, '', isSelected);
+      } else if (viewMode === 'thermal') {
+        mesh.material = getFLIRThermalMaterial(info.componentId, objectId, isSelected);
+      }
     });
+  });
 }
