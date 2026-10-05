@@ -1047,6 +1047,10 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       }
 
       // Default all to hidden, then selectively activate
+      for (const model of models.values()) {
+        model.rootGroup.visible = false;
+      }
+      if (turbofanModel) turbofanModel.rootGroup.visible = false;
       if (watchModel) watchModel.rootGroup.visible = false;
       if (droneModel) droneModel.rootGroup.visible = false;
       if (engineModel) engineModel.rootGroup.visible = false;
