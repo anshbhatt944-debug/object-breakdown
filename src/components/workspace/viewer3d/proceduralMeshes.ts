@@ -450,33 +450,154 @@ function buildAuthenticGeometryForMeshKey(key: string, material: THREE.Material,
       break;
     }
     case 'key-spring': {
-      // High-precision gold-plated progressive switch spring
+      // High-precision 24K gold-plated progressive switch spring (12 coils with flat ground ends)
       geo = getCachedGeometry('key-spring-gold-geo', () => {
-        return createRealisticSpringGeometry(0.32, 0.038, 9, 1.4);
+        return createRealisticSpringGeometry(0.22, 0.028, 11, 1.25);
       });
       break;
     }
     case 'key-leaf': {
-      // Stamped phosphor bronze leaf contact with dual flexible blades and gold crosspoint rivets
+      // Stamped phosphor bronze leaf contact with dual wiper blades, terminal pins, and gold crosspoints
       geo = getCachedGeometry('key-leaf-contact-geo', () => {
         const shape = new THREE.Shape();
-        shape.moveTo(-0.25, -0.6);
-        shape.lineTo(0.25, -0.6);
-        shape.lineTo(0.25, 0.1);
-        shape.lineTo(0.18, 0.6); // Angled ramp blade
-        shape.lineTo(0.05, 0.6);
-        shape.lineTo(0.12, 0.1);
-        shape.lineTo(-0.25, 0.1);
+        // Lower terminal pin entering PCB
+        shape.moveTo(-0.12, -0.9);
+        shape.lineTo(0.12, -0.9);
+        shape.lineTo(0.12, -0.3);
+        // Base seating flange
+        shape.lineTo(0.35, -0.3);
+        shape.lineTo(0.35, 0.05);
+        // Angled resilient contact wiping ramp
+        shape.lineTo(0.24, 0.65);
+        shape.lineTo(0.08, 0.65);
+        shape.lineTo(0.14, 0.1);
+        shape.lineTo(-0.12, 0.1);
         shape.closePath();
-        return new THREE.ExtrudeGeometry(shape, { depth: 0.06, bevelEnabled: true, bevelSize: 0.01 });
+        const ext = new THREE.ExtrudeGeometry(shape, { depth: 0.06, bevelEnabled: true, bevelSize: 0.015, bevelSegments: 2 });
+        ext.center();
+        return ext;
+      });
+      break;
+    }
+    case 'key-plate': {
+      // CNC Polycarbonate flex-cut mounting plate with 14.0mm switch cutout
+      geo = getCachedGeometry('key-plate-flex-geo-v2', () => {
+        const shape = new THREE.Shape();
+        const R = 1.30; // 2.60 x 2.60 mm standard 1U footprint
+        shape.moveTo(-R, -R);
+        shape.lineTo(R, -R);
+        shape.lineTo(R, R);
+        shape.lineTo(-R, R);
+        shape.closePath();
+
+        // Central square 14.0mm switch mounting snap window
+        const hole = new THREE.Path();
+        const H = 0.58;
+        hole.moveTo(-H, -H);
+        hole.lineTo(H, -H);
+        hole.lineTo(H, H);
+        hole.lineTo(-H, H);
+        hole.closePath();
+        shape.holes.push(hole);
+
+        const ext = new THREE.ExtrudeGeometry(shape, {
+          depth: 0.08,
+          bevelEnabled: true,
+          bevelSize: 0.012,
+          bevelThickness: 0.012,
+          bevelSegments: 2,
+        });
+        ext.center();
+        ext.rotateX(Math.PI / 2);
+        return ext;
+      });
+      break;
+    }
+    case 'key-gasket': {
+      // Rogers Poron XRD acoustic isolation dampener pad (matches plate and PCB footprint perfectly)
+      geo = getCachedGeometry('key-gasket-poron-geo-v2', () => {
+        const shape = new THREE.Shape();
+        const R = 1.30; // Exactly matches plate and PCB perimeter
+        shape.moveTo(-R, -R);
+        shape.lineTo(R, -R);
+        shape.lineTo(R, R);
+        shape.lineTo(-R, R);
+        shape.closePath();
+
+        // Center cutout for switch lower housing pass-through
+        const hole = new THREE.Path();
+        const H = 0.58;
+        hole.moveTo(-H, -H);
+        hole.lineTo(H, -H);
+        hole.lineTo(H, H);
+        hole.lineTo(-H, H);
+        hole.closePath();
+        shape.holes.push(hole);
+
+        const ext = new THREE.ExtrudeGeometry(shape, {
+          depth: 0.06,
+          bevelEnabled: true,
+          bevelSize: 0.01,
+          bevelThickness: 0.01,
+          bevelSegments: 2,
+        });
+        ext.center();
+        ext.rotateX(Math.PI / 2);
+        return ext;
       });
       break;
     }
     case 'key-pcb': {
-      // Multi-layer FR4 circuit board with solder pads, Kailh hot-swap socket, and SMD diode
-      geo = getCachedGeometry('key-pcb-fr4-geo', () => {
-        const pcb = new THREE.BoxGeometry(3.2, 0.15, 3.2);
-        return pcb;
+      // 4-layer FR4 circuit board with central post clearance hole and solder pin pads
+      geo = getCachedGeometry('key-pcb-fr4-geo-v2', () => {
+        const shape = new THREE.Shape();
+        const R = 1.30; // Exactly matches plate and gasket perimeter
+        shape.moveTo(-R, -R);
+        shape.lineTo(R, -R);
+        shape.lineTo(R, R);
+        shape.lineTo(-R, R);
+        shape.closePath();
+
+        // Center stem post clearance hole
+        const centerHole = new THREE.Path();
+        centerHole.absarc(0, 0, 0.22, 0, Math.PI * 2, true);
+        shape.holes.push(centerHole);
+
+        // Switch terminal pin pass-through holes
+        const pin1 = new THREE.Path();
+        pin1.absarc(0.35, 0.15, 0.08, 0, Math.PI * 2, true);
+        shape.holes.push(pin1);
+
+        const pin2 = new THREE.Path();
+        pin2.absarc(-0.35, 0.15, 0.08, 0, Math.PI * 2, true);
+        shape.holes.push(pin2);
+
+        const ext = new THREE.ExtrudeGeometry(shape, {
+          depth: 0.09,
+          bevelEnabled: true,
+          bevelSize: 0.012,
+          bevelThickness: 0.012,
+          bevelSegments: 2,
+        });
+        ext.center();
+        ext.rotateX(Math.PI / 2);
+        return ext;
+      });
+      break;
+    }
+    case 'key-socket': {
+      // Kailh CPG151101S01 SMT hot-swap socket housing
+      geo = getCachedGeometry('key-hotswap-socket-geo-v2', () => {
+        const body = new THREE.BoxGeometry(0.75, 0.14, 0.38);
+        return body;
+      });
+      break;
+    }
+    case 'key-led': {
+      // Reverse-mount SMD 3528 RGB LED package
+      geo = getCachedGeometry('key-smd-led-geo-v2', () => {
+        const led = new THREE.BoxGeometry(0.32, 0.09, 0.24);
+        return led;
       });
       break;
     }
