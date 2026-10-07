@@ -62,18 +62,18 @@ export function getComponentStressTelemetry(
     stressMpa = 820;
     failureRisk = 'Torsional cyclic vibration and centrifugal disc radial burst tension.';
   }
-  // 2. High Stress: 500 - 850 MPa (Piston Crowns, Wastegate Flappers, Rotor Bell)
-  else if (/piston|wastegate|bellcrank|escapement|pallet|ratchet-wheel|rotor-bell/.test(id)) {
-    stressMpa = 580;
-    failureRisk = 'Thermal-mechanical fatigue under periodic combustion pulse loads.';
+  // 2. High Stress: 500 - 850 MPa (Piston Crowns, Wastegate Flappers, Rotor Bell, Switch Spring)
+  else if (/piston|wastegate|bellcrank|escapement|pallet|ratchet-wheel|rotor-bell/.test(id) || /switch-spring|key-spring/.test(id)) {
+    stressMpa = 685;
+    failureRisk = 'Torsional cyclic shear fatigue across progressive helical wire coils under bottom-out.';
   } else if (/combust|housing-turbine|chra|bearing|gear-train|gearbox/.test(id)) {
     stressMpa = 420;
     failureRisk = 'High contact Hertzian stress and localized micro-pitting.';
   }
-  // 3. Moderate Stress: 250 - 450 MPa (Stator Vanes, Cylinder Walls, Drone Arms under 4G pull-up)
-  else if (/stator|vane|vsv|grid|frame-arm|motor-group|connecting-rod|cylinder/.test(id)) {
-    stressMpa = 290;
-    failureRisk = 'Cantilever aerodynamic bending deflection and acoustic flutter.';
+  // 3. Moderate Stress: 250 - 450 MPa (Stator Vanes, Cylinder Walls, Drone Arms, Contact Leaf)
+  else if (/stator|vane|vsv|grid|frame-arm|motor-group|connecting-rod|cylinder/.test(id) || /contact-leaf|key-leaf/.test(id)) {
+    stressMpa = 360;
+    failureRisk = 'Cantilever bending deflection and micro-fretting wear at gold contact wiping point.';
   } else if (/cowl|casing|plate|flange|clamp|fastener/.test(id)) {
     stressMpa = 175;
     failureRisk = 'Hoop burst stress from internal fluid pressure.';
@@ -300,18 +300,22 @@ export function getComponentThermalTelemetry(
   }
   // Mechanical Keyboard
   else if (obj.includes('keyboard') || /switch|keycap|pcb/.test(id)) {
-    if (/pcb|controller|mcu|led/.test(id)) {
-      tempCelsius = 46;
+    if (/led|rgb/.test(id)) {
+      tempCelsius = 54;
       thermalZone = 'electronics';
-      heatSource = 'Microcontroller processor & RGB LED matrix power draw (46°C).';
+      heatSource = 'Per-key SMD 3528 RGB LED driver dissipation (54°C).';
+    } else if (/pcb|controller|mcu/.test(id)) {
+      tempCelsius = 42;
+      thermalZone = 'electronics';
+      heatSource = 'ARM Cortex-M4 microcontroller & matrix scan processing (42°C).';
     } else if (/pbt-keycap|keycap/.test(id)) {
       tempCelsius = 31;
       thermalZone = 'ambient';
       heatSource = 'Typist fingertip contact conduction (31°C).';
     } else {
-      tempCelsius = 23;
+      tempCelsius = 24;
       thermalZone = 'ambient';
-      heatSource = 'Ambient room air (23°C).';
+      heatSource = 'Ambient keyboard chassis equilibrium (24°C).';
     }
   }
 
