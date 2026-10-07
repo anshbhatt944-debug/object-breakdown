@@ -87,8 +87,46 @@ function registerMesh(
   // This makes each physical part independently animatable during an exploded view.
   root.attach(mesh);
 
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
+  const isWatch = objectId === 'wristwatch';
+  const meshName = mesh.name;
+  const compId = mapping?.componentId || (isMeaningfulComponentName(meshName) ? meshName : (isWatch ? `watch-part-${sequenceIndex + 1}` : `aux-assembly-${sequenceIndex + 1}`));
+  const displayName = mapping?.displayName || (isMeaningfulComponentName(meshName) ? meshName : (isWatch ? `Movement Structural Component ${sequenceIndex + 1}` : `Auxiliary Subsystem ${sequenceIndex + 1}`));
+  const category = mapping?.category || (isWatch ? 'Horological Mechanism' : 'Mechanical');
+
+  // Realistic PBR CAD shaders for mechanical keyboard GLB components
+  if (objectId === 'mechanical-keyboard') {
+    if (compId === 'pbt-keycap') {
+      mesh.material = new THREE.MeshStandardMaterial({
+        color: new THREE.Color('#1e293b'),
+        roughness: 0.55,
+        metalness: 0.04,
+      });
+    } else if (compId === 'switch-top-housing') {
+      mesh.material = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color('#e0f2fe'),
+        roughness: 0.16,
+        metalness: 0.05,
+        transmission: 0.75,
+        opacity: 0.85,
+        transparent: true,
+        ior: 1.58,
+        clearcoat: 0.85,
+        clearcoatRoughness: 0.10,
+      });
+    } else if (compId === 'switch-stem') {
+      mesh.material = new THREE.MeshStandardMaterial({
+        color: new THREE.Color('#ef4444'),
+        roughness: 0.22,
+        metalness: 0.05,
+      });
+    } else if (compId === 'switch-bottom-housing') {
+      mesh.material = new THREE.MeshStandardMaterial({
+        color: new THREE.Color('#0f172a'),
+        roughness: 0.48,
+        metalness: 0.06,
+      });
+    }
+  }
 
   const originalMats = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
   originalMats.set(
@@ -97,12 +135,6 @@ function registerMesh(
       ? mesh.material.map((m) => m.clone())
       : mesh.material.clone()
   );
-
-  const isWatch = objectId === 'wristwatch';
-  const meshName = mesh.name;
-  const compId = mapping?.componentId || (isMeaningfulComponentName(meshName) ? meshName : (isWatch ? `watch-part-${sequenceIndex + 1}` : `aux-assembly-${sequenceIndex + 1}`));
-  const displayName = mapping?.displayName || (isMeaningfulComponentName(meshName) ? meshName : (isWatch ? `Movement Structural Component ${sequenceIndex + 1}` : `Auxiliary Subsystem ${sequenceIndex + 1}`));
-  const category = mapping?.category || (isWatch ? 'Horological Mechanism' : 'Mechanical');
 
   // Mapping vectors are deliberately object-specific. A small staged delay makes
   // the breakdown read as a disassembly instead of every part moving simultaneously.
@@ -676,6 +708,221 @@ function addPenEngineeringInternals(
   });
 }
 
+function addKeyboardEngineeringInternals(
+  objectData: ObjectBreakdownData,
+  rootGroup: THREE.Group,
+  componentMap: Map<string, LoadedComponentMeshInfo>,
+  viewMode: ViewMode3D,
+) {
+  if (objectData.id !== 'mechanical-keyboard') return;
+
+  const findNode = (id: string, list: ComponentNode[]): ComponentNode | undefined => {
+    for (const item of list) {
+      if (item.id === id) return item;
+      if (item.children) {
+        const found = findNode(id, item.children);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  };
+
+  const definitions: Array<{
+    id: string;
+    name: string;
+    category: string;
+    meshKey: string;
+    color: string;
+    position: [number, number, number];
+    scale: number;
+    explodeVector: [number, number, number];
+    start: number;
+    end: number;
+    revealThreshold: number;
+    assemblyDepth: number;
+  }> = [
+    {
+      id: 'switch-spring',
+      name: '24K Gold-Plated Progressive Helical Spring',
+      category: 'Kinematics & Energy Storage',
+      meshKey: 'key-spring',
+      color: '#fbbf24',
+      position: [0, -0.72, 0],
+      scale: 1.0,
+      explodeVector: [0, 0.85, 0],
+      start: 0.18,
+      end: 0.70,
+      revealThreshold: 0.20,
+      assemblyDepth: 1,
+    },
+    {
+      id: 'switch-contact-leaf',
+      name: 'Phosphor Bronze Gold-Crosspoint Contact Leaf',
+      category: 'Electrical Contacts',
+      meshKey: 'key-leaf',
+      color: '#d97706',
+      position: [0.28, -0.75, 0],
+      scale: 1.0,
+      explodeVector: [1.8, -0.2, 0],
+      start: 0.22,
+      end: 0.74,
+      revealThreshold: 0.25,
+      assemblyDepth: 2,
+    },
+    {
+      id: 'switch-plate',
+      name: 'CNC Polycarbonate Flex-Cut Mounting Plate',
+      category: 'Structural',
+      meshKey: 'key-plate',
+      color: '#334155',
+      position: [0, -0.70, 0],
+      scale: 1.0,
+      explodeVector: [0, -1.0, 0],
+      start: 0.15,
+      end: 0.65,
+      revealThreshold: 0.00,
+      assemblyDepth: 1,
+    },
+    {
+      id: 'switch-gasket',
+      name: 'Rogers Poron XRD Acoustic Gasket Dampeners',
+      category: 'Acoustic Damping',
+      meshKey: 'key-gasket',
+      color: '#18181b',
+      position: [0, -0.78, 0],
+      scale: 1.0,
+      explodeVector: [0, -1.8, 0],
+      start: 0.18,
+      end: 0.70,
+      revealThreshold: 0.00,
+      assemblyDepth: 1,
+    },
+    {
+      id: 'pcb-assembly',
+      name: '4-Layer FR4 Keyboard PCB Substrate',
+      category: 'Electronics',
+      meshKey: 'key-pcb',
+      color: '#065f46',
+      position: [0, -1.36, 0],
+      scale: 1.0,
+      explodeVector: [0, -2.6, 0],
+      start: 0.22,
+      end: 0.75,
+      revealThreshold: 0.00,
+      assemblyDepth: 0,
+    },
+    {
+      id: 'hotswap-socket',
+      name: 'Kailh CPG151101S01 Hot-Swap Leaf Socket & Diode',
+      category: 'Interconnect',
+      meshKey: 'key-socket',
+      color: '#1e293b',
+      position: [0.35, -1.48, 0.15],
+      scale: 1.0,
+      explodeVector: [0, -3.2, 0],
+      start: 0.25,
+      end: 0.80,
+      revealThreshold: 0.30,
+      assemblyDepth: 2,
+    },
+    {
+      id: 'switch-rgb-led',
+      name: 'SMD 3528 Reverse-Mount Per-Key RGB LED',
+      category: 'Optoelectronics',
+      meshKey: 'key-led',
+      color: '#38bdf8',
+      position: [0, -1.30, -0.45],
+      scale: 1.0,
+      explodeVector: [0, -2.9, 0],
+      start: 0.24,
+      end: 0.78,
+      revealThreshold: 0.30,
+      assemblyDepth: 2,
+    },
+  ];
+
+  definitions.forEach((def) => {
+    const existingNode = findNode(def.id, objectData.rootComponents);
+    const node: ComponentNode = existingNode
+      ? { ...existingNode, meshKey: def.meshKey }
+      : {
+      id: def.id,
+      name: def.name,
+      cadId: `PART-${def.id.toUpperCase()}`,
+      category: def.category,
+      meshKey: def.meshKey,
+      explodeVector: def.explodeVector,
+      defaultColor: def.color,
+      material: {
+        name: def.name,
+        grade: 'Precision Specification',
+        type:
+          def.meshKey === 'key-spring' || def.meshKey === 'key-leaf' || def.meshKey === 'key-socket'
+            ? 'Metal'
+            : def.meshKey === 'key-led'
+            ? 'Semiconductor'
+            : 'Polymer',
+        density: 'Standard',
+      },
+      function: 'Precision mechanical keyboard component.',
+      manufacturing: {
+        process: 'Industrial manufacturing process',
+        machinery: 'Specialized tooling',
+        tolerance: '±0.02 mm',
+        defectRisks: [],
+      },
+      dimensions: { formatted: 'CAD standard' },
+      mechanicalRole: { motion: 'Axial displacement' },
+      connectedTo: [],
+      failureModes: [],
+      engineeringReason: 'Precision engineering component.',
+      dataConfidence: 'Verified',
+      revealThreshold: def.revealThreshold,
+      assemblyDepth: def.assemblyDepth,
+    };
+
+    const group = createComponentMesh(node, objectData.id, viewMode, false, false);
+    group.position.set(...def.position);
+    group.scale.setScalar(def.scale);
+    group.name = def.id;
+    group.userData.componentId = def.id;
+    rootGroup.add(group);
+
+    const originalMaterials = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
+    const childMeshes: THREE.Mesh[] = [];
+    group.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        mesh.userData.componentId = def.id;
+        childMeshes.push(mesh);
+        const material = mesh.material as THREE.Material | THREE.Material[];
+        originalMaterials.set(
+          mesh,
+          Array.isArray(material) ? material.map((m) => m.clone()) : material.clone()
+        );
+      }
+    });
+
+    componentMap.set(def.id, {
+      mesh: group,
+      componentId: def.id,
+      displayName: def.name,
+      category: def.category,
+      basePosition: group.position.clone(),
+      baseRotation: group.rotation.clone(),
+      baseScale: group.scale.clone(),
+      explodeVector: new THREE.Vector3(...def.explodeVector),
+      explodedRotation: group.rotation.clone(),
+      explodeStart: def.start,
+      explodeEnd: def.end,
+      revealThreshold: def.revealThreshold,
+      assemblyDepth: def.assemblyDepth,
+      originalMaterials,
+      sourceMeshes: childMeshes,
+    });
+  });
+}
+
 function buildProceduralFallback(
   objectData: ObjectBreakdownData,
   viewMode: ViewMode3D,
@@ -757,16 +1004,40 @@ export async function load3DModelForObject(
       try {
         const subScene = await loadGLTFGroup(sub.modelPath);
         subScene.name = sub.id;
-        subScene.scale.setScalar(sub.initialScale);
-        subScene.position.set(...sub.initialOffset);
-        if (sub.initialRotation) subScene.rotation.set(...sub.initialRotation);
-        rootGroup.add(subScene);
+
+        // Container group encapsulates local rotations and provides clean horizontal centering
+        const subContainer = new THREE.Group();
+        subContainer.name = `${sub.id}-container`;
+        subContainer.add(subScene);
+
+        // Apply initial rotation to the subScene first
+        if (sub.initialRotation) {
+          subScene.rotation.set(...sub.initialRotation);
+        }
+        subContainer.updateMatrixWorld(true);
+
+        // Center subScene horizontally inside subContainer so (0, y, 0) is the coaxial center
+        const subBox = new THREE.Box3().setFromObject(subScene);
+        const subCenter = subBox.getCenter(new THREE.Vector3());
+        subScene.position.x -= subCenter.x;
+        subScene.position.z -= subCenter.z;
+        subContainer.updateMatrixWorld(true);
+
+        // Scale and position the subContainer in rootGroup space
+        subContainer.scale.setScalar(sub.initialScale);
+        subContainer.position.set(...sub.initialOffset);
+        subContainer.updateMatrixWorld(true);
+
+        rootGroup.add(subContainer);
       } catch (e) {
         console.warn(`Could not load sub-model ${sub.modelPath}:`, e);
       }
     }
 
     processGLTFMeshes(rootGroup, config, componentMap);
+    if (objectData.id === 'mechanical-keyboard') {
+      addKeyboardEngineeringInternals(objectData, rootGroup, componentMap, viewMode);
+    }
   } else if (config?.type === 'gltf' && config.modelPath) {
     try {
       const gltfScene = await loadGLTFGroup(config.modelPath);
