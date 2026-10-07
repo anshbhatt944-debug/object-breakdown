@@ -1231,8 +1231,21 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
               info.mesh.position.y += Math.sin(kTime * 2.5) * 0.015 * (1 - localProgress);
             }
           } else if (currentModelId === 'mechanical-keyboard') {
+            const isPlaying = isPlayingMechanismRef.current;
+            const keySpeed = isPlaying ? 4.5 : 2.5;
+            const rawStroke = Math.sin(kTime * keySpeed);
+            // Keystroke stroke displacement: travels downwards
+            const strokeDisp = Math.max(0, rawStroke) * 0.16 * (1 - localProgress);
+
             if (id === 'pbt-keycap' || id === 'switch-stem') {
-              info.mesh.position.y += Math.sin(kTime * 3.5) * 0.04 * (1 - localProgress);
+              info.mesh.position.y -= strokeDisp;
+            } else if (id === 'switch-spring') {
+              // Helical spring compresses axially under stem stroke
+              info.mesh.scale.y = Math.max(0.65, 1.0 - strokeDisp * 1.8);
+            } else if (id === 'switch-contact-leaf') {
+              // Contact leaf flexes when stem reaches 2.0 mm actuation threshold
+              const isActuated = strokeDisp > 0.07;
+              info.mesh.position.x += (isActuated ? 0.025 : 0) * (1 - localProgress);
             }
           } else if (currentModelId === 'jet-turbine') {
             const isPlaying = isPlayingMechanismRef.current;
