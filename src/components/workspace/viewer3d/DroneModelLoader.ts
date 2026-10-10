@@ -3,7 +3,21 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { ObjectBreakdownData, ViewMode3D, ComponentNode } from '../../../types/objectData';
 import { MODEL_ASSETS, ModelAssetConfig, ModelMeshMapping } from '../../../data/modelRegistry';
-import { createComponentMesh } from './proceduralMeshes';
+import {
+  createComponentMesh,
+  createAerodynamicBilletImpeller,
+  createAerodynamicInconelTurbineWheel,
+  createPrecisionTurbochargerCHRA,
+  createPrecisionInconelHeatShield,
+} from './proceduralMeshes';
+import {
+  getCastAluminumNormalMap,
+  getCastIronNormalMap,
+  getTurbineHeatPatinaMap,
+  getBilletMachinedNormalMap,
+  getBrushedStainlessNormalMap,
+  getZincDichromateColorMap,
+} from './proceduralTextures';
 import {
   getFEAStressMaterial,
   getFLIRThermalMaterial,
@@ -123,6 +137,7 @@ function registerMesh(
   sequenceIndex: number,
   sequenceCount: number,
   preserveHierarchy = false,
+  objectId?: string,
 ) {
   root.updateMatrixWorld(true);
   mesh.updateMatrixWorld(true);
@@ -135,6 +150,138 @@ function registerMesh(
   mesh.castShadow = true;
   mesh.receiveShadow = true;
 
+  const meshName = mesh.name;
+  const compId = mapping?.componentId || meshName || `comp-${mesh.id}`;
+  const displayName = mapping?.displayName || meshName || 'Component';
+  const category = mapping?.category || 'Mechanical';
+
+  // Realistic PBR metallurgical CAD shaders for turbocharged car engine / turbocharger components
+  if (objectId === 'car-engine') {
+    if (compId === 'turbo-compressor-housing') {
+      // Cast A356-T6 Aluminum volute housing with micro-pebble cast grain bump and specular cast luster
+      mesh.material = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color('#d8dee9'),
+        normalMap: getCastAluminumNormalMap(),
+        normalScale: new THREE.Vector2(0.95, 0.95),
+        roughness: 0.32,
+        metalness: 0.88,
+        clearcoat: 0.42,
+        clearcoatRoughness: 0.22,
+        reflectivity: 0.90,
+      });
+    } else if (compId === 'turbo-compressor-inlet') {
+      // Cold air induction bellmouth snout with CNC turning toolpaths
+      mesh.material = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color('#f1f5f9'),
+        normalMap: getBilletMachinedNormalMap(),
+        normalScale: new THREE.Vector2(0.5, 0.5),
+        roughness: 0.16,
+        metalness: 0.95,
+        clearcoat: 0.85,
+        clearcoatRoughness: 0.08,
+        reflectivity: 0.98,
+      });
+    } else if (compId === 'turbo-impeller-wheel') {
+      // 5-axis CNC point-milled forged billet 2618-T6 aluminum impeller
+      mesh.material = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color('#f8fafc'),
+        normalMap: getBilletMachinedNormalMap(),
+        normalScale: new THREE.Vector2(0.75, 0.75),
+        roughness: 0.08,
+        metalness: 0.98,
+        clearcoat: 0.95,
+        clearcoatRoughness: 0.04,
+        reflectivity: 1.0,
+      });
+    } else if (compId === 'turbo-chra-core') {
+      // GGG-40 ductile cast iron center bearing housing with oil-cured satin finish & sand-cast grain
+      mesh.material = new THREE.MeshStandardMaterial({
+        color: new THREE.Color('#2b303a'),
+        normalMap: getCastIronNormalMap(),
+        normalScale: new THREE.Vector2(0.5, 0.5),
+        roughness: 0.38,
+        metalness: 0.78,
+      });
+    } else if (compId === 'turbo-heat-shield') {
+      // Stamped Inconel 625 radiant heat shield with iridescent golden straw-amber temper oxidation
+      mesh.material = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color('#f59e0b'),
+        roughness: 0.18,
+        metalness: 0.92,
+        clearcoat: 0.80,
+        clearcoatRoughness: 0.12,
+      });
+    } else if (compId === 'turbo-turbine-housing') {
+      // Ni-Resist D-5S high-nickel austenitic ductile iron with heat-cycled refractory patina and cast grain
+      mesh.material = new THREE.MeshStandardMaterial({
+        color: new THREE.Color('#5c6473'),
+        map: getTurbineHeatPatinaMap(),
+        normalMap: getCastIronNormalMap(),
+        normalScale: new THREE.Vector2(0.85, 0.85),
+        roughness: 0.42,
+        metalness: 0.74,
+      });
+    } else if (compId === 'turbo-turbine-wheel') {
+      // Inconel 713C high-temperature nickel superalloy radial turbine wheel with heat-tint oxide
+      mesh.material = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color('#5e6572'),
+        map: getTurbineHeatPatinaMap(),
+        normalMap: getCastIronNormalMap(),
+        normalScale: new THREE.Vector2(0.6, 0.6),
+        roughness: 0.28,
+        metalness: 0.90,
+        clearcoat: 0.55,
+        clearcoatRoughness: 0.18,
+      });
+    } else if (compId === 'turbo-exhaust-flange') {
+      // Thick T3/T4 divided manifold flange with machined mating face and mill scale
+      mesh.material = new THREE.MeshStandardMaterial({
+        color: new THREE.Color('#4b515d'),
+        normalMap: getCastIronNormalMap(),
+        normalScale: new THREE.Vector2(0.65, 0.65),
+        roughness: 0.35,
+        metalness: 0.84,
+      });
+    } else if (compId === 'turbo-exhaust-outlet') {
+      // High-flow discharge port & Inconel downpipe transition
+      mesh.material = new THREE.MeshStandardMaterial({
+        color: new THREE.Color('#555e6c'),
+        normalMap: getCastIronNormalMap(),
+        normalScale: new THREE.Vector2(0.5, 0.5),
+        roughness: 0.32,
+        metalness: 0.88,
+      });
+    } else if (compId === 'turbo-wastegate-actuator') {
+      // Deep-drawn yellow-zinc dichromate plated steel canister
+      mesh.material = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color('#d97706'),
+        map: getZincDichromateColorMap(),
+        roughness: 0.20,
+        metalness: 0.88,
+        clearcoat: 0.70,
+        clearcoatRoughness: 0.14,
+      });
+    } else if (compId === 'turbo-wastegate-linkage') {
+      // Precision 304 stainless steel threaded pushrod with linear brushed texture
+      mesh.material = new THREE.MeshStandardMaterial({
+        color: new THREE.Color('#e2e8f0'),
+        normalMap: getBrushedStainlessNormalMap(),
+        normalScale: new THREE.Vector2(0.75, 0.75),
+        roughness: 0.14,
+        metalness: 0.96,
+      });
+    } else if (compId === 'turbo-oil-ports') {
+      // Aircraft anodized blue -4AN oil restrictor banjo fitting
+      mesh.material = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color('#0284c7'),
+        roughness: 0.18,
+        metalness: 0.92,
+        clearcoat: 0.85,
+        clearcoatRoughness: 0.10,
+      });
+    }
+  }
+
   const originalMats = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
   originalMats.set(
     mesh,
@@ -142,11 +289,6 @@ function registerMesh(
       ? mesh.material.map((m) => m.clone())
       : mesh.material.clone()
   );
-
-  const meshName = mesh.name;
-  const compId = mapping?.componentId || meshName || `comp-${mesh.id}`;
-  const displayName = mapping?.displayName || meshName || 'Component';
-  const category = mapping?.category || 'Mechanical';
 
   // Mapping vectors are deliberately object-specific. A small staged delay makes
   // the breakdown read as a disassembly instead of every part moving simultaneously.
@@ -360,6 +502,7 @@ function processGLTFMeshes(
       index,
       meshes.length,
       false,
+      config.objectId,
     );
     mesh.userData.sourceMeshName = originalName;
   });
@@ -528,6 +671,193 @@ function addPenEngineeringInternals(
   });
 }
 
+function addTurbochargerEngineeringInternals(
+  objectData: ObjectBreakdownData,
+  rootGroup: THREE.Group,
+  componentMap: Map<string, LoadedComponentMeshInfo>,
+  _viewMode: ViewMode3D,
+) {
+  if (objectData.id !== 'car-engine') return;
+
+  // 1. Hide legacy broken/distorted GLTF polygon meshes
+  ['turbo-chra-core', 'turbo-heat-shield', 'turbo-impeller-wheel', 'turbo-turbine-wheel'].forEach((id) => {
+    const oldInfo = componentMap.get(id);
+    if (oldInfo) {
+      oldInfo.mesh.visible = false;
+      if ((oldInfo.mesh as THREE.Mesh).isMesh) {
+        (oldInfo.mesh as THREE.Mesh).geometry = new THREE.BufferGeometry();
+      }
+    }
+  });
+
+  // 2. High-Performance CAD PBR Metallurgy Shaders
+  const chraMat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color('#2b303a'),
+    normalMap: getCastIronNormalMap(),
+    normalScale: new THREE.Vector2(0.5, 0.5),
+    roughness: 0.42,
+    metalness: 0.78,
+  });
+
+  const anodizedOilMat = new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color('#0284c7'),
+    roughness: 0.18,
+    metalness: 0.92,
+    clearcoat: 0.85,
+    clearcoatRoughness: 0.10,
+  });
+
+  const impellerMat = new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color('#f8fafc'),
+    normalMap: getBilletMachinedNormalMap(),
+    normalScale: new THREE.Vector2(0.75, 0.75),
+    roughness: 0.08,
+    metalness: 0.98,
+    clearcoat: 0.96,
+    clearcoatRoughness: 0.04,
+    reflectivity: 1.0,
+  });
+
+  const heatShieldMat = new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color('#f59e0b'),
+    roughness: 0.18,
+    metalness: 0.92,
+    clearcoat: 0.85,
+    clearcoatRoughness: 0.12,
+  });
+
+  const turbineMat = new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color('#585e68'),
+    map: getTurbineHeatPatinaMap(),
+    normalMap: getCastIronNormalMap(),
+    normalScale: new THREE.Vector2(0.65, 0.65),
+    roughness: 0.30,
+    metalness: 0.88,
+    clearcoat: 0.60,
+    clearcoatRoughness: 0.16,
+  });
+
+  // 3. Precision Engineering Procedural Assemblies
+  // CHRA: Integrated CNC 6061-T6 aluminum backplate (Ø 4.50) + GGG-40 cast iron body (Ø 4.30)
+  // Seamlessly spans Z in [-0.855, +0.465] bridging the compressor and turbine housings flush
+  const chraGroup = createPrecisionTurbochargerCHRA(chraMat, anodizedOilMat);
+  chraGroup.position.set(0, 3.029, 0.025);
+  rootGroup.add(chraGroup);
+
+  // Inconel 625 Heat Shield (Ø 4.20 dished thermal radiation barrier)
+  const heatShieldGroup = createPrecisionInconelHeatShield(heatShieldMat);
+  heatShieldGroup.position.set(0, 3.029, 0.425);
+  rootGroup.add(heatShieldGroup);
+
+  // 12-Blade Billet Compressor Impeller (6 primary + 6 splitters point-milled with 35° backsweep)
+  const impellerGroup = createAerodynamicBilletImpeller(1.60, 1.30, impellerMat);
+  impellerGroup.position.set(0, 3.029, -1.55);
+  rootGroup.add(impellerGroup);
+
+  // 9-Blade Radial-Inflow Inconel 713C Turbine Wheel
+  const turbineGroup = createAerodynamicInconelTurbineWheel(1.55, 1.25, turbineMat);
+  turbineGroup.position.set(0, 3.029, 1.15);
+  rootGroup.add(turbineGroup);
+
+  // 4. Register Clean Groups in componentMap with ordered axial explode vectors
+  const registerProceduralComponent = (
+    id: string,
+    group: THREE.Group,
+    displayName: string,
+    category: string,
+    explodeVector: [number, number, number],
+    explodeStart: number,
+    explodeEnd: number,
+    revealThreshold: number,
+    assemblyDepth: number
+  ) => {
+    group.name = id;
+    group.userData.componentId = id;
+    const childMeshes: THREE.Mesh[] = [];
+    const originalMaterials = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
+
+    group.traverse((c) => {
+      if ((c as THREE.Mesh).isMesh) {
+        const m = c as THREE.Mesh;
+        m.userData.componentId = id;
+        m.castShadow = true;
+        m.receiveShadow = true;
+        childMeshes.push(m);
+        originalMaterials.set(
+          m,
+          Array.isArray(m.material) ? m.material.map(mat => mat.clone()) : m.material.clone()
+        );
+      }
+    });
+
+    componentMap.set(id, {
+      mesh: group,
+      componentId: id,
+      displayName,
+      category,
+      basePosition: group.position.clone(),
+      baseRotation: group.rotation.clone(),
+      baseScale: group.scale.clone(),
+      explodeVector: new THREE.Vector3(...explodeVector),
+      explodedRotation: group.rotation.clone(),
+      explodeStart,
+      explodeEnd,
+      revealThreshold,
+      assemblyDepth,
+      originalMaterials,
+      sourceMeshes: childMeshes,
+    });
+  };
+
+  registerProceduralComponent(
+    'turbo-chra-core',
+    chraGroup,
+    'Center Housing Rotating Assembly (CHRA) & Compressor Backplate',
+    'Core Rotordynamics & Tribology',
+    [0, 0, 0],
+    0.20,
+    0.70,
+    0.00,
+    0
+  );
+
+  registerProceduralComponent(
+    'turbo-heat-shield',
+    heatShieldGroup,
+    'Inconel 625 Thermal Radiation Barrier & Piston Ring Seal Backplate',
+    'Thermal Protection & Barrier',
+    [0, 0, 1.2],
+    0.22,
+    0.72,
+    0.48,
+    2
+  );
+
+  registerProceduralComponent(
+    'turbo-impeller-wheel',
+    impellerGroup,
+    '5-Axis CNC Forged Billet 2618-T6 Compressor Impeller (12 Blades)',
+    'Centrifugal Fluid Compression',
+    [0, 0, -3.8],
+    0.08,
+    0.58,
+    0.20,
+    1
+  );
+
+  registerProceduralComponent(
+    'turbo-turbine-wheel',
+    turbineGroup,
+    'Inconel 713C High-Temperature 9-Blade Radial Inflow Turbine Wheel',
+    'Enthalpy Extraction & Turbine Dynamics',
+    [0, 0, 3.8],
+    0.15,
+    0.65,
+    0.20,
+    1
+  );
+}
+
 function buildProceduralFallback(
   objectData: ObjectBreakdownData,
   viewMode: ViewMode3D,
@@ -674,6 +1004,7 @@ export async function load3DModelForObject(
         rootGroup.add(gltfScene);
         processGLTFMeshes(rootGroup, config, componentMap);
         addPenEngineeringInternals(objectData, rootGroup, componentMap, viewMode);
+        addTurbochargerEngineeringInternals(objectData, rootGroup, componentMap, viewMode);
       }
     } catch (e) {
       console.warn(`Could not load GLTF model for ${objectData.id}, using procedural fallback`, e);
@@ -695,6 +1026,9 @@ export async function load3DModelForObject(
   // Center all child meshes/groups inside rootGroup so (0,0,0) is the true geometric center
   rootGroup.children.forEach((child) => {
     child.position.sub(center);
+    if (child.userData) {
+      child.userData.basePosition = child.position.clone();
+    }
   });
   rootGroup.position.set(0, 0, 0);
 
@@ -712,8 +1046,23 @@ export async function load3DModelForObject(
       info.basePosition.copy(info.mesh.position);
       info.baseRotation.copy(info.mesh.rotation);
       info.baseScale.copy(info.mesh.scale);
+      info.explodedRotation.copy(info.mesh.rotation);
       info.mesh.position.copy(info.basePosition);
       info.mesh.rotation.copy(info.baseRotation);
+      info.mesh.userData.componentId = info.componentId;
+
+      if (info.sourceMeshes) {
+        info.sourceMeshes.forEach((m) => {
+          m.userData.componentId = info.componentId;
+          if (!m.userData) m.userData = {};
+          if (!m.userData.basePosition) m.userData.basePosition = new THREE.Vector3();
+          if (!m.userData.baseRotation) m.userData.baseRotation = new THREE.Euler();
+          if (!m.userData.baseScale) m.userData.baseScale = new THREE.Vector3(1, 1, 1);
+          m.userData.basePosition.copy(m.position);
+          m.userData.baseRotation.copy(m.rotation);
+          m.userData.baseScale.copy(m.scale);
+        });
+      }
 
       // Re-derive explosion vectors for unmapped meshes using the newly centered geometry
       const mapping = config ? findMeshMapping(config, info.mesh.name) : undefined;
