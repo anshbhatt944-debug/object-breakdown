@@ -4,243 +4,1323 @@ export const carEngineData: ObjectBreakdownData = {
   id: 'car-engine',
   name: 'Turbocharged Car Engine',
   category: 'Thermodynamic / Mechanical',
-  subtitle: '2.0L Inline-4 DOHC Direct-Injection Turbocharged ICE',
-  heroTagline: 'High-pressure cylinder combustion, forced-induction boost, and reciprocating mechanical dynamics.',
+  subtitle: '2.0L Inline-4 DOHC Direct-Injection Twin-Scroll Turbocharged ICE',
+  heroTagline: 'Divided twin-scroll forced induction, 350-bar direct fuel injection, and 140-bar reciprocating combustion thermodynamics.',
   thumbnail: 'engine',
   complexityScore: {
-    overall: 9.6,
+    overall: 9.8,
     mechanical: 9.9,
-    electrical: 8.2,
-    material: 9.5,
-    manufacturing: 9.8,
-    assembly: 9.7,
+    electrical: 8.9,
+    material: 9.8,
+    manufacturing: 9.9,
+    assembly: 9.8,
   },
   stats: {
-    componentCount: 185,
-    materialCount: 12,
-    manufacturingStages: 22,
-    movingParts: 74,
-    approxCostUsd: '$3,200 - $6,500',
-    productionVolume: '15M+ units/year',
+    componentCount: 285,
+    materialCount: 16,
+    manufacturingStages: 34,
+    movingParts: 92,
+    approxCostUsd: '$4,200 - $7,800',
+    productionVolume: '18M+ units/year',
   },
   summary:
-    'A modern high-performance turbocharged internal combustion engine converts chemical fuel energy into rotational mechanical horsepower through the four-stroke Otto thermodynamic cycle. Operating at combustion pressures exceeding 140 bar (2,000 PSI) and temperatures above 2,200°C, it balances reciprocating piston dynamics, variable valve timing (VVT), dual-scroll turbocharging, and 350-bar gasoline direct injection.',
+    'A modern high-performance turbocharged internal combustion engine (ICE) is a pinnacle of thermodynamic and rotordynamic engineering, transforming chemical fuel enthalpy into mechanical shaft horsepower at over 40% brake thermal efficiency. The assembly features a high-efficiency twin-scroll exhaust gas turbocharger operating at 220,000 RPM and 1,020°C exhaust gas temperatures, feeding compressed charge air at 1.85 bar (26.8 PSI) boost into four high-compression combustion chambers. Reciprocating forged pistons endure 2,500 Gs of acceleration and 140 bar (2,030 PSI) peak cylinder firing pressures, driving a deep-fillet induction-hardened cross-plane crankshaft through laser-fractured connecting rods while variable valve timing (VVT) and 350-bar gasoline direct injection optimize combustion dynamics across the entire 800 to 7,200 RPM operating envelope.',
   engineeringDisciplines: [
     'Thermodynamics & Four-Stroke Otto Cycle Dynamics',
-    'High-Temperature Metallurgy & Single-Crystal Alloys',
-    'Fluid Mechanics & Forced-Induction Gas Dynamics',
-    'Tribology & Hydrodynamic Journal Bearing Lubrication',
+    'Compressible Gas Dynamics & Centrifugal Turbo-Compressor Aerodynamics',
+    'High-Temperature Nickel Superalloy Metallurgy & Creep Physics',
+    'Tribology, Micro-Honing & 360° Hydrodynamic Journal Bearing Dynamics',
+    'Pneumatic Closed-Loop Wastegate Actuation & Boost Control Kinematics',
+    'Combustion Chemistry & 350-Bar Gasoline Direct Injection (GDI)',
   ],
   rootComponents: [
+    // =========================================================================
+    // 1. FORCED INDUCTION & TURBOCHARGER CORE ASSEMBLY
+    // =========================================================================
     {
-      id: 'cylinder-block-assembly',
-      name: 'Engine Block & Crankcase Assembly',
-      cadId: 'SUB-ENG-01',
-      category: 'Structural Engine Block',
-      meshKey: 'engine-block',
-      explodeVector: [0, 0, 0],
-      defaultColor: '#475569',
+      id: 'turbo-compressor-housing',
+      name: 'Cast A356-T6 Aluminum Twin-Volute Compressor Housing',
+      cadId: 'TURBO-CMP-01',
+      category: 'Air Induction Enclosure',
+      meshKey: 'turbo-compressor-housing',
+      explodeVector: [0, 0, -2.8],
+      defaultColor: '#cbd5e1',
       material: {
-        name: 'Cast Aluminum A319 with Spun Cast-Iron Cylinder Liners',
-        grade: 'A319-T6 Aluminum / Grey Cast Iron (GG25)',
+        name: 'Cast A356-T6 Permanent Mold Aerospace Aluminum Alloy',
+        grade: 'ASTM B26 A356.0-T6 / Al-Si7Mg0.3 Solution-Treated & Aged',
         type: 'Metal',
-        density: '2.79 g/cm³ (Al) / 7.2 g/cm³ (Iron)',
-        tensileStrength: '280 MPa (Al)',
+        density: '2.68 g/cm³',
+        tensileStrength: '310 MPa',
+        yieldStrength: '235 MPa',
+        thermalConductivity: '159 W/(m·K)',
+        hardness: '90-100 HB',
       },
-      function: 'Provides the rigid foundation housing cylinders, coolant passages, oil galleries, and crankshaft main journal bearings.',
+      function:
+        'Decelerates supersonic air leaving the spinning compressor wheel tips, converting kinetic velocity into static pressure (up to 1.85 bar relative boost) through an aerodynamically contoured logarithmic spiral volute and diffuser.',
       manufacturing: {
-        process: 'High-Pressure Die Casting (HPDC) with Semi-Permanent Sand Cores followed by CNC Multi-Spindle Line Boring and Plateau Cylinder Honing',
-        machinery: 'Nagel Cylinder Honing Machine + Makino 5-Axis Engine Machining Center',
-        tolerance: 'Cylinder bore cylindricity: ±0.003 mm',
-        defectRisks: ['Porosity in coolant water jacket', 'Main bore misalignment'],
+        process:
+          'Permanent Mold Gravity Die Casting with Automated Core Extraction followed by 5-Axis CNC High-Speed Contour Milling and Ported-Shroud Anti-Surge Bleed Slot Broaching',
+        machinery: 'Makino A61nx 5-Axis Horizontal Machining Center + Mitutoyo Crysta-Apex CMM',
+        tolerance: 'Compressor inducer bore runout: ±0.010 mm; Volute throat profile: ±0.015 mm',
+        defectRisks: ['Inter-dendritic microporosity in diffuser wall', 'Machining burrs in anti-surge recirculating bleed slots'],
       },
       dimensions: {
-        length: '485 mm × 390 mm × 410 mm (Weight: 38 kg bare block)',
-        formatted: '485 × 390 × 410 mm (Bore 82.5 mm × Stroke 92.8 mm)',
+        length: '240 mm × 260 mm × 165 mm',
+        formatted: 'Envelope: Ø 165 mm Volute, Inducer Bore Ø 58.000 mm (Wall: 4.8 mm, Mass: 2.85 kg)',
       },
       mechanicalRole: {
-        forces: 'Peak combustion pressure load: 140 bar (75,000 N per cylinder firing)',
-        motion: 'Static foundation',
+        forces: 'Internal cyclic pneumatic hoop burst stress: 3.2 bar absolute peak; Intake suction vacuum: -0.15 bar',
+        motion: 'Static aerodynamic pressure containment housing',
       },
-      connectedTo: ['piston-rod-assembly', 'crankshaft-assembly', 'cylinder-head'],
+      connectedTo: ['turbo-compressor-inlet', 'turbo-chra-core', 'intercooler-charge-piping'],
       failureModes: [
         {
-          mode: 'Cylinder bore scuffing / Ring micro-welding',
-          cause: 'Oil film breakdown under localized thermal hot spots.',
-          mitigation: 'Cross-hatch plateau honing to retain hydrodynamic oil pockets.',
+          mode: 'High-cycle fatigue acoustic cracking at diffuser tongue (cutwater)',
+          cause: 'Severe blade-pass pressure pulses during continuous high-boost compressor surge events.',
+          mitigation: 'Dual ported-shroud bleed bleed cavities and thick reinforced volute throat fillets.',
           severity: 'Critical',
         },
       ],
       engineeringReason:
-        'Cast aluminum reduces total engine mass by 28 kg compared to iron blocks, while iron cylinder liners provide wear resistance against piston ring friction.',
+        'A356-T6 aluminum provides superior strength-to-weight ratio (saving 4.2 kg over iron) while its high 159 W/(m·K) thermal conductivity dissipates heat generated by air adiabatic compression (up to 160°C discharge temp).',
       dataConfidence: 'Verified',
+      assemblyDepth: 0,
+      revealThreshold: 0.00,
+      technicalNotes: [
+        'Volute profile follows a logarithmic spiral A(θ) = A_throat · (θ / 360°) to maintain constant circumferential flow velocity.',
+        'Integrates an annular ported shroud bleed ring that expands the compressor surge margin by 18% during low-flow high-boost spooling.',
+        'Mating flange with the CHRA utilizes a full 360° V-band clamp torque-loaded to 14.5 N·m for leak-free sealing.',
+      ],
+      inspectionPoints: [
+        'Inducer bore diametrical cylindricity verified on CMM with scanning probe (spec: < 0.008 mm).',
+        'Helium mass-spectrometer pressure decay leak test at 3.5 bar pneumatic charge.',
+        'Fluorescent dye penetrant inspection (ASTM E1417) across tongue root fillet to verify zero surface micro-porosity.',
+      ],
+      interfaces: [
+        'V-band circumferential compression clamp interface to CHRA bearing cartridge',
+        'Cold air bellmouth induction snout clamping lip with bead-lock retention groove',
+        'High-boost charge discharge pipe silicone hose interface with integrated bead roll',
+      ],
+      designPrinciples: [
+        'Minimize diffusion velocity loss through gentle 8° included divergence angle on diffuser walls.',
+        'Preserve structural hoop integrity to guarantee full containment in the event of an uncontained impeller blade burst at 220,000 RPM.',
+      ],
+    },
+    {
+      id: 'turbo-compressor-inlet',
+      name: 'Cold Air Induction Bellmouth Inlet Snout & Billet Impeller Wheel',
+      cadId: 'TURBO-IND-02',
+      category: 'Centrifugal Fluid Compression',
+      meshKey: 'turbo-compressor-inlet',
+      explodeVector: [0, 0, -4.6],
+      defaultColor: '#f8fafc',
+      material: {
+        name: 'Forged Billet 2618-T6 High-Strength Aluminum (Impeller) & Spun Aluminum Snout',
+        grade: 'AMS 4132 / EN AW-2618A (Impeller) & Al 6061-T6 (Snout)',
+        type: 'Metal',
+        density: '2.76 g/cm³',
+        tensileStrength: '440 MPa',
+        yieldStrength: '370 MPa',
+        thermalConductivity: '146 W/(m·K)',
+        hardness: '120 HB',
+      },
+      function:
+        'Conditions incoming ambient air into uniform laminar axial flow and utilizes a 5-axis point-milled 6+6 blade forged billet compressor wheel to accelerate air to Mach 1.45 at 220,000 RPM, imparting massive kinetic energy into the airstream.',
+      manufacturing: {
+        process:
+          'Point-by-Point 5-Axis High-Speed CNC Flank Milling from Solid Forged Billet 2618-T6 followed by Micro-Bead Blasting, Anodic Surface Passivation, and Multi-Plane VSR Dynamic High-Speed Balancing',
+        machinery: 'Hermle C32U 5-Axis Dynamic Machining Center + Schenck TBcomfort High-Speed Core Balancer',
+        tolerance: 'Blade profile coordinate tolerance: ±0.005 mm; Residual unbalance: < 0.003 mg·mm',
+        defectRisks: ['Micro-cutter chatter marks on razor splitter blade tips', 'Residual dynamic unbalance at 200,000 RPM'],
+      },
+      dimensions: {
+        length: '145 mm × Ø 110 mm',
+        formatted: 'Outer Snout Ø 110 mm, Inducer Ø 54.000 mm / Exducer Ø 67.000 mm (Extended Tip Ø 71 mm, 520 g)',
+      },
+      mechanicalRole: {
+        forces: 'Blade tip centrifugal acceleration: 180,000 Gs; Centrifugal root tension: ~280 MPa; Tip speed: 510 m/s (Mach 1.45)',
+        motion: 'Ultra-high-speed rotordynamics: 20,000 to 220,000 RPM continuous rotary motion',
+      },
+      connectedTo: ['turbo-compressor-housing', 'turbo-chra-core'],
+      failureModes: [
+        {
+          mode: 'High-cycle blade fatigue failure / Foreign Object Damage (FOD)',
+          cause: 'Ingestion of unmetered particulate or acoustic flutter resonance during compressor surge.',
+          mitigation: 'Point-milled forged 2618 billet grain structure and 40-mesh stainless intake air filtration.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'CNC point-milled billet 2618-T6 forged aluminum allows razor-thin 0.5 mm aerodynamic blade leading edges with 100% void-free grain flow, delivering 15% higher fatigue life and 22% lower rotational inertia than cast wheels.',
+      dataConfidence: 'Verified',
+      assemblyDepth: 1,
+      revealThreshold: 0.25,
+      technicalNotes: [
+        'Features a 6 primary + 6 secondary aerodynamic splitter blade configuration for optimal boundary layer control.',
+        'Extended Tip Technology (ETT) flattens the pressure ratio curve, maintaining peak efficiency past 2.0 bar boost.',
+        'Thru-bore shaft interface employs an interference shrink fit with M7 left-hand locking nut torqued to stretch specification.',
+      ],
+      inspectionPoints: [
+        'Optical white-light interferometry for 3D blade airfoil contour verification across all 12 vanes.',
+        'High-speed vibration sorting rig (VSR) balance testing up to 250,000 RPM.',
+        'Fluorescent eddy-current crack detection along wheel hub bore fillet.',
+      ],
+      interfaces: [
+        'High-pressure induction silicone coupler to mass airflow (MAF) meter',
+        'Precision precision-ground ground shaft journal taper and M7 LH locking thread',
+      ],
+      designPrinciples: [
+        'Maximize blade backward curvature (backsweep angle 30°-45°) for wider stable operating choke-to-surge compressor map.',
+        'Minimize rotating inertia (polar moment I = 0.5 · m · r²) to slash spool-up transient turbo lag time.',
+      ],
+    },
+    {
+      id: 'turbo-impeller-wheel',
+      name: '5-Axis CNC Forged Billet 2618-T6 Compressor Impeller (12 Blades)',
+      cadId: 'TURBO-IMP-02B',
+      category: 'Centrifugal Fluid Compression',
+      meshKey: 'turbo-impeller-wheel',
+      explodeVector: [0, 0, -3.8],
+      defaultColor: '#f8fafc',
+      material: {
+        name: 'Forged Billet 2618-T6 Aerospace Aluminum (High-Copper / Low-Silicon)',
+        grade: 'AMS 4132 / EN AW-2618A-T6 (Al-Cu2.3-Mg1.5-Fe1.1-Ni1.0)',
+        type: 'Metal',
+        density: '2.76 g/cm³',
+        tensileStrength: '440 MPa',
+        yieldStrength: '370 MPa',
+        thermalConductivity: '146 W/(m·K)',
+        hardness: '120 HB',
+      },
+      function:
+        'Spins up to 220,000 RPM (tip velocity Mach 1.45 / 510 m/s), intaking ambient charge air axially and accelerating it radially through 6 primary full-height swept blades and 6 secondary splitter blades with 35° backsweep to build up to 1.85 bar boost.',
+      manufacturing: {
+        process:
+          'Point-by-point 5-axis continuous CNC flank milling from solid forged billet 2618-T6, vibratory ceramic tumbling, anodic passivation, and multi-plane Schenck VSR dynamic balancing to ISO 1940-1 Grade G 0.4.',
+        machinery: 'Hermle C32U 5-Axis Dynamic Machining Center + Schenck TBcomfort High-Speed Core Balancer',
+        tolerance: 'Airfoil blade contour: ±0.003 mm; Residual unbalance: < 0.003 mg·mm',
+        defectRisks: ['Micro-cutter deflection on ultra-thin 0.5 mm splitter leading edges', 'Centrifugal blade root fatigue under surge flutter'],
+      },
+      dimensions: {
+        length: '48 mm × Ø 71.0 mm',
+        formatted: 'Exducer Ø 71.0 mm (Extended Tip), Inducer Ø 54.0 mm, Bore Ø 8.500 mm (12 Blades, 165 g)',
+      },
+      mechanicalRole: {
+        forces: 'Centrifugal acceleration at exducer tip: 180,000 Gs; Hub hoop stress: ~280 MPa; Tip speed: 510 m/s (Mach 1.45)',
+        motion: 'Ultra-high-speed rotordynamics: 20,000 to 220,000 RPM continuous rotary motion',
+      },
+      connectedTo: ['turbo-compressor-inlet', 'turbo-compressor-housing', 'turbo-chra-core'],
+      failureModes: [
+        {
+          mode: 'Centrifugal blade root high-cycle fatigue burst',
+          cause: 'Repeated cyclic spool-up beyond 230,000 RPM combined with intake particulate foreign object damage.',
+          mitigation: 'Point-milled 2618-T6 forged billet void-free grain alignment and finite-element optimized root fillets.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'Forged billet 2618-T6 delivers 100% void-free grain structure, eliminating casting shrinkage cavities and allowing 35% thinner blade profiles that enhance flow velocity while reducing spool-up polar moment of inertia by 22%.',
+      dataConfidence: 'Verified',
+      assemblyDepth: 1,
+      revealThreshold: 0.20,
+      technicalNotes: [
+        'Features 6 primary blades and 6 secondary aerodynamic splitters with 35° backsweep for broad compressor operating map.',
+        'Extended Tip Technology (ETT) provides extra aerodynamic work at high pressure ratios exceeding 2.2 bar.',
+        'M7 left-hand locking spinner nut with aerodynamic bullet nose cone prevents flow separation at the inducer core.',
+      ],
+      inspectionPoints: [
+        'CMM 3D scanning interferometry checking blade airfoil chord angles across all 12 vanes.',
+        'Dynamic VSR core balancing up to 250,000 RPM verifying residual unbalance < 0.003 mg·mm.',
+      ],
+      interfaces: [
+        'Precision shrink-fit onto 42CrMo4 ground turbine shaft with M7 left-hand locking thread',
+        'Aerodynamic running clearance against A356-T6 compressor housing contour',
+      ],
+      designPrinciples: [
+        'Maximize blade backsweep (35°) to stabilize aerodynamic discharge and broaden the compressor choke-to-surge margin.',
+        'Minimize rotating polar moment of inertia (I = 0.5 · m · r²) for instantaneous boost spool response.',
+      ],
+    },
+    {
+      id: 'turbo-chra-core',
+      name: 'Center Housing Rotating Assembly (CHRA) & 360° Hydrodynamic Journal Bearing Core',
+      cadId: 'TURBO-CHR-03',
+      category: 'Core Rotordynamics & Tribology',
+      meshKey: 'turbo-chra-core',
+      explodeVector: [0, 0, 0],
+      defaultColor: '#38bdf8',
+      material: {
+        name: 'High-Strength Ductile Cast Iron (GGG-40) with C17200 Beryllium Copper Bearings',
+        grade: 'EN-GJS-400-15 (Cartridge) / UNS C17200 Beryllium Copper (Bearings)',
+        type: 'Metal',
+        density: '7.20 g/cm³ (Cartridge) / 8.25 g/cm³ (Bushings)',
+        tensileStrength: '400 MPa (Cartridge) / 1,200 MPa (Bushings)',
+        yieldStrength: '250 MPa (Cartridge) / 950 MPa (Bushings)',
+        hardness: '160-200 HB (Iron) / 38-44 HRC (Beryllium Copper)',
+      },
+      function:
+        'Maintains the ultra-high-speed rotordynamic shaft alignment at 220,000 RPM through dual floating hydrodynamic oil-film journal bearings and a 360° ramped thrust bearing, while routing 4.5 bar engine oil and engine coolant through internal jackets to prevent thermal soak-back.',
+      manufacturing: {
+        process:
+          'Precision Resin-Sand Core Casting followed by Multi-Spindle CNC Line Boring, Micron-Tolerance Sunnen Diamond Honing, and Multi-Axis Milling of Cross-Flow Cooling Water Jackets',
+        machinery: 'Sunnen SV-2400 Automated Diamond Honing Machine + Zeiss Prismo Ultra-Precision CMM',
+        tolerance: 'Journal bearing bore cylindricity: ±0.002 mm; Axial thrust pad flatness: 0.0015 mm',
+        defectRisks: ['Internal water-jacket sand core residue', 'Sub-micron journal bore taper or out-of-roundness'],
+      },
+      dimensions: {
+        length: '110 mm × Ø 95 mm × 95 mm',
+        formatted: 'CHRA Cartridge: 110 mm × Ø 95 mm, Shaft Journal Ø 8.500 mm (Clearance: 0.028 mm, Mass: 3.20 kg)',
+      },
+      mechanicalRole: {
+        forces: 'Axial aerodynamic thrust load: ~650 N forward/reverse; Hydrodynamic oil film pressure: > 80 bar inside shear wedge',
+        motion: 'Houses dual-speed floating hydrodynamic sleeve bearings (bearings rotate at ~35% shaft speed)',
+      },
+      connectedTo: ['turbo-compressor-housing', 'turbo-turbine-housing', 'turbo-oil-ports', 'turbo-heat-shield'],
+      failureModes: [
+        {
+          mode: 'Hydrodynamic oil film breakdown / Bearing oil coking',
+          cause: 'Engine shutdown under full boost without cooling idle period (thermal soak-back coking oil in bearing galleries).',
+          mitigation: 'Internal cross-flow water cooling jackets with auxiliary electric run-on water pump.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'Dual fully-floating hydrodynamic sleeve bearings create two concentric damping oil films (inner and outer clearance), effectively attenuating high-frequency shaft harmonic whip and unbalance vibration at 3,600 Hz.',
+      dataConfidence: 'Verified',
+      assemblyDepth: 0,
+      revealThreshold: 0.00,
+      technicalNotes: [
+        'Floating brass sleeve bearings rotate at approximately one-third of shaft speed (70,000 RPM when shaft is at 210,000 RPM), halving relative rubbing velocity.',
+        'Incorporates dynamic twin-ring gas-phase labyrinth piston rings at compressor and turbine ends to block 2 bar boost and exhaust pressure.',
+        'Coolant passages are positioned around the turbine-end journal bearing to prevent heat transfer from incandescent exhaust gases.',
+      ],
+      inspectionPoints: [
+        'Air-gage multi-plane electronic bore comparator for journal bore diametrical clearance verification.',
+        'High-pressure hydraulic flush test at 8 bar to confirm 100% absence of core casting particulates.',
+        'Dynamic balancing on Schenck VSR machine to verify residual unbalance < 0.003 mg·mm across full speed ramp.',
+      ],
+      interfaces: [
+        'Circumferential pilot ring and O-ring seal to compressor housing backplate',
+        'V-band locking flange and heat shield locator step to turbine housing',
+        'Top M12×1.25 pressurized oil inlet feed and bottom 2-bolt gravity oil scavenge drain flange',
+      ],
+      designPrinciples: [
+        'Maximize hydrodynamic damping ratio to maintain rotordynamic stability across critical shaft bending resonance frequencies.',
+        'Design water cooling thermosiphon geometry so coolant continues natural convective circulation after engine key-off.',
+      ],
+    },
+    {
+      id: 'turbo-heat-shield',
+      name: 'Inconel 625 Thermal Radiation Barrier & Piston Ring Seal Backplate',
+      cadId: 'TURBO-HSH-04',
+      category: 'Thermal Protection & Barrier',
+      meshKey: 'turbo-heat-shield',
+      explodeVector: [0, 0, 1.2],
+      defaultColor: '#f59e0b',
+      material: {
+        name: 'Inconel 625 Solid Solution-Strengthened Nickel Superalloy',
+        grade: 'AMS 5599 / UNS N06625 (Ni-Cr22-Mo9-Nb3.5)',
+        type: 'Metal',
+        density: '8.44 g/cm³',
+        tensileStrength: '930 MPa',
+        yieldStrength: '517 MPa',
+        thermalConductivity: '9.8 W/(m·K)',
+        hardness: '200-240 HB',
+      },
+      function:
+        'Provides an impenetrable thermal radiation barrier separating the 1,020°C incandescent exhaust turbine gas from the CHRA center bearing cartridge, protecting hydrodynamic oil seals from thermal degradation and oil coking.',
+      manufacturing: {
+        process:
+          'Deep-Draw Precision Hydraulic Stamping from 1.2 mm Cold-Rolled Inconel 625 Sheet followed by Laser Bore Cutting, Stress-Relief Annealing at 980°C in Vacuum Furnace, and Precision Deburring',
+        machinery: 'Schuler 400-Ton Hydraulic Transfer Press + Trumpf TruLaser Cell 7040',
+        tolerance: 'Center seal bore cylindricity: ±0.015 mm; Flange perimeter flatness: 0.025 mm',
+        defectRisks: ['Edge micro-cracking during deep draw radius forming', 'Thermal warping under vacuum annealing'],
+      },
+      dimensions: {
+        length: '155 mm × 155 mm × 12 mm',
+        formatted: 'Outer Envelope: Ø 155 mm × 1.2 mm Wall, Center Seal Bore Ø 28.000 mm (Mass: 185 g)',
+      },
+      mechanicalRole: {
+        forces: 'Thermal expansion differential stress: ~220 MPa across 600°C gradient; Exhaust backpressure thrust: ~400 N',
+        motion: 'Static thermal deflection containment barrier',
+      },
+      connectedTo: ['turbo-chra-core', 'turbo-turbine-housing'],
+      failureModes: [
+        {
+          mode: 'Thermal fatigue creep distortion & seal ring seat cocking',
+          cause: 'Rapid engine thermal cycling between -20°C cold starts and 1,000°C wide-open-throttle boost.',
+          mitigation: 'High-niobium Inconel 625 solid-solution strengthening and circumferential relief corrugations.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'Inconel 625 retains over 75% of its room-temperature yield strength at 750°C and has extremely low 9.8 W/(m·K) thermal conductivity, creating an ideal thermal insulator to stop conductive heat flux into engine oil.',
+      dataConfidence: 'Verified',
+      assemblyDepth: 2,
+      revealThreshold: 0.48,
+      technicalNotes: [
+        'Formed with radial expansion corrugation ribs that accommodate differential thermal growth without oil-seal cocking.',
+        'Houses the stationary steel piston ring seal runner bore, which prevents exhaust blowby gas from entering the CHRA.',
+        'Under normal full-load boost, the hot face operates at ~780°C while the CHRA contact face remains below 160°C.',
+      ],
+      inspectionPoints: [
+        'Optical coordinate laser profilometer checking perimeter clamping flatness.',
+        'Eddy current testing for stamping micro-fissures around the central shaft seal bore neck.',
+      ],
+      interfaces: [
+        'Clamped between CHRA turbine-side pilot flange and turbine housing clamping step',
+        'Houses dynamic steel piston ring seal on the turbine wheel hub',
+      ],
+      designPrinciples: [
+        'Maximize radiation reflection factor while minimizing conductive contact cross-sectional surface area.',
+      ],
+    },
+    {
+      id: 'turbo-turbine-housing',
+      name: 'Ni-Resist D-5S High-Nickel Cast Iron Twin-Scroll Turbine Housing',
+      cadId: 'TURBO-TRB-05',
+      category: 'Exhaust Gas Thermodynamic Expansion',
+      meshKey: 'turbo-turbine-housing',
+      explodeVector: [0, 0, 2.9],
+      defaultColor: '#475569',
+      material: {
+        name: 'High-Nickel Austenitic Ductile Iron (Ni-Resist D-5S)',
+        grade: 'ASTM A439 Type D-5S / DIN GGG-NiCr35-5-2 (35% Ni, 5.5% Cr, 2% Si)',
+        type: 'Metal',
+        density: '7.45 g/cm³',
+        tensileStrength: '420 MPa',
+        yieldStrength: '240 MPa',
+        thermalConductivity: '13.5 W/(m·K)',
+        hardness: '160-200 HB',
+      },
+      function:
+        'Channels incandescent 1,020°C exhaust gas pulses through two physically isolated volute scrolls (Scroll A: Cyl 1 & 4; Scroll B: Cyl 2 & 3), directing gas kinetic velocity onto the Inconel turbine wheel to extract enthalpy with zero pulse backflow interference.',
+      manufacturing: {
+        process:
+          'Precision Ceramic Shell Investment Casting followed by CNC Multi-Axis Milling of Exhaust Flanges, 5-Axis Volute Contour Facing, and High-Speed Induction Seat Hardening for Internal Wastegate Flapper',
+        machinery: 'Mazak Integrex e-670H 5-Axis Multi-Tasking Center + Automated CMM Metrology',
+        tolerance: 'Twin-scroll divider septum position: ±0.015 mm; Exducer bore profile: ±0.012 mm',
+        defectRisks: ['Thermal stress micro-cracking across thin scroll divider septum', 'Internal slag inclusion in high-nickel melt'],
+      },
+      dimensions: {
+        length: '230 mm × 210 mm × 145 mm',
+        formatted: 'Outer Volute Ø 145 mm, Wall 6.5 mm, Exducer Throat Ø 52.000 mm (A/R Ratio: 0.72 divided, Mass: 4.20 kg)',
+      },
+      mechanicalRole: {
+        forces: 'Internal cyclic exhaust pressure pulses: up to 3.8 bar absolute peak; Thermal expansion hoop load: ~280 MPa',
+        motion: 'Static high-temperature pressure vessel housing',
+      },
+      connectedTo: ['turbo-chra-core', 'turbo-exhaust-flange', 'turbo-exhaust-outlet', 'turbo-wastegate-actuator'],
+      failureModes: [
+        {
+          mode: 'Thermal fatigue cracking across wastegate valve seat and twin-scroll divider septum',
+          cause: 'Repeated severe thermal cycling from 1,020°C full-boost exhaust to idle, inducing high plastic thermal strain.',
+          mitigation: 'Ni-Resist D-5S high-nickel austenitic metallurgy with low thermal expansion coefficient.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'Ni-Resist D-5S contains 35% nickel, which stabilizes an austenitic matrix with exceptionally low thermal expansion (12.5×10⁻⁶ /K), preventing thermal shock cracking at continuous 1,020°C (1,868°F) exhaust gas temperatures.',
+      dataConfidence: 'Verified',
+      assemblyDepth: 0,
+      revealThreshold: 0.00,
+      technicalNotes: [
+        'Twin-scroll divided design completely separates cylinders with overlapping exhaust valve events (firing order 1-3-4-2), eliminating backflow interference and boosting turbine response by 35%.',
+        'Integrates an internal 34 mm nickel-superalloy wastegate flapper valve with high-temperature cobalt-base Stellite hardfacing.',
+        'A/R ratio of 0.72 provides an optimal compromise between rapid spool-up at 1,800 RPM and low backpressure at 7,000 RPM redline.',
+      ],
+      inspectionPoints: [
+        'Ultrasonic thickness testing of internal twin-scroll divider wall septum.',
+        'High-temperature gas leak decay test across wastegate valve seat face (leakage < 0.5 L/min at 1.5 bar).',
+        'X-ray radiographic inspection (ASTM E192) for internal shrinkage voids in thick flange transitions.',
+      ],
+      interfaces: [
+        'V-band clamped joint to CHRA center bearing cartridge',
+        'T3/T4 divided 4-bolt manifold mounting flange with high-temperature inconel studs',
+        'V-band / 5-bolt downpipe exhaust outlet discharge port',
+      ],
+      designPrinciples: [
+        'Keep volute wall thickness uniform (6.5 mm) to avoid localized thermal gradient concentrations and hot-spot stress risers.',
+        'Maintain divided scroll isolation all the way to the turbine wheel leading edge tip radius.',
+      ],
+    },
+    {
+      id: 'turbo-turbine-wheel',
+      name: 'Inconel 713C High-Temperature 9-Blade Radial Inflow Turbine Wheel',
+      cadId: 'TURBO-TRB-05B',
+      category: 'High-Temperature Enthalpy Extraction',
+      meshKey: 'turbo-turbine-wheel',
+      explodeVector: [0, 0, 3.8],
+      defaultColor: '#5e6572',
+      material: {
+        name: 'Vacuum Investment Cast Inconel 713C Nickel Superalloy',
+        grade: 'AMS 5377 / UNS N07713 (Ni-Cr12.5-Al6.1-Mo4.2-Nb2.0-Ti0.8)',
+        type: 'Metal',
+        density: '7.92 g/cm³',
+        tensileStrength: '895 MPa at 20°C / 620 MPa at 980°C',
+        yieldStrength: '720 MPa at 20°C / 480 MPa at 980°C',
+        thermalConductivity: '11.2 W/(m·K)',
+        hardness: '34-38 HRC',
+      },
+      function:
+        'Converts thermodynamic thermal enthalpy and kinetic pressure pulses from 1,020°C exhaust gas into 32 kW of mechanical shaft power via 9 curved radial-inflow vanes, driving the compressor impeller across the 42CrMo4 electron-beam welded shaft.',
+      manufacturing: {
+        process:
+          'Vacuum induction melting and ceramic-shell investment casting under high vacuum, hot isostatic pressing (HIP) at 1,180°C / 100 MPa to eliminate microporosity, followed by electron-beam welding onto 42CrMo4 alloy steel shaft and dual-plane high-speed balancing.',
+        machinery: 'ALD Vacuum Investment Casting Furnace + PTR Electron-Beam Welder + Schenck VSR Balancer',
+        tolerance: 'Turbine vane profile contour: ±0.005 mm; Shaft runout: < 0.002 mm TIR',
+        defectRisks: ['Grain boundary oxidation at 1,000°C', 'Shrinkage micro-voids at thick hub root'],
+      },
+      dimensions: {
+        length: '52 mm × Ø 58.0 mm',
+        formatted: 'Inducer Ø 58.0 mm, Exducer Ø 49.0 mm, Shaft Journal Ø 8.500 mm (9 Curved Vanes, 285 g)',
+      },
+      mechanicalRole: {
+        forces: 'Exhaust gas aerodynamic torque: 3.4 N·m at 220,000 RPM (32 kW shaft output); Centrifugal blade root tension: 340 MPa',
+        motion: 'Ultra-high-speed rotordynamics: 20,000 to 220,000 RPM continuous rotary motion',
+      },
+      connectedTo: ['turbo-chra-core', 'turbo-turbine-housing', 'turbo-impeller-wheel'],
+      failureModes: [
+        {
+          mode: 'Thermal creep rupture & exducer tip rubbing',
+          cause: 'Prolonged exposure to lean-burn exhaust gas exceeding 1,050°C causing centrifugal creep elongation.',
+          mitigation: 'Inconel 713C γ/γ\' precipitation hardening and vacuum hot isostatic pressing (HIP).',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'Inconel 713C superalloy maintains exceptional creep-rupture strength exceeding 200 MPa at 980°C for over 1,000 hours, resisting catastrophic blade elongation inside the tight 0.28 mm turbine housing clearance.',
+      dataConfidence: 'Verified',
+      assemblyDepth: 1,
+      revealThreshold: 0.25,
+      technicalNotes: [
+        'Scalloped exducer backplate design cuts polar moment of inertia by 14%, slashing boost threshold by 250 engine RPM.',
+        'Features 9 thick aerodynamic radial-inflow vanes engineered for optimal gas expansion velocity ratio (U/C = 0.70).',
+        'Shaft is joined via precision electron-beam welding in high vacuum, producing a 100% penetration joint with zero heat distortion.',
+      ],
+      inspectionPoints: [
+        'Real-time digital X-ray radiographic inspection verifying 100% absence of sub-surface casting porosity.',
+        'Automated optical scanning of all 9 vane trailing edge profiles to within 0.005 mm.',
+      ],
+      interfaces: [
+        'Electron-beam welded 42CrMo4 ground journal shaft running on hydrodynamic bearings',
+        'Houses turbine-end dynamic gas-labyrinth piston ring oil seal',
+      ],
+      designPrinciples: [
+        'Maximize radial inflow kinetic energy conversion with 9-vane curved blade geometry.',
+        'Scallop the hub perimeter to minimize thermal mass and rotational inertia without compromising burst containment margin.',
+      ],
+    },
+    {
+      id: 'turbo-exhaust-flange',
+      name: 'T3/T4 Divided Twin-Scroll Exhaust Manifold Inlet Flange',
+      cadId: 'TURBO-FLG-06',
+      category: 'Exhaust Interface',
+      meshKey: 'turbo-exhaust-flange',
+      explodeVector: [-1.9, -1.9, 2.6],
+      defaultColor: '#334155',
+      material: {
+        name: 'Heat-Resistant Cast Stainless Steel HK30 (25Cr-20Ni)',
+        grade: 'ASTM A297 Grade HK / DIN 1.4848 High-Nickel Heat-Resistant Alloy',
+        type: 'Metal',
+        density: '7.85 g/cm³',
+        tensileStrength: '585 MPa',
+        yieldStrength: '290 MPa',
+        thermalConductivity: '14.2 W/(m·K)',
+        hardness: '180-220 HB',
+      },
+      function:
+        'Bolts directly to the engine split exhaust manifold via four high-temperature M10 studs, creating a leak-proof gas seal that transfers 950°C-1,020°C high-pressure exhaust pulses into the twin-scroll turbine volutes.',
+      manufacturing: {
+        process:
+          'Investment Shell Casting integral with Turbine Housing or CNC High-Speed Face Milling with Multi-Spindle M10×1.25 Thread Tapping',
+        machinery: 'DMG MORI NTX 2000 Mill-Turn Machining Center + Laser Surface Profilometer',
+        tolerance: 'Mating face flatness: 0.020 mm; Stud hole true position: ±0.025 mm',
+        defectRisks: ['Thermal warping causing exhaust pulse blowby leaks', 'Stud galling under high-temp oxidation'],
+      },
+      dimensions: {
+        length: '125 mm × 95 mm × 18 mm',
+        formatted: 'Divided Flange 125 × 95 × 18 mm thick, 4× M10 Stud Holes, Dual Ports 42 × 34 mm (Mass: 1.42 kg)',
+      },
+      mechanicalRole: {
+        forces: 'Exhaust gas shock pulses: up to 3.8 bar; Stud pre-load clamp tension: 4× 35,000 N clamping force',
+        motion: 'Static rigid interface',
+      },
+      connectedTo: ['turbo-turbine-housing'],
+      failureModes: [
+        {
+          mode: 'Exhaust gas leak blowby / Multi-layer steel (MLS) gasket burnout',
+          cause: 'Loss of stud preload under extreme thermal cycling and creep relaxation at 950°C.',
+          mitigation: 'Inconel 718 high-temperature exhaust studs and multi-layer embossed stainless gaskets.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'Thick 18 mm HK30 stainless flange resists thermal warping across the central divider septum under high clamping torque, preventing acoustic exhaust tick leaks and preserving exhaust pulse kinetic energy.',
+      dataConfidence: 'Verified',
+      assemblyDepth: 1,
+      revealThreshold: 0.28,
+      technicalNotes: [
+        'Central divider septum is 6.0 mm thick to resist thermal bowing under high exhaust pressure differential.',
+        'Mating surface features fine phonographic micro-grooving for enhanced mechanical bite into multi-layer steel gaskets.',
+      ],
+      inspectionPoints: [
+        'Laser optical flatness check across both port opening sealing lands.',
+        'Thread pitch diameter verification with Go/No-Go calibrated thread gages.',
+      ],
+      interfaces: [
+        'Bolted directly to the cylinder head exhaust manifold with 4× M10 Inconel studs',
+      ],
+      designPrinciples: [
+        'Ensure gasket contact pressure exceeds 60 MPa across all sealing lands to prevent gas blowout.',
+      ],
+    },
+    {
+      id: 'turbo-exhaust-outlet',
+      name: 'High-Flow Downpipe Discharge V-Band Outlet Port & Inconel Turbine Exducer',
+      cadId: 'TURBO-OUT-07',
+      category: 'Exhaust Discharge',
+      meshKey: 'turbo-exhaust-outlet',
+      explodeVector: [0, 0, 4.6],
+      defaultColor: '#64748b',
+      material: {
+        name: 'Vacuum Investment Cast Inconel 713C Superalloy & Cast Ductile Outlet Rim',
+        grade: 'Inconel 713C (Turbine Wheel) & Ni-Resist D-5S (V-Band Rim)',
+        type: 'Metal',
+        density: '8.00 g/cm³ (Inconel) / 7.45 g/cm³ (Rim)',
+        tensileStrength: '860 MPa @ 900°C',
+        yieldStrength: '680 MPa @ 900°C',
+        hardness: '34-38 HRC',
+      },
+      function:
+        'Houses the Inconel 713C radial inflow turbine wheel exducer blades, converting waste gas thermal enthalpy into 25 kW of mechanical shaft power, before smoothly discharging expanded exhaust gas into the vehicle downpipe with minimal backpressure.',
+      manufacturing: {
+        process:
+          'Vacuum Investment Casting (Inconel 713C Turbine Wheel) Electron-Beam Friction Welded to SAE 4140 Steel Shaft followed by CNC V-Band Taper Turning and Dynamic Balancing',
+        machinery: 'Leybold Vacuum Investment Furnace + Kuka Inertia Friction Welder + CNC Lathe',
+        tolerance: 'Turbine wheel tip running clearance: 0.28 ± 0.03 mm; V-band taper angle: 15.0° ± 0.1°',
+        defectRisks: ['Friction weld joint void porosity', 'Turbine blade trailing edge micro-creep'],
+      },
+      dimensions: {
+        length: '160 mm × Ø 120 mm',
+        formatted: 'Discharge Port: Ø 76.2 mm (3.0 in) V-Band Rim, Turbine Exducer Ø 49.000 mm (Mass: 1.98 kg)',
+      },
+      mechanicalRole: {
+        forces: 'Centrifugal blade tip tension: ~380 MPa; Centrifugal force on wheel at 220,000 RPM: > 45 kN',
+        motion: 'Houses spinning Inconel turbine wheel spinning up to 220,000 RPM coaxial with the compressor',
+      },
+      connectedTo: ['turbo-turbine-housing'],
+      failureModes: [
+        {
+          mode: 'Turbine wheel tip rub / Exducer blade erosion',
+          cause: 'Bearing radial play wear or excessive carbon soot impact at Mach 1 velocities.',
+          mitigation: 'Precise 0.28 mm hot clearance margin and Inconel 713C vacuum investment casting.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'Inconel 713C maintains superior creep rupture strength up to 1,000°C, ensuring that turbine blades do not elongate radially under 180,000 G centrifugal loads and contact the housing.',
+      dataConfidence: 'Verified',
+      assemblyDepth: 1,
+      revealThreshold: 0.30,
+      technicalNotes: [
+        'V-band flange connection provides 360° uniform sealing pressure and allows infinite clocking orientation for downpipe routing.',
+        'Turbine wheel features 9 full blades with thin trailing edges to maximize isentropic expansion efficiency (η_t > 74%).',
+      ],
+      inspectionPoints: [
+        'Turbine exducer throat clearance verification using precision feeler gauges.',
+        'Friction weld ultrasonic phased-array inspection (UT) across shaft-to-wheel junction.',
+      ],
+      interfaces: [
+        'Vehicle high-flow 3.0-inch catalytic downpipe via stainless V-band clamp',
+      ],
+      designPrinciples: [
+        'Minimize discharge diffuser static pressure to maximize total enthalpy drop across the turbine wheel.',
+      ],
+    },
+    {
+      id: 'turbo-wastegate-actuator',
+      name: 'Pneumatic Boost Wastegate Canister Actuator & Bracket',
+      cadId: 'TURBO-WGA-08',
+      category: 'Pneumatic Boost Control',
+      meshKey: 'turbo-wastegate-actuator',
+      explodeVector: [2.9, 1.2, -0.6],
+      defaultColor: '#d97706',
+      material: {
+        name: 'Deep-Drawn Zinc-Dichromate Steel with Nomex-Reinforced Fluorosilicone Diaphragm',
+        grade: 'AISI 1018 Zinc-Plated / AMS 3326 Fluorosilicone Diaphragm',
+        type: 'Composite',
+        density: '7.85 g/cm³ (Canister) / 1.45 g/cm³ (Diaphragm)',
+        tensileStrength: '440 MPa (Steel)',
+        operatingTemp: '-40°C to +220°C',
+      },
+      function:
+        'Houses a calibrated internal silicon-chrome compression spring and flexible diaphragm that converts intake manifold boost pressure into linear mechanical pushrod force (up to 12.5 mm stroke), opening the internal wastegate flapper valve to regulate boost to exactly 1.85 bar.',
+      manufacturing: {
+        process:
+          'Deep-Draw Sheet Metal Stamping, Yellow Zinc Dichromate Passivation Plating, Compression Molded Silicone Diaphragm Assembly, and Ultrasonic Crimped Perimeter Enclosure',
+        machinery: 'Minster 200-Ton Mechanical Stamping Press + Automated Spring Load Calibration Cell',
+        tolerance: 'Cracking pressure calibration: 0.85 ± 0.05 bar; Full stroke travel: 12.5 ± 0.3 mm',
+        defectRisks: ['Diaphragm edge pinch during crimping', 'Spring rate calibration deviation'],
+      },
+      dimensions: {
+        length: '125 mm × Ø 88 mm',
+        formatted: 'Canister Envelope: Ø 88 mm × 125 mm Length, Stroke: 12.5 mm linear travel (Mass: 640 g)',
+      },
+      mechanicalRole: {
+        forces: 'Internal spring preload: 140 N; Peak pneumatic diaphragm opening force: ~320 N at 1.85 bar boost',
+        motion: 'Linear reciprocating stroke: 0 to 12.5 mm axial pushrod displacement',
+      },
+      connectedTo: ['turbo-compressor-housing', 'turbo-wastegate-linkage'],
+      failureModes: [
+        {
+          mode: 'Diaphragm rupture / Wastegate fail-closed overboost',
+          cause: 'Thermal hardening of fluorosilicone diaphragm from radiant exhaust heat soak.',
+          mitigation: 'Nomex fabric reinforcement, dual-port pneumatic control, and reflective gold heat shielding.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'Pneumatic diaphragm actuation provides instant, fail-safe boost regulation: in the event of electronic ECU solenoid signal failure, intake boost directly cracks the wastegate open mechanically, preventing catastrophic engine destruction.',
+      dataConfidence: 'Verified',
+      assemblyDepth: 2,
+      revealThreshold: 0.48,
+      technicalNotes: [
+        'Dual-port configuration allows ECU boost solenoid to apply pressure to both top and bottom chambers for ultra-precise closed-loop boost PID control.',
+        'Internal spring crack pressure is set to 0.85 bar gauge; additional boost up to 1.85 bar is modulated electronically by pulse-width modulated (PWM) 3-way solenoid valve.',
+      ],
+      inspectionPoints: [
+        'Automated pressure-stroke hysteresis curve testing on pneumatic dynamometer rig.',
+        '100% helium pressure decay leak test at 3.0 bar hold pressure.',
+      ],
+      interfaces: [
+        'Rigid stamped bracket bolted to compressor housing front face',
+        'Quick-connect pneumatic reference boost hose port from compressor volute',
+        'Threaded clevis pin connecting to wastegate linkage pushrod',
+      ],
+      designPrinciples: [
+        'Ensure diaphragm effective area remains constant across full stroke travel to linearize actuator control gain.',
+      ],
+    },
+    {
+      id: 'turbo-wastegate-linkage',
+      name: '304 Stainless Steel Wastegate Pushrod Linkage, Clevis & Bellcrank Flapper Arm',
+      cadId: 'TURBO-LNK-09',
+      category: 'Kinematics & Linkage',
+      meshKey: 'turbo-wastegate-linkage',
+      explodeVector: [2.5, 0.4, 0.8],
+      defaultColor: '#e2e8f0',
+      material: {
+        name: 'AISI 304 Austenitic Stainless Steel with Cobalt-Base Stellite Bushings',
+        grade: 'AISI 304 / UNS S30400 & Stellite 6 Pivot Hardfacing',
+        type: 'Metal',
+        density: '8.00 g/cm³',
+        tensileStrength: '620 MPa',
+        yieldStrength: '290 MPa',
+        hardness: '42 HRC (Stellite)',
+      },
+      function:
+        'Translates the 12.5 mm linear stroke of the pneumatic actuator into a 22° angular rotation of the wastegate flapper arm, lifting the internal 34 mm nickel valve off its seat to bypass high-pressure exhaust gas around the turbine wheel.',
+      manufacturing: {
+        process:
+          'Swiss CNC Turning of M6×1.0 Threaded Pushrod, Investment Casting of Stainless Clevis Fork, High-Temperature Stellite 6 Laser Cladding on Pivot Bushings, and E-Clip Retainer Assembly',
+        machinery: 'Citizen Cincom L20 Swiss CNC Lathe + Laser Deposition Cladding Cell',
+        tolerance: 'Clevis pin diameter: 6.000 +0.000 / -0.008 mm (h6); Turnbuckle thread pitch: M6×1.0-6g',
+        defectRisks: ['Thermal binding / galling at pivot bush in 800°C exhaust environment', 'Turnbuckle jam nut loosening'],
+      },
+      dimensions: {
+        length: '185 mm × 24 mm × 38 mm',
+        formatted: 'Pushrod Length: 185 mm × Ø 6.0 mm, Bellcrank Arm: 34 mm radius (Stroke: 22° rotation, Mass: 210 g)',
+      },
+      mechanicalRole: {
+        forces: 'Pushrod axial thrust load: up to 320 N; Flapper blow-open force from exhaust backpressure: ~165 N',
+        motion: 'Kinematic angular rotation: 0° to 22° pivot flapper opening arc',
+      },
+      connectedTo: ['turbo-wastegate-actuator', 'turbo-turbine-housing'],
+      failureModes: [
+        {
+          mode: 'Wastegate flapper pivot bush seizure / Rattle wear',
+          cause: 'Loss of clearance from thermal oxidation scale accumulation under lean-burn exhaust.',
+          mitigation: 'Stellite 6 cobalt-based wear sleeves with high-temperature graphite anti-seize coating.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        '304 stainless steel resists atmospheric corrosion while Stellite 6 cobalt-alloy pivot bushings eliminate thermal galling and oxidation seizure at continuous 850°C service temperatures.',
+      dataConfidence: 'Verified',
+      assemblyDepth: 3,
+      revealThreshold: 0.68,
+      technicalNotes: [
+        'Turnbuckle threaded sleeve allows manual micrometer adjustment of wastegate base crack pressure during factory calibration.',
+        'Bellcrank arm includes a floating spherical washer to accommodate non-linear angular kinematic arc deflection without bending the pushrod.',
+      ],
+      inspectionPoints: [
+        'Verification of angular pivot rotation torque under heated condition (breakaway torque < 0.25 N·m).',
+        'Thread runout and clevis pin shear strength pull testing.',
+      ],
+      interfaces: [
+        'Clevis joint connection to pneumatic actuator pushrod with stainless cotter pin',
+        'Rotary shaft pass-through into turbine housing exhaust chamber',
+      ],
+      designPrinciples: [
+        'Design linkage kinematics with self-locking over-center geometry at closed position to resist exhaust pulsation flapper chatter.',
+      ],
+    },
+    {
+      id: 'turbo-oil-ports',
+      name: 'Hydrodynamic Pressurized Oil Feed & Gravitational Scavenge Drain Ports',
+      cadId: 'TURBO-OIL-10',
+      category: 'Lubrication & Tribology',
+      meshKey: 'turbo-oil-ports',
+      explodeVector: [0, 2.4, 0],
+      defaultColor: '#0284c7',
+      material: {
+        name: 'Aircraft-Grade 6061-T6 Anodized Aluminum with CDA 360 Brass Restrictor',
+        grade: 'Al 6061-T6 (MIL-A-8625 Type II Anodized) / CDA 360 Free-Cutting Brass',
+        type: 'Metal',
+        density: '2.70 g/cm³ (Al) / 8.50 g/cm³ (Brass)',
+        tensileStrength: '310 MPa',
+        hardness: '95 HB',
+      },
+      function:
+        'Directs 4.5 bar pressurized synthetic engine oil through a precision 0.9 mm restrictor jet to continuously lubricate the floating journal bearings, and scavenges aerated hot oil via a large gravity drain flange back to the engine oil pan.',
+      manufacturing: {
+        process:
+          '5-Axis CNC Mill-Turning from Solid Billet 6061-T6 Aluminum followed by Micro-Hole Drilling of 0.9 mm Restrictor Orifice, Anodizing, and 100% Optical Flow Verification',
+        machinery: 'Miyano BNE-51MSY CNC Turning Center + Keyence Micro-Measurement Microscope',
+        tolerance: 'Restrictor orifice diameter: 0.900 ± 0.005 mm; Drain flange flatness: 0.015 mm',
+        defectRisks: ['Machining chip blockage in 0.9 mm restrictor hole', 'Flange gasket leak under vibration'],
+      },
+      dimensions: {
+        length: '65 mm × 45 mm × 50 mm',
+        formatted: 'Feed Port: -4AN / M12×1.25 (Ø 0.9 mm Orifice), Drain Flange: 2-Bolt M8 (Port Ø 19.0 mm, Mass: 280 g)',
+      },
+      mechanicalRole: {
+        forces: 'Feed oil hydraulic pressure: 3.5 to 5.5 bar; Gravity drain return pressure: atmospheric (0 bar)',
+        motion: 'Fluid flow conduits: Feed flow ~1.2 L/min hot oil at 120°C',
+      },
+      connectedTo: ['turbo-chra-core'],
+      failureModes: [
+        {
+          mode: 'Oil starvation / Restrictor blockage or drain backpressure flooding',
+          cause: 'Particulate sludge in engine oil or kinked drain line causing oil to flood past piston rings into exhaust.',
+          mitigation: 'Integrated fine mesh stainless filter screen and minimum 30° gravity drain slope.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'A precise 0.9 mm restrictor orifice provides exactly 1.2 L/min of oil flow required for hydrodynamic film generation without over-pressurizing the dynamic labyrinth piston seals, preventing blue exhaust oil smoke.',
+      dataConfidence: 'Verified',
+      assemblyDepth: 3,
+      revealThreshold: 0.70,
+      technicalNotes: [
+        'Drain port must be oriented within ±15° of absolute vertical downward datum to ensure gravity oil drainage without pooling.',
+        'High-temperature copper crush washers or O-rings provide hermetic sealing against engine bay oil mist fires.',
+      ],
+      inspectionPoints: [
+        'Optical microscope verification of 0.900 mm restrictor orifice diameter and circularity.',
+        'Hydrostatic pressure proof test at 15 bar hydraulic pressure.',
+      ],
+      interfaces: [
+        'Top CHRA oil feed inlet thread (M12×1.25 / -4AN flare)',
+        'Bottom CHRA oil drain face (2-bolt M8 flange with high-temp graphite gasket)',
+      ],
+      designPrinciples: [
+        'Ensure drain cross-sectional area is at least 8× larger than feed orifice area to handle aerated foamed oil volume.',
+      ],
+    },
+
+    // =========================================================================
+    // 2. RECIPROCATING POWERTRAIN & STRUCTURAL CHASSIS
+    // =========================================================================
+    {
+      id: 'cylinder-block-assembly',
+      name: 'Engine Block & Crankcase Assembly (Cast A319 with Centrifugal GG25 Liners)',
+      cadId: 'ENG-BLK-11',
+      category: 'Structural Powertrain Chassis',
+      meshKey: 'engine-block',
+      explodeVector: [0, 0, 0],
+      defaultColor: '#475569',
+      material: {
+        name: 'Cast Aluminum A319 with Centrifugally Spun Grey Cast-Iron Liners',
+        grade: 'A319-T6 Aluminum / Grey Cast Iron (GG25 / Class 35)',
+        type: 'Metal',
+        density: '2.79 g/cm³ (Al) / 7.20 g/cm³ (Iron)',
+        tensileStrength: '280 MPa (Al) / 320 MPa (Iron)',
+        yieldStrength: '185 MPa (Al)',
+        hardness: '95-105 HB (Al) / 210-240 HB (Iron)',
+      },
+      function:
+        'Provides the rigid structural skeleton housing the four cylinder bores, Siamese coolant passages, pressurized oil galleries, and crankshaft main journal bearings, reacting 75,000 N peak combustion forces per cylinder firing.',
+      manufacturing: {
+        process:
+          'High-Pressure Die Casting (HPDC) with Semi-Permanent Sand Cores followed by CNC Multi-Spindle Line Boring and Plateau Diamond Honing of Cylinder Liners',
+        machinery: 'Nagel Automated CNC Plateau Honing Cell + Makino 5-Axis Engine Machining Center',
+        tolerance: 'Cylinder bore cylindricity: ±0.003 mm; Plateau surface roughness: Rpk 0.2 μm / Rvk 1.2 μm',
+        defectRisks: ['Porosity in high-pressure coolant jackets', 'Main bearing saddle bore misalignment'],
+      },
+      dimensions: {
+        length: '485 mm × 390 mm × 410 mm',
+        formatted: '485 × 390 × 410 mm (Bore Ø 82.500 mm × Stroke 92.800 mm, Bare Mass: 38.0 kg)',
+      },
+      mechanicalRole: {
+        forces: 'Peak combustion pressure: 140 bar (74,800 N instantaneous thrust per cylinder firing)',
+        motion: 'Static structural foundation for all reciprocating and rotating parts',
+      },
+      connectedTo: ['piston-rod-assembly', 'crankshaft-assembly', 'cylinder-head-assembly', 'turbo-compressor-housing'],
+      failureModes: [
+        {
+          mode: 'Cylinder bore scuffing / Ring micro-welding',
+          cause: 'Oil film breakdown under extreme thermal hot spots during sustained high-boost operation.',
+          mitigation: 'Cross-hatch plateau honing to retain hydrodynamic oil pockets and under-piston oil squirter jets.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'Cast aluminum block reduces front-axle engine mass by 28 kg compared to solid cast iron, while centrifugally spun iron liners provide durable wear resistance against piston ring friction over 300,000+ km.',
+      dataConfidence: 'Verified',
+      assemblyDepth: 0,
+      revealThreshold: 0.00,
+      technicalNotes: [
+        'Closed-deck design with Siamese cylinder liners delivers maximum bore rigidity under 140 bar combustion pressure.',
+        'Integrates 4 under-piston oil squirter nozzles that spray 3 bar engine oil onto piston crowns, lowering temperatures by 70°C.',
+        'Bedplate design with cross-bolted main bearing caps stiffens the crankcase to withstand 380 N·m torque output.',
+      ],
+      inspectionPoints: [
+        'Air-gage laser profilometer measuring 3-axis cylinder bore roundness across 12 vertical depths.',
+        'Ultrasonic wall thickness measurement between coolant jackets and cylinder liners.',
+      ],
+      interfaces: [
+        'Top deck cylinder head interface with MLS head gasket and 10× M11 ARP2000 head bolts',
+        'Bottom oil pan interface and front timing chain cover mounting face',
+      ],
+      designPrinciples: [
+        'Maintain structural bore circularity under thermal expansion to guarantee < 0.1% blowby oil consumption.',
+      ],
     },
     {
       id: 'piston-rod-assembly',
-      name: 'Forged Piston & Connecting Rod Subassembly',
-      cadId: 'SUB-ENG-02',
-      category: 'Reciprocating Powertrain',
+      name: 'Forged 4032 Piston & Fracture-Split 4340 Connecting Rod Subassembly',
+      cadId: 'ENG-PST-12',
+      category: 'Reciprocating Powertrain Kinematics',
       meshKey: 'engine-piston',
       explodeVector: [0, 3.2, 0],
       defaultColor: '#94a3b8',
       material: {
         name: 'Forged 4032 High-Silicon Aluminum (Piston) & 4340 Chromoly Steel (Rod)',
-        grade: 'Al 4032-T6 / AISI 4340 Quenched & Tempered',
+        grade: 'Al 4032-T6 (Piston) / AISI 4340 Quenched & Tempered (Rod)',
         type: 'Metal',
         density: '2.68 g/cm³ (Piston) / 7.85 g/cm³ (Rod)',
-        tensileStrength: '1100 MPa (Rod)',
+        tensileStrength: '380 MPa (Piston) / 1,100 MPa (Rod)',
+        yieldStrength: '315 MPa (Piston) / 950 MPa (Rod)',
+        hardness: '125 HB (Piston) / 32-36 HRC (Rod)',
       },
-      function: 'Captures expanding combustion gas pressure and transmits linear thrust to the rotating crankshaft.',
+      function:
+        'Captures expanding 140-bar combustion gas pressure across its 82.5 mm crown and transmits linear thrust through an H-beam connecting rod to turn the crankshaft, accelerating from 0 to 24 m/s (86 km/h) twice per revolution.',
       manufacturing: {
-        process: 'Closed-Die Drop Forging, CNC Skirt Machining, DLC (Diamond-Like Carbon) Pin Coating, and Fracture-Split Rod Cap Separation',
-        machinery: 'Hydraulic 2500-ton Forging Press + Laser-Cracked Rod Splitting Cell',
-        tolerance: 'Piston-to-bore clearance: 0.035 ± 0.005 mm',
-        defectRisks: ['Piston crown thermal fatigue micro-cracking', 'Gudgeon pin galling'],
+        process:
+          'Closed-Die Drop Forging (2,500-ton press), CNC Skirt Barrel Machining, DLC (Diamond-Like Carbon) Coated Wrist Pin, and Laser-Cracked Fracture-Split Connecting Rod Cap Separation',
+        machinery: 'Komatsu 2500-Ton Forging Press + Trumpf Laser-Cracking Cell + Nagel Pin Honing',
+        tolerance: 'Piston-to-bore clearance: 0.035 ± 0.005 mm; Rod big-end bore roundness: ±0.002 mm',
+        defectRisks: ['Piston crown thermal fatigue micro-cracking', 'Gudgeon pin bore galling under boundary lubrication'],
       },
-      dimensions: { formatted: 'Piston Ø 82.5 mm (320 g) / Rod Center-to-Center 144.0 mm (485 g)' },
+      dimensions: {
+        length: '144.0 mm rod C-to-C × Ø 82.465 mm piston',
+        formatted: 'Piston Ø 82.465 mm (320 g), Rod C-C 144.000 mm (485 g), Wrist Pin Ø 22.000 mm (105 g)',
+      },
       mechanicalRole: {
-        forces: 'Peak acceleration: 2,500 G at 7,000 RPM (Reciprocating inertia force: ~14,000 N)',
-        motion: 'Reciprocating linear motion: 92.8 mm stroke',
+        forces: 'Peak reciprocating acceleration: 2,500 Gs at 7,000 RPM (Reciprocating inertia force: ~14,000 N; Combustion thrust: 74,800 N)',
+        motion: 'Reciprocating linear motion: 92.8 mm stroke (0 to 24 m/s instantaneous velocity)',
       },
       connectedTo: ['cylinder-block-assembly', 'crankshaft-assembly'],
-      failureModes: [{ mode: 'Connecting rod buckling / throwing a rod', cause: 'Severe pre-ignition / detonation (engine knock) or hydro-locking', mitigation: 'H-Beam forged geometry and forged chromoly rod bolts', severity: 'Critical' }],
-      engineeringReason: 'Laser-fractured cracked rod caps create microscopic interlocking surface peaks, ensuring perfect bearing roundness when torqued.',
+      failureModes: [
+        {
+          mode: 'Connecting rod beam buckling / Piston ring land collapse',
+          cause: 'Severe pre-ignition / detonation (engine knock) or hydraulic locking from fuel injector stuck open.',
+          mitigation: 'Forged 4340 chromoly H-beam geometry and high-silicon 4032 alloy thermal stability.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'Laser-fractured cracked rod caps create microscopic interlocking crystalline surface peaks, guaranteeing 100% perfect bearing roundness when torqued and eliminating rod cap fretting.',
       dataConfidence: 'Verified',
+      assemblyDepth: 1,
+      revealThreshold: 0.35,
+      technicalNotes: [
+        'Piston skirts are coated with 12 μm of molybdenum disulfide (MoS2) screen-printed polymer to slash cold-start friction by 30%.',
+        'Features three piston rings: PVD-coated steel top compression ring (1.2 mm), ductile iron Napier scraper ring (1.2 mm), and 3-piece stainless oil ring (2.0 mm).',
+        'Wrist pin is offset by 0.8 mm toward the major thrust side to attenuate piston slap noise at cold idle.',
+      ],
+      inspectionPoints: [
+        'Automated scale mass sorting matching all 4 piston-and-rod assemblies to within ±0.5 grams.',
+        'Optical profilometry of piston skirt complex barrel-and-ovality contour.',
+      ],
+      interfaces: [
+        'Centrifugally cast cylinder liner walls via 3-ring pack seal',
+        'Crankshaft rod journal crankpins via bi-metal aluminum-silicon bearings',
+      ],
+      designPrinciples: [
+        'Optimize rod-to-stroke ratio (R/S = 144 / 92.8 = 1.55) to minimize side-wall thrust friction against cylinder liners.',
+      ],
     },
     {
       id: 'crankshaft-assembly',
-      name: 'Forged Steel Cross-Plane Crankshaft',
-      cadId: 'SUB-ENG-03',
-      category: 'Kinematics & Rotordynamics',
+      name: 'Forged Micro-Alloyed Steel Cross-Plane Crankshaft (42CrMo4 Induction-Hardened)',
+      cadId: 'ENG-CRK-13',
+      category: 'Rotary Kinematics & High-Torque Transmission',
       meshKey: 'engine-crankshaft',
       explodeVector: [0, -2.8, 0],
       defaultColor: '#64748b',
       material: {
-        name: 'Forged Micro-Alloyed Carbon Steel (42CrMo4)',
-        grade: 'AISI 4140 / 42CrMo4 Induction Hardened',
+        name: 'Forged Micro-Alloyed Carbon Steel (42CrMo4 / AISI 4140)',
+        grade: 'AISI 4140 / 42CrMo4 Induction Hardened & Tempered',
         type: 'Metal',
         density: '7.85 g/cm³',
-        hardness: 'Journals: 58-62 HRC',
+        tensileStrength: '1,050 MPa',
+        yieldStrength: '850 MPa',
+        hardness: 'Journals: 58-62 HRC (Core: 28-32 HRC)',
       },
-      function: 'Converts reciprocating piston motion into continuous rotary torque (380 N·m) to propel the vehicle drivetrain.',
+      function:
+        'Converts reciprocating linear piston forces into continuous rotary flywheel torque (380 N·m / 280 lb·ft), delivering mechanical horsepower to the vehicle transmission across an 800 to 7,200 RPM range.',
       manufacturing: {
-        process: 'Hot Die Forging, Multi-Axis CNC Turning, Deep Fillet Rolling, Micro-Drilling Angled Oil Passages, and Induction Journal Hardening',
-        machinery: 'Hegenscheidt Fillet Rolling Machine + Dynamic Balancing Bench',
-        tolerance: 'Journal runout < 0.003 mm; Dynamic unbalance < 10 g·mm',
-        defectRisks: ['Fillet micro-cracks under torsional vibration'],
+        process:
+          'Hot Die Drop Forging (6,000-ton press), Multi-Axis CNC Pin Turning, Deep Fillet Cold-Rolling, Angled Gun-Drilling of Oil Lubrication Cross-Holes, and High-Frequency Induction Journal Hardening',
+        machinery: 'Hegenscheidt Deep Fillet Rolling Machine + Schenck Dynamic Crankshaft Balancer',
+        tolerance: 'Journal diameter runout: < 0.003 mm; Residual dynamic unbalance: < 8 g·mm',
+        defectRisks: ['Fillet micro-cracking from torsional vibration', 'Induction hardening quench micro-cracks'],
       },
-      dimensions: { formatted: 'L 510 mm × Ø 54 mm Main Journals (Weight: 14.5 kg)' },
+      dimensions: {
+        length: '512 mm × Ø 170 mm',
+        formatted: 'L 512 mm, 5 Main Journals Ø 54.000 mm, 4 Crankpins Ø 48.000 mm (Stroke: 92.8 mm, Mass: 14.8 kg)',
+      },
       mechanicalRole: {
-        forces: 'Torsional vibration harmonics: ±1.8° peak angular displacement at 4th engine order',
-        motion: 'Pure rotation: 800 to 7,200 RPM',
+        forces: 'Torsional harmonic oscillation: ±1.8° peak displacement at 4th engine order; Peak shear stress: ~340 MPa',
+        motion: 'Pure rotary motion: 800 to 7,200 RPM (up to 754 rad/s angular velocity)',
       },
       connectedTo: ['piston-rod-assembly', 'cylinder-block-assembly'],
-      failureModes: [{ mode: 'Fatigue fracture at crankpin radius fillet', cause: 'Torsional vibration from faulty harmonic damper', mitigation: 'Deep fillet cold-rolling to induce compressive residual surface stress', severity: 'Critical' }],
-      engineeringReason: 'Deep fillet cold-rolling creates compressive residual stress layers in critical high-stress radius pockets, increasing fatigue life by over 300%.',
+      failureModes: [
+        {
+          mode: 'Torsional fatigue fracture at crankpin radius fillet',
+          cause: 'Torsional harmonic resonance amplified by degraded front harmonic damper pulley.',
+          mitigation: 'Deep fillet cold-rolling inducing 800 MPa compressive residual surface stress.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'Deep fillet cold-rolling compresses surface grain structures, inducing compressive residual stress layers in critical high-stress radius fillets that boost crankshaft fatigue endurance life by over 300%.',
       dataConfidence: 'Verified',
+      assemblyDepth: 0,
+      revealThreshold: 0.00,
+      technicalNotes: [
+        'Features 8 counterweights for 100% primary reciprocating mass balance and 50% secondary rotating mass balance.',
+        'Main and rod journals are induction hardened to 58-62 HRC to a depth of 2.5 mm, then micro-polished to mirror Ra 0.08 μm finish.',
+        'Angled oil holes are gun-drilled from main journals to rod journals to deliver continuous hydrodynamic lubrication.',
+      ],
+      inspectionPoints: [
+        'Magnetic particle inspection (MPI) detecting microscopic surface defects.',
+        'Multi-axis dynamic balancing bench testing dynamic unbalance at both front and rear flywheel flanges.',
+      ],
+      interfaces: [
+        '5 main journal bearings housed inside engine block crankcase',
+        'Rear dual-mass flywheel mounting flange with 8× M12 bolts',
+        'Front harmonic damper pulley and timing chain drive sprocket',
+      ],
+      designPrinciples: [
+        'Balance polar moment of inertia to resist torsional whipping while allowing rapid engine acceleration.',
+      ],
     },
     {
-      id: 'turbocharger-assembly',
-      name: 'Twin-Scroll Exhaust Gas Turbocharger',
-      cadId: 'SUB-ENG-04',
-      category: 'Forced Induction & Fluid Dynamics',
-      meshKey: 'engine-turbo',
-      explodeVector: [3.2, 1.5, 0],
-      defaultColor: '#f59e0b',
+      id: 'cylinder-head-assembly',
+      name: '16-Valve DOHC Cylinder Head Assembly with Dual Continuous VVT Phasers',
+      cadId: 'ENG-HED-14',
+      category: 'Gas Exchange & Valvetrain',
+      meshKey: 'engine-block',
+      explodeVector: [0, 2.8, 0],
+      defaultColor: '#94a3b8',
       material: {
-        name: 'Inconel 713C (Turbine Wheel) & Billet Forged Titanium (Compressor Wheel)',
-        grade: 'Inconel 713C Nickel Superalloy / Ti-6Al-4V',
+        name: 'Cast Aluminum A356-T6 with Sintered Valve Seats & Sodium-Filled Exhaust Valves',
+        grade: 'A356-T6 Aluminum / Stellite-Faced Nimonic 80A (Exhaust Valves)',
         type: 'Metal',
-        density: '8.0 g/cm³ (Inconel) / 4.43 g/cm³ (Titanium)',
+        density: '2.68 g/cm³ (Head) / 8.20 g/cm³ (Valves)',
+        tensileStrength: '310 MPa (Head) / 1,020 MPa (Valves)',
+        operatingTemp: 'Exhaust valves: up to 850°C',
       },
-      function: 'Harnesses waste thermal/kinetic energy from 950°C exhaust gas to compress ambient air to 1.8 bar boost pressure.',
+      function:
+        'Controls gas exchange into and out of the four combustion chambers via 16 valves driven by dual overhead camshafts with variable valve timing (VVT), routing 350-bar gasoline direct injection and spark ignition.',
       manufacturing: {
-        process: 'Vacuum Investment Casting (Inconel Turbine) + 5-Axis CNC High-Speed Milling from Billet (Titanium Compressor) + VSR (Vibration Sorting Rig) Balancing',
-        machinery: 'Schenck High-Speed Turbo Core Balancer (250,000 RPM)',
-        tolerance: 'Residual dynamic unbalance < 0.005 mg·mm',
-        defectRisks: ['Compressor surge wheel burst at 200k RPM'],
+        process:
+          'Gravity Die Casting with Complex Sand Cores for Siamese Coolant Passages, Multi-Spindle Valve Seat Pocket Machining, and Induction Seat Shrink-Fitting',
+        machinery: 'Makino A51nx High-Precision Engine Machining Center',
+        tolerance: 'Valve seat runout: < 0.008 mm; Deck flatness: 0.015 mm',
+        defectRisks: ['Porosity between exhaust valve seats', 'Camshaft journal line bore runout'],
       },
-      dimensions: { formatted: 'Turbine Ø 48 mm / Compressor Ø 52 mm (Max Speed: 220,000 RPM)' },
-      mechanicalRole: { forces: 'Centrifugal blade tip stress: ~620 MPa; Tip speed exceeds Mach 1.4' },
-      connectedTo: ['cylinder-head'],
-      failureModes: [{ mode: 'Journal bearing oil coking / shaft seizure', cause: 'Hot engine shut-down without cooling idle period', mitigation: 'Water-cooled center bearing housing (CHRA) with electric auxiliary run-on pump', severity: 'Critical' }],
-      engineeringReason: 'Twin-scroll split turbine housing separates exhaust pulses from alternating cylinders (1-4 vs 2-3), eliminating backflow interference and virtually banishing turbo lag.',
+      dimensions: {
+        length: '480 mm × 290 mm × 165 mm',
+        formatted: '480 × 290 × 165 mm, 16 Valves (Intake Ø 33.5 mm / Exhaust Ø 28.0 mm Sodium-Filled, Mass: 24.5 kg)',
+      },
+      mechanicalRole: {
+        forces: 'Valve spring seat pressure: 450 N; Peak cam lobe opening force: 1,800 N at 7,000 RPM',
+        motion: 'Dual overhead camshaft rotation at half engine speed (400 to 3,600 RPM)',
+      },
+      connectedTo: ['cylinder-block-assembly', 'turbo-exhaust-flange'],
+      failureModes: [
+        {
+          mode: 'Exhaust valve head thermal tulip recession / Valve seat burning',
+          cause: 'Lean air-fuel ratio causing valve temperature to exceed 900°C without adequate seat contact cooling.',
+          mitigation: 'Sodium-filled hollow exhaust valve stems that conduct heat into guide cooling jackets.',
+          severity: 'Critical',
+        },
+      ],
+      engineeringReason:
+        'Sodium-filled hollow exhaust valve stems liquefy at 98°C, sloshing back and forth during valve opening to transfer heat from the valve head into the water-cooled guide, dropping valve face temperatures by 150°C.',
       dataConfidence: 'Verified',
+      assemblyDepth: 1,
+      revealThreshold: 0.30,
+      technicalNotes: [
+        'Dual independent VVT phasers alter intake and exhaust cam timing by up to 50° crank angle to optimize volumetric efficiency.',
+        'High-tumble intake ports induce intense in-cylinder rotational kinetic energy, speeding flame-front propagation to 45 m/s.',
+      ],
+      inspectionPoints: [
+        'Vacuum decay test on all 16 valve seats checking seating hermetic seal.',
+        'Optical coordinate measurement of combustion chamber bowl volumetric CC capacity (tolerance: ±0.3 cc).',
+      ],
+      interfaces: [
+        'Engine block deck face via multi-layer steel (MLS) head gasket',
+        'Exhaust manifold flange connecting to turbocharger turbine housing',
+      ],
+      designPrinciples: [
+        'Maximize valve curtain flow area while preserving structural bridge width between valve seats.',
+      ],
     },
   ],
+
+  // =========================================================================
+  // 3. ADVANCED MATERIALS SCIENCE
+  // =========================================================================
   materials: [
     {
-      name: 'A319-T6 Cast Aluminum Alloy',
-      percentage: 45,
-      color: '#94a3b8',
+      name: 'A356-T6 Permanent Mold Cast Aluminum Alloy',
+      percentage: 38,
+      color: '#cbd5e1',
       category: 'Cast Aluminum-Silicon Alloy',
-      usedIn: ['Cylinder Block', 'Cylinder Head'],
+      usedIn: ['Compressor Volute Housing', 'Cylinder Head'],
       properties: [
-        { key: 'Tensile Strength', value: '280 MPa' },
-        { key: 'Thermal Conductivity', value: '140 W/(m·K)' },
-        { key: 'Density', value: '2.79 g/cm³' },
+        { key: 'Tensile Strength', value: '310 MPa' },
+        { key: 'Yield Strength', value: '235 MPa' },
+        { key: 'Thermal Conductivity', value: '159 W/(m·K)' },
+        { key: 'Density', value: '2.68 g/cm³' },
+        { key: 'Elongation at Break', value: '5.5%' },
+        { key: 'Hardness', value: '95 HB' },
       ],
-      advantages: ['High thermal dissipation', 'Lightweight mass reduction', 'Good castability for complex sand cores'],
-      disadvantages: ['Lower modulus than iron (71 GPa vs 170 GPa) requires structural reinforcement ribs'],
-      alternatives: ['Compacted Graphite Iron (CGI - stronger but 2x heavier)'],
-      selectionRationale: 'Optimizes vehicle front-axle weight distribution for agile handling while delivering rapid engine warmup.',
+      advantages: [
+        'Exceptional strength-to-weight ratio slashes engine mass',
+        'High thermal conductivity rapidly dissipates compression heat',
+        'Excellent fluidity enables thin-walled aerodynamic volute geometries',
+      ],
+      disadvantages: [
+        'Modulus of elasticity (72 GPa) is half that of cast iron',
+        'Requires T6 solution heat treatment and artificial aging to achieve full strength',
+      ],
+      alternatives: ['Magnesium AZ91D (lighter but vulnerable to galvanic corrosion)'],
+      selectionRationale:
+        'Delivers the ideal balance of high thermal conductivity, pressure containment integrity, and lightweight structural mass for the turbocharger compressor volute and cylinder head.',
     },
     {
-      name: 'Inconel 713C (Nickel-Chromium Superalloy)',
-      percentage: 12,
+      name: 'Ni-Resist D-5S High-Nickel Austenitic Ductile Iron',
+      percentage: 18,
+      color: '#475569',
+      category: 'Austenitic Ductile Iron Alloy',
+      usedIn: ['Twin-Scroll Turbine Housing', 'Exhaust Wastegate Flapper'],
+      properties: [
+        { key: 'Max Continuous Temp', value: '1,020 °C (1,868 °F)' },
+        { key: 'Nickel Content', value: '34.0 - 37.0 wt%' },
+        { key: 'Chromium Content', value: '5.0 - 6.0 wt%' },
+        { key: 'Tensile Strength', value: '420 MPa' },
+        { key: 'Coefficient of Thermal Expansion', value: '12.5 × 10⁻⁶ /K' },
+        { key: 'Density', value: '7.45 g/cm³' },
+      ],
+      advantages: [
+        'Maintains structural strength inside glowing 1,020°C exhaust gas streams without oxidation scaling',
+        'Low thermal expansion coefficient prevents thermal shock cracking across twin-scroll divider septum',
+        'Exceptional resistance to thermal fatigue cycling',
+      ],
+      disadvantages: [
+        'High raw material cost due to 35% nickel content',
+        'Significantly heavier than aluminum alloys',
+      ],
+      alternatives: ['Silicon-Molybdenum Ductile Iron (SiMo - cheaper but limits max temp to 850°C)'],
+      selectionRationale:
+        'Essential for surviving incandescent wide-open-throttle exhaust pulses from high-output direct-injection engines without thermal fatigue cracking.',
+    },
+    {
+      name: 'Inconel 713C Vacuum Investment Cast Superalloy',
+      percentage: 8,
       color: '#f59e0b',
-      category: 'Precipitation-Hardened Superalloy',
+      category: 'Precipitation-Hardened Nickel Superalloy',
       usedIn: ['Turbocharger Turbine Wheel', 'Exhaust Valves'],
       properties: [
-        { key: 'Max Service Temp', value: '1,050 °C (1,922 °F)' },
-        { key: 'Tensile Strength @ 900°C', value: '620 MPa' },
-        { key: 'Creep Rupture Resistance', value: 'Extreme' },
+        { key: 'Max Operating Temp', value: '1,050 °C (1,922 °F)' },
+        { key: 'Tensile Strength @ 900°C', value: '860 MPa' },
+        { key: 'Yield Strength @ 900°C', value: '680 MPa' },
+        { key: 'Creep Rupture Strength', value: 'Extreme (100h @ 980°C / 150 MPa)' },
+        { key: 'Density', value: '8.00 g/cm³' },
       ],
-      advantages: ['Maintains structural strength inside glowing 1,000°C exhaust gas streams without oxidation'],
-      disadvantages: ['Extremely difficult to machine; must be cast under vacuum'],
-      alternatives: ['Titanium-Aluminide (TiAl - lighter but brittle)'],
-      selectionRationale: 'Withstands extreme centrifugal forces at 220,000 RPM while bathed in incandescent combustion exhaust.',
+      advantages: [
+        'Maintains high tensile and creep strength under 180,000 G centrifugal loads at 1,000°C',
+        'Impervious to hot corrosion and sulfur oxidation in automotive exhaust',
+      ],
+      disadvantages: [
+        'Extremely difficult to machine; must be precision vacuum investment cast',
+        'High mass requires careful aerodynamic blade thinning to minimize inertia',
+      ],
+      alternatives: ['Titanium-Aluminide (TiAl - 50% lighter but brittle at room temperature)'],
+      selectionRationale:
+        'Guarantees zero blade tip elongation or creep rupture when spinning at 220,000 RPM while directly immersed in pulsating 1,000°C combustion blowdown gases.',
+    },
+    {
+      name: 'Billet Forged 2618-T6 High-Strength Aluminum',
+      percentage: 6,
+      color: '#f8fafc',
+      category: 'Aerospace Forged Aluminum-Copper Alloy',
+      usedIn: ['Compressor Impeller Wheel'],
+      properties: [
+        { key: 'Tensile Strength', value: '440 MPa' },
+        { key: 'Yield Strength', value: '370 MPa' },
+        { key: 'Thermal Conductivity', value: '146 W/(m·K)' },
+        { key: 'Density', value: '2.76 g/cm³' },
+        { key: 'Fatigue Strength (10⁷ cycles)', value: '150 MPa' },
+      ],
+      advantages: [
+        'Superior high-temperature strength retention compared to standard 6061 or 7075 alloys',
+        'Zero internal casting porosity allows razor-sharp 0.5 mm blade leading edges',
+        'Low rotational inertia delivers instant throttle spool response',
+      ],
+      disadvantages: [
+        'Costly 5-axis point-by-point CNC milling process takes 45 minutes per wheel',
+      ],
+      alternatives: ['Cast C355-T6 Aluminum (cheaper but lower fatigue life)'],
+      selectionRationale:
+        'Withstands 180,000 G centrifugal root stresses at 220,000 RPM while enabling razor-thin aerodynamic blade profiles for peak isentropic efficiency.',
+    },
+    {
+      name: 'AISI 4340 Nickel-Chromium-Molybdenum Alloy Steel',
+      percentage: 16,
+      color: '#64748b',
+      category: 'High-Tensile Quenched & Tempered Steel',
+      usedIn: ['Connecting Rods', 'Turbocharger Center Shaft'],
+      properties: [
+        { key: 'Tensile Strength', value: '1,100 MPa' },
+        { key: 'Yield Strength', value: '950 MPa' },
+        { key: 'Elastic Modulus', value: '210 GPa' },
+        { key: 'Density', value: '7.85 g/cm³' },
+        { key: 'Fatigue Limit', value: '510 MPa' },
+      ],
+      advantages: [
+        'Extraordinary toughness and deep through-hardenability',
+        'High fatigue endurance limit under high-frequency alternating push-pull loads',
+      ],
+      disadvantages: ['Requires precision heat treatment to prevent hydrogen embrittlement'],
+      alternatives: ['Titanium Ti-6Al-4V (lighter but 5× more expensive)'],
+      selectionRationale:
+        'Withstands 75,000 N combustion thrust loads and 2,500 G inertia stresses in connecting rods without beam buckling.',
+    },
+    {
+      name: 'C17200 Beryllium Copper & High-Lead Bronze',
+      percentage: 4,
+      color: '#d97706',
+      category: 'Precipitation-Hardened Copper Alloy',
+      usedIn: ['Hydrodynamic Floating Journal Bearings', '360° Thrust Collar'],
+      properties: [
+        { key: 'Tensile Strength', value: '1,200 MPa' },
+        { key: 'Yield Strength', value: '950 MPa' },
+        { key: 'Thermal Conductivity', value: '105 W/(m·K)' },
+        { key: 'Hardness', value: '38-44 HRC' },
+        { key: 'Coefficient of Friction (oiled)', value: '0.003' },
+      ],
+      advantages: [
+        'Extreme resistance to galling and metal-to-metal seizure during momentary cold-start boundary lubrication',
+        'Exceptional thermal conductivity dissipates frictional heat into engine oil',
+      ],
+      disadvantages: ['Beryllium oxide dust is toxic during manufacturing casting/machining'],
+      alternatives: ['Silicon Nitride (Si3N4) Ceramic Balls (used in ball-bearing CHRA cartridges)'],
+      selectionRationale:
+        'Forms an indestructible tribological mating surface against the hardened steel shaft, cushioning 220,000 RPM rotation on a 0.028 mm floating hydrodynamic oil wedge.',
     },
   ],
+
+  // =========================================================================
+  // 4. THERMODYNAMIC & GAS-DYNAMIC HOW-IT-WORKS WALKTHROUGH
+  // =========================================================================
   howItWorks: [
     {
       step: 1,
-      title: 'Intake Stroke (0° to 180° Crank Angle)',
-      description: 'Intake valves open. Piston descends, drawing in pressurized boost air (1.8 bar) from the intercooler while direct injectors spray gasoline at 350 bar into the cylinder.',
-      activeComponentIds: ['piston-rod-assembly', 'cylinder-block-assembly'],
-      forcesDescription: 'Manifold pressure: P_boost = 180 kPa absolute; Air-fuel mass ratio: λ = 1.0 (14.7:1 stoichiometric).',
+      title: 'Stage 1: Ambient Induction & Kinetic Centrifugal Compression (Impeller Spooling)',
+      description:
+        'Cold ambient air is ingested through the bellmouth inlet. The CNC billet forged compressor wheel, spinning at 220,000 RPM, accelerates air particles to Mach 1.45 (510 m/s) across its 12 aerodynamic blades. Passing through the logarithmic spiral volute, kinetic velocity converts into static pressure, generating 1.85 bar (26.8 PSI) boost at 160°C discharge temperature.',
+      activeComponentIds: ['turbo-compressor-inlet', 'turbo-compressor-housing', 'turbo-chra-core'],
+      forcesDescription:
+        'Induction mass airflow: m_dot = 0.28 kg/s (37 lb/min); Impeller tip speed: 510 m/s; Centrifugal acceleration: 180,000 Gs.',
     },
     {
       step: 2,
-      title: 'Compression Stroke (180° to 360° Crank Angle)',
-      description: 'All valves close. Piston rises, compressing the air-fuel mixture by 10.5:1 ratio, raising mixture pressure to 35 bar and temperature to 480°C.',
-      activeComponentIds: ['piston-rod-assembly', 'cylinder-block-assembly'],
-      forcesDescription: 'Polytropic compression work: W = (P2·V2 - P1·V1) / (1 - γ) ≈ 420 Joules.',
+      title: 'Stage 2: Charge Air Intercooling & 350-Bar Direct Fuel Injection',
+      description:
+        'Hot pressurized boost air passes through the bar-and-plate intercooler, rejecting thermal energy into ambient airflow and dropping charge air temperature from 160°C to 42°C, increasing air density by 38%. Entering the cylinder during the intake stroke (0° to 180° CA), high-pressure common-rail injectors spray gasoline directly into the combustion chamber at 350 bar (5,075 PSI) in multi-pulse micro-droplets (Sauter Mean Diameter < 10 μm).',
+      activeComponentIds: ['cylinder-head-assembly', 'piston-rod-assembly'],
+      forcesDescription:
+        'Charge density: ρ = 2.18 kg/m³; Direct fuel injection pressure: P_inj = 35 MPa (350 bar); Injection duration: 1.8 milliseconds.',
     },
     {
       step: 3,
-      title: 'Combustion & Power Stroke (360° to 540° Crank Angle)',
-      description: 'Spark plug fires 12° before Top Dead Center. Flame front propagates at 45 m/s. Pressure spikes to 140 bar, driving the piston downward with 75,000 N of thrust.',
-      activeComponentIds: ['piston-rod-assembly', 'crankshaft-assembly'],
-      forcesDescription: 'Peak combustion force: F = P · A = 14×10^6 Pa · (π/4 · 0.0825^2 m²) = 74,800 N (7.6 metric tons instantaneous force!).',
+      title: 'Stage 3: Polytropic Compression Stroke & Top-Dead-Center Ignition',
+      description:
+        'As the intake valves seal, the forged piston ascends from Bottom Dead Center to Top Dead Center (180° to 360° CA). The dense air-fuel mixture is compressed by a 10.5:1 ratio, raising cylinder pressure to 38 bar and temperature to 490°C. Precisely 12° before TDC, the iridium spark plug ignites the homogenized charge, initiating a turbulent deflagration flame kernel that propagates across the pent-roof chamber at 45 m/s.',
+      activeComponentIds: ['piston-rod-assembly', 'cylinder-block-assembly'],
+      forcesDescription:
+        'Polytropic compression work: W_comp = 480 Joules; In-cylinder charge temperature before ignition: T_comp = 763 K (490°C).',
     },
     {
       step: 4,
-      title: 'Exhaust & Turbo Spooling (540° to 720° Crank Angle)',
-      description: 'Exhaust valves open. Sonic blowdown gas pulses rush through the dual-scroll manifold, spinning the Inconel turbine wheel up to 200,000 RPM.',
-      activeComponentIds: ['turbocharger-assembly', 'crankshaft-assembly'],
-      forcesDescription: 'Exhaust gas temperature: 950°C; Turbocharger power extraction: ~25 kW to drive compressor.',
+      title: 'Stage 4: Rapid Flame-Front Deflagration & 140-Bar Power Stroke',
+      description:
+        'Full combustion liberates intense chemical enthalpy, spiking in-cylinder pressure to 140 bar (2,030 PSI) and localized flame temperatures above 2,200°C. Expanding combustion gases exert 74,800 N (7.6 metric tons) of downward thrust onto the forged piston crown, driving the H-beam connecting rod downward to turn the induction-hardened crankshaft through a 92.8 mm stroke, delivering 380 N·m of continuous flywheel torque.',
+      activeComponentIds: ['piston-rod-assembly', 'crankshaft-assembly', 'cylinder-block-assembly'],
+      forcesDescription:
+        'Peak combustion force: F = P · A = 14×10⁶ Pa · (π/4 · 0.0825² m²) = 74,800 N; Instantaneous rod compression load: 7.6 metric tons.',
+    },
+    {
+      step: 5,
+      title: 'Stage 5: Blowdown Exhaust Pulse Separation via Divided Twin-Scroll Manifold',
+      description:
+        'At 540° CA, sodium-filled exhaust valves crack open. Sonic blowdown exhaust pulses at 1,020°C and 3.8 bar pressure rush into the divided twin-scroll manifold. Scroll A channels exhaust from Cylinders 1 and 4, while Scroll B channels Cylinders 2 and 3. Physical isolation prevents scavenging pulse backflow from interfering with cylinder gas evacuation, delivering crisp, uninhibited kinetic pulses directly onto the Inconel turbine wheel.',
+      activeComponentIds: ['turbo-turbine-housing', 'turbo-exhaust-flange', 'cylinder-head-assembly'],
+      forcesDescription:
+        'Exhaust blowdown velocity: ~620 m/s; Pulse stagnation temperature: 1,020°C; Pulse frequency at 6,000 RPM: 200 Hz.',
+    },
+    {
+      step: 6,
+      title: 'Stage 6: Radial Inconel Turbine Expansion & Pneumatic Wastegate Closed-Loop Regulation',
+      description:
+        'Exhaust gases expand through the Inconel 713C turbine wheel, extracting 25 kW of mechanical power to spin the central shaft and compressor wheel up to 220,000 RPM. When boost pressure reaches the target 1.85 bar, the ECU boost solenoid vents control pressure to the dual-port wastegate canister, extending the stainless steel pushrod by 12.5 mm and swinging the internal 34 mm nickel flapper valve open by 22° to bypass excess exhaust around the wheel.',
+      activeComponentIds: ['turbo-turbine-housing', 'turbo-exhaust-outlet', 'turbo-wastegate-actuator', 'turbo-wastegate-linkage'],
+      forcesDescription:
+        'Turbine power extraction: W_dot_turb = 25.4 kW (34.0 HP); Wastegate actuator cracking force: 140 N; Wastegate bypass flow: up to 35% exhaust mass.',
     },
   ],
+
+  // =========================================================================
+  // 5. ENGINEERING EQUATIONS & INTERACTIVE MATHEMATICAL MODELS
+  // =========================================================================
   engineeringEquations: [
     {
       id: 'eq-otto-efficiency',
-      title: 'Thermal Efficiency of Air-Standard Otto Cycle',
+      title: 'Air-Standard Otto Cycle Brake Thermal Efficiency',
       discipline: 'Thermal',
-      latex: '\\eta_{thermal} = 1 - \\frac{1}{r_c^{\\gamma - 1}}',
-      explanation: 'Calculates the ideal thermodynamic efficiency limit of the internal combustion engine based on compression ratio (r_c) and heat capacity ratio of air (γ = 1.4).',
+      latex: '\\eta_{th} = 1 - \\frac{1}{r_c^{\\gamma - 1}}',
+      explanation:
+        'Calculates the thermodynamic efficiency ceiling of the internal combustion engine based on static compression ratio (r_c) and specific heat ratio of air (γ = 1.40). Incorporates real-world mechanical and pumping loss factors to determine brake thermal efficiency and projected horsepower.',
       variables: [
-        { symbol: 'η', name: 'Thermal Efficiency', unit: '%', objectValue: '38.2% (Brake Thermal Efficiency)' },
+        { symbol: 'η_th', name: 'Brake Thermal Efficiency', unit: '%', objectValue: '38.6%' },
         { symbol: 'r_c', name: 'Static Compression Ratio', unit: '-', objectValue: '10.5 : 1' },
         { symbol: 'γ', name: 'Specific Heat Ratio (Air)', unit: '-', objectValue: '1.40' },
       ],
@@ -249,123 +1329,398 @@ export const carEngineData: ObjectBreakdownData = {
           const { compressionRatio, boostBar } = inputs;
           const gamma = 1.4;
           const idealEff = (1 - 1 / Math.pow(compressionRatio, gamma - 1)) * 100;
-          const brakeEff = idealEff * 0.62; // Real-world mechanical & heat losses
-          const powerHp = (140 * (1 + boostBar) * (compressionRatio / 10.0)).toFixed(0);
+          const brakeEff = idealEff * 0.635;
+          const powerBhp = Math.round(145 * (1 + boostBar * 0.88) * Math.pow(compressionRatio / 10.0, 0.4));
           return {
             result: brakeEff,
             unit: '%',
-            formatted: `Brake Efficiency: ${brakeEff.toFixed(1)}% (${powerHp} HP Output)`,
-            interpretation: compressionRatio > 12 && boostBar > 1.2 ? 'Critical Knock Risk: Severe pre-ignition detonation unless running 100+ Octane race fuel!' : 'Safe high-efficiency forced-induction calibration.',
+            formatted: `Brake Efficiency: ${brakeEff.toFixed(1)}% (${powerBhp} BHP Output)`,
+            interpretation:
+              compressionRatio > 11.5 && boostBar > 1.6
+                ? 'CRITICAL KNOCK WARNING: Pre-ignition detonation limit exceeded. Requires 102+ Octane race fuel or water-methanol injection!'
+                : 'Optimal high-efficiency forced-induction calibration balancing thermodynamic efficiency and detonation safety margins.',
           };
         },
         inputs: [
-          { key: 'compressionRatio', label: 'Compression Ratio (r_c)', min: 8.5, max: 13.5, step: 0.5, default: 10.5, unit: ':1' },
-          { key: 'boostBar', label: 'Turbo Boost Gauge Pressure', min: 0.2, max: 2.5, step: 0.1, default: 1.2, unit: 'bar' },
+          { key: 'compressionRatio', label: 'Static Compression Ratio (r_c)', min: 8.5, max: 13.0, step: 0.5, default: 10.5, unit: ':1' },
+          { key: 'boostBar', label: 'Turbo Boost Gauge Pressure', min: 0.2, max: 2.5, step: 0.1, default: 1.85, unit: 'bar' },
         ],
       },
     },
     {
+      id: 'eq-compressor-pr',
+      title: 'Turbocharger Compressor Pressure Ratio & Isentropic Discharge Temperature',
+      discipline: 'Fluid Mechanics',
+      latex: 'T_{out} = T_{in} \\left[ 1 + \\frac{PR^{(\\gamma-1)/\\gamma} - 1}{\\eta_c} \\right]',
+      explanation:
+        'Determines the air temperature leaving the compressor volute before intercooling as a function of pressure ratio (PR = P_out / P_in), ambient inlet temperature (T_in), and compressor isentropic efficiency (η_c = 74%).',
+      variables: [
+        { symbol: 'T_out', name: 'Compressor Discharge Temperature', unit: '°C', objectValue: '162 °C' },
+        { symbol: 'PR', name: 'Total Pressure Ratio (P_out / P_in)', unit: '-', objectValue: '2.85 : 1' },
+        { symbol: 'η_c', name: 'Compressor Isentropic Efficiency', unit: '%', objectValue: '74.0%' },
+        { symbol: 'T_in', name: 'Ambient Inlet Temperature', unit: '°C', objectValue: '25 °C' },
+      ],
+      interactiveCalculator: {
+        calculate: (inputs) => {
+          const { boostBar, isentropicEff } = inputs;
+          const gamma = 1.4;
+          const pIn = 1.0; // 1 bar ambient
+          const pOut = pIn + boostBar;
+          const pr = pOut / pIn;
+          const tInK = 298.15; // 25°C in Kelvin
+          const tOutK = tInK * (1 + (Math.pow(pr, (gamma - 1) / gamma) - 1) / (isentropicEff / 100));
+          const tOutC = tOutK - 273.15;
+          return {
+            result: tOutC,
+            unit: '°C',
+            formatted: `Discharge Temp: ${tOutC.toFixed(1)}°C (PR: ${pr.toFixed(2)})`,
+            interpretation:
+              tOutC > 180
+                ? 'Severe thermal heat soak: Intercooler must reject massive heat to prevent pre-ignition knock!'
+                : 'Normal compressor thermal operating regime within intercooler heat rejection envelope.',
+          };
+        },
+        inputs: [
+          { key: 'boostBar', label: 'Turbo Boost Gauge Pressure', min: 0.4, max: 2.6, step: 0.1, default: 1.85, unit: 'bar' },
+          { key: 'isentropicEff', label: 'Compressor Isentropic Efficiency', min: 60, max: 82, step: 1, default: 74, unit: '%' },
+        ],
+      },
+    },
+    {
+      id: 'eq-turbine-power',
+      title: 'Turbine Enthalpy Extraction & Shaft Power Balance',
+      discipline: 'Thermal',
+      latex: '\\dot{W}_{turb} = \\dot{m}_{exh} \\cdot C_p \\cdot T_{in} \\cdot \\left[ 1 - \\left( \\frac{1}{PR_t} \\right)^{(\\gamma-1)/\\gamma} \\right] \\cdot \\eta_t',
+      explanation:
+        'Calculates the mechanical shaft power extracted by the Inconel radial turbine wheel from waste exhaust enthalpy to drive the high-speed centrifugal compressor impeller.',
+      variables: [
+        { symbol: 'W_turb', name: 'Turbine Mechanical Shaft Power', unit: 'kW', objectValue: '25.4 kW (34.0 HP)' },
+        { symbol: 'm_exh', name: 'Exhaust Gas Mass Flow Rate', unit: 'kg/s', objectValue: '0.28 kg/s' },
+        { symbol: 'T_in', name: 'Turbine Inlet Temperature', unit: 'K', objectValue: '1,293 K (1,020°C)' },
+        { symbol: 'PR_t', name: 'Turbine Expansion Ratio', unit: '-', objectValue: '2.45 : 1' },
+      ],
+    },
+    {
       id: 'eq-piston-acceleration',
-      title: 'Kinematic Piston Acceleration & Inertia Force',
+      title: 'Kinematic Reciprocating Piston Acceleration & Inertia Force',
       discipline: 'Mechanical',
       latex: 'a(\\theta) = r \\cdot \\omega^2 \\left( \\cos \\theta + \\frac{r}{L} \\cos 2\\theta \\right)',
-      explanation: 'Calculates the extreme reciprocating G-forces experienced by the piston crown at engine redline (7,000 RPM) at Top Dead Center.',
+      explanation:
+        'Calculates the extreme reciprocating G-forces experienced by the piston crown at engine redline (7,000 RPM) at Top Dead Center, where the piston changes direction 233 times per second.',
       variables: [
-        { symbol: 'a_max', name: 'Peak Piston Acceleration', unit: 'm/s²', objectValue: '24,500 m/s² (2,500 Gs)' },
-        { symbol: 'ω', name: 'Crank Angular Velocity', unit: 'rad/s', objectValue: '733 rad/s (7,000 RPM)' },
-        { symbol: 'r', name: 'Crank Throw Radius', unit: 'mm', objectValue: '46.4 mm' },
-        { symbol: 'L', name: 'Connecting Rod Length', unit: 'mm', objectValue: '144.0 mm' },
+        { symbol: 'a_max', name: 'Peak Reciprocating Acceleration', unit: 'm/s²', objectValue: '24,500 m/s² (2,500 Gs)' },
+        { symbol: 'ω', name: 'Crankshaft Angular Velocity', unit: 'rad/s', objectValue: '733 rad/s (7,000 RPM)' },
+        { symbol: 'r', name: 'Crank Throw Radius (Stroke / 2)', unit: 'mm', objectValue: '46.4 mm' },
+        { symbol: 'L', name: 'Connecting Rod Length C-to-C', unit: 'mm', objectValue: '144.0 mm' },
+      ],
+    },
+    {
+      id: 'eq-mass-airflow',
+      title: 'Forced-Induction Mass Airflow & Engine Horsepower Potential',
+      discipline: 'Fluid Mechanics',
+      latex: '\\dot{m}_{air} = \\frac{V_d \\cdot RPM \\cdot \\eta_v \\cdot \\rho_{boost}}{2 \\cdot 60}',
+      explanation:
+        'Computes the mass of air ingested into the cylinders per second to evaluate maximum combustion fuel mass and theoretical peak brake horsepower potential.',
+      variables: [
+        { symbol: 'm_air', name: 'Engine Mass Airflow', unit: 'kg/s', objectValue: '0.278 kg/s (36.8 lb/min)' },
+        { symbol: 'V_d', name: 'Displacement Volume', unit: 'L', objectValue: '2.0 Liters (1,998 cc)' },
+        { symbol: 'η_v', name: 'Volumetric Efficiency', unit: '%', objectValue: '96.5%' },
+        { symbol: 'ρ_boost', name: 'Intercooled Charge Air Density', unit: 'kg/m³', objectValue: '2.18 kg/m³' },
       ],
     },
   ],
+
+  // =========================================================================
+  // 6. MANUFACTURING PROCESS TIMELINE
+  // =========================================================================
   manufacturingTimeline: [
     {
       stepNumber: 1,
-      stageName: 'Block Casting & Thermal Ageing',
-      description: 'Molten A319 aluminum alloy injected under 800-ton locking pressure into steel molds with grey iron liner inserts preheated to 200°C.',
-      machinery: 'Bühler 800-ton Die Casting Cell',
-      tolerance: '±0.15 mm on rough casting',
-      materialReq: 'A319 Aluminum Ingot + Iron Liners',
-      qualityChecks: ['X-Ray computed tomography (CT) scan for sand void porosity'],
-      commonDefects: ['Cold shuts along oil passages'],
+      stageName: 'Block & Head Foundry Die Casting',
+      description:
+        'Molten A319 and A356 aluminum alloys are injected under 800-ton hydraulic pressure into steel molds with centrifugally spun grey iron cylinder liner inserts preheated to 200°C.',
+      machinery: 'Bühler 800-Ton High-Pressure Die Casting Cell',
+      tolerance: '±0.15 mm on rough casting profile',
+      materialReq: 'A319 Aluminum Ingot, A356 Aluminum Ingot, Centrifugally Cast GG25 Liners',
+      qualityChecks: ['X-ray computed tomography (CT) scan for inter-dendritic shrinkage porosity'],
+      commonDefects: ['Cold shuts along Siamese cooling water jacket passages'],
     },
     {
       stepNumber: 2,
-      stageName: 'Plateau Honing of Cylinder Liners',
-      description: 'Diamond honing stones rotate and stroke in synchronized helical pattern to produce 45° cross-hatch micro-grooves that hold engine oil films.',
-      machinery: 'Nagel Automated CNC Plateau Honing Machine',
+      stageName: 'Cylinder Bore Multi-Axis Plateau Honing',
+      description:
+        'Diamond-impregnated honing stones rotate and stroke in synchronized helical motions to produce cross-hatch plateau micro-grooves that retain hydrodynamic oil films.',
+      machinery: 'Nagel Automated CNC Plateau Honing Cell',
       tolerance: 'Cylindricity: 0.003 mm; Roughness: Rpk 0.2 μm / Rvk 1.2 μm',
-      materialReq: 'Grey Cast Iron Liners',
-      qualityChecks: ['Air-gage multi-plane diameter laser profilometer'],
-      commonDefects: ['Hone angle asymmetry causing excessive oil consumption'],
+      materialReq: 'Grey Cast Iron Liners (GG25)',
+      qualityChecks: ['Air-gage multi-plane laser diameter profilometer'],
+      commonDefects: ['Honing cross-hatch angle asymmetry causing excessive oil consumption'],
+    },
+    {
+      stepNumber: 3,
+      stageName: 'Inconel 713C Vacuum Investment Casting & Friction Welding',
+      description:
+        'Turbine wheels are investment cast in ceramic shell molds under 10⁻⁴ mbar vacuum from molten Inconel 713C, then inertia-friction welded to precision SAE 4140 chrome-moly shafts.',
+      machinery: 'Leybold Vacuum Investment Furnace + Kuka Inertia Friction Welder',
+      tolerance: 'Shaft runout: < 0.005 mm; Weld tensile strength: > 850 MPa',
+      materialReq: 'Inconel 713C Master Heat Ingot, SAE 4140 Quenched Shaft',
+      qualityChecks: ['Phased-array ultrasonic inspection (UT) across friction-weld interface'],
+      commonDefects: ['Lack-of-fusion micro-inclusions at weld bond line'],
+    },
+    {
+      stepNumber: 4,
+      stageName: '5-Axis CNC Point-Milling of Billet Compressor Impeller',
+      description:
+        'Forged solid billet 2618-T6 aluminum discs are 5-axis flank-milled with ball-end diamond cutters to sculpt aerodynamic 6+6 blades with 0.5 mm razor leading edges.',
+      machinery: 'Hermle C32U 5-Axis Dynamic Machining Center',
+      tolerance: 'Airfoil coordinate profile: ±0.005 mm; Surface finish: Ra 0.12 μm',
+      materialReq: 'Forged 2618-T6 Aluminum Cylindrical Billets',
+      qualityChecks: ['Zeiss optical white-light 3D coordinate blade scanner'],
+      commonDefects: ['Cutter deflection causing trailing edge thickness deviation'],
+    },
+    {
+      stepNumber: 5,
+      stageName: 'High-Speed Vibration Sorting Rig (VSR) Balancing',
+      description:
+        'The assembled CHRA cartridge is mounted in an acoustic test rig, supplied with 4.5 bar heated engine oil, and driven by shop air up to 250,000 RPM while laser sensors measure dynamic unbalance.',
+      machinery: 'Schenck TBcomfort High-Speed Turbo Core Balancer (250,000 RPM)',
+      tolerance: 'Residual dynamic unbalance: < 0.003 mg·mm across full speed spectrum',
+      materialReq: 'Assembled CHRA, 120°C Synthetic Lubricating Oil',
+      qualityChecks: ['Fourier-transform vibration harmonic spectrogram at 250,000 RPM'],
+      commonDefects: ['Phase-angle shift indicating loose thrust collar locknut'],
+    },
+    {
+      stepNumber: 6,
+      stageName: 'Connecting Rod Fracture-Splitting & Sizing',
+      description:
+        'Forged 4340 connecting rods are laser-notched across the big-end bearing parting plane, then hydraulically snapped in a single impact to produce mating fracture surfaces with crystalline interlocking peaks.',
+      machinery: 'Trumpf Laser-Cracking Cell + Alfing Hydraulic Rod Splitting Station',
+      tolerance: 'Big-end bore roundness when torqued: ±0.002 mm',
+      materialReq: 'Forged 4340 Chromoly Steel Rod Forgings',
+      qualityChecks: ['Optical microscopy inspecting fracture surface peak retention'],
+      commonDefects: ['Micro-spalling flake particulate trapped in bearing shell bore'],
+    },
+    {
+      stepNumber: 7,
+      stageName: 'Crankshaft Fillet Deep-Rolling & Induction Hardening',
+      description:
+        'Hardened rolling wheels exert 25,000 N force into main and rod journal radius fillets to induce 800 MPa compressive residual stress, followed by high-frequency induction hardening of journals to 60 HRC.',
+      machinery: 'Hegenscheidt Fillet Deep-Rolling Machine + Inductoheat Hardening Line',
+      tolerance: 'Fillet plastic depth: 2.5 mm; Journal hardness: 58-62 HRC',
+      materialReq: 'Forged 42CrMo4 Steel Crankshaft',
+      qualityChecks: ['Barkhausen noise eddy-current grinding burn detection'],
+      commonDefects: ['Localized soft spots from inadequate induction quench spray'],
+    },
+    {
+      stepNumber: 8,
+      stageName: 'Cold-Test & Hot-Fire Automated Engine Dynamometer End-of-Line Check',
+      description:
+        'Fully assembled engines are spun by an electric dyno for automated acoustic and compression testing, followed by a 20-minute automated hot-fire dyno run verifying 1.85 bar boost, emission lambda, and 380 N·m torque output.',
+      machinery: 'AVL Automated Production Engine Test Cell (400 kW Dyno)',
+      tolerance: 'Torque output: 380 ± 5 N·m; Boost pressure: 1.85 ± 0.03 bar',
+      materialReq: 'Calibration Gasoline (98 RON), Factory Fill Synthetic Oil',
+      qualityChecks: ['100% crankcase blowby flow measurement and combustion pressure knock sensor trace'],
+      commonDefects: ['Minor O-ring vacuum leak on intake manifold runner'],
     },
   ],
+
+  // =========================================================================
+  // 7. COMPONENT RELATIONSHIPS & KINEMATIC TOPOLOGY
+  // =========================================================================
   relationships: [
-    { sourceId: 'piston-rod-assembly', targetId: 'crankshaft-assembly', interactionType: 'pushes', description: 'Transfers downward combustion gas force into rotating crankshaft torque.' },
-    { sourceId: 'crankshaft-assembly', targetId: 'cylinder-block-assembly', interactionType: 'supports', description: 'Rides on hydrodynamic pressurized oil film inside main journal bearings.' },
-    { sourceId: 'cylinder-head', targetId: 'turbocharger-assembly', interactionType: 'transfers', description: 'Channels 950°C exhaust gas pulses directly into the turbine housing.' },
+    {
+      sourceId: 'turbo-compressor-inlet',
+      targetId: 'turbo-compressor-housing',
+      interactionType: 'transfers',
+      description: 'Discharges supersonic compressed air at Mach 1.45 into the volute diffuser.',
+    },
+    {
+      sourceId: 'turbo-compressor-housing',
+      targetId: 'cylinder-head-assembly',
+      interactionType: 'transfers',
+      description: 'Delivers 1.85 bar intercooled charge air into high-tumble intake ports.',
+    },
+    {
+      sourceId: 'cylinder-head-assembly',
+      targetId: 'turbo-exhaust-flange',
+      interactionType: 'transfers',
+      description: 'Discharges 1,020°C split exhaust gas blowdown pulses into the twin-scroll manifold.',
+    },
+    {
+      sourceId: 'turbo-exhaust-flange',
+      targetId: 'turbo-turbine-housing',
+      interactionType: 'transfers',
+      description: 'Channels isolated cylinder exhaust pulses directly onto Inconel turbine blades.',
+    },
+    {
+      sourceId: 'turbo-turbine-housing',
+      targetId: 'turbo-exhaust-outlet',
+      interactionType: 'transfers',
+      description: 'Directs expanded exhaust gas out through downpipe V-band connection.',
+    },
+    {
+      sourceId: 'turbo-chra-core',
+      targetId: 'turbo-compressor-inlet',
+      interactionType: 'rotates',
+      description: 'Central rotating shaft spins the billet compressor wheel at 220,000 RPM.',
+    },
+    {
+      sourceId: 'turbo-wastegate-actuator',
+      targetId: 'turbo-wastegate-linkage',
+      interactionType: 'pushes',
+      description: 'Applies up to 320 N linear force to swing the internal wastegate flapper arm.',
+    },
+    {
+      sourceId: 'turbo-oil-ports',
+      targetId: 'turbo-chra-core',
+      interactionType: 'supports',
+      description: 'Delivers 4.5 bar pressurized synthetic oil creating floating hydrodynamic liquid wedges.',
+    },
+    {
+      sourceId: 'piston-rod-assembly',
+      targetId: 'crankshaft-assembly',
+      interactionType: 'pushes',
+      description: 'Transfers 74,800 N combustion gas force into rotating crankshaft torque.',
+    },
+    {
+      sourceId: 'crankshaft-assembly',
+      targetId: 'cylinder-block-assembly',
+      interactionType: 'supports',
+      description: 'Rides on hydrodynamic pressurized oil films inside cross-bolted main journal bearings.',
+    },
   ],
+
+  // =========================================================================
+  // 8. INTERACTIVE WHAT-IF SCENARIOS
+  // =========================================================================
   whatIfParameters: [
     {
       id: 'param-boost-pressure',
       label: 'Turbocharger Boost Gauge Pressure',
       component: 'Turbocharger',
       min: 0.4,
-      max: 2.6,
-      defaultValue: 1.2,
+      max: 2.8,
+      defaultValue: 1.85,
       unit: 'bar',
       impactMetrics: [
         {
-          name: 'Peak Engine Horsepower',
+          name: 'Engine Peak Horsepower',
           calculate: (val) => {
-            const pct = Math.round(((val - 1.2) / 1.2) * 55);
+            const baseHp = 145; // Naturally aspirated baseline
+            const hp = Math.round(baseHp * (1 + val * 0.88));
+            const change = Math.round(((hp - 380) / 380) * 100);
             return {
-              changePercent: pct,
-              valueStr: `${(280 + (val - 1.2) * 110).toFixed(0)} BHP`,
-              status: val > 2.0 ? 'warning' : 'optimal',
-              explanation: val > 2.0 ? 'Extreme cylinder pressure (>170 bar) requires forged pistons and high-octane fuel.' : 'Safe factory boost calibration.',
+              changePercent: change,
+              valueStr: `${hp} BHP`,
+              status: val > 2.3 ? 'warning' : 'optimal',
+              explanation:
+                val > 2.3
+                  ? 'Extreme cylinder pressure (>175 bar) exceeds stock head bolt clamp load; head gasket failure imminent!'
+                  : 'Safe high-efficiency factory boost calibration with twin-scroll response.',
+            };
+          },
+        },
+        {
+          name: 'Compressor Discharge Temp (Pre-Intercooler)',
+          calculate: (val) => {
+            const pr = (1.0 + val) / 1.0;
+            const tempC = Math.round(298.15 * (1 + (Math.pow(pr, 0.286) - 1) / 0.74) - 273.15);
+            return {
+              changePercent: Math.round(((tempC - 162) / 162) * 100),
+              valueStr: `${tempC} °C`,
+              status: tempC > 185 ? 'warning' : 'optimal',
+              explanation:
+                tempC > 185
+                  ? 'Extreme adiabatic heating exceeds intercooler heat rejection capacity; intake air temp rises.'
+                  : 'Compressor operating within peak isentropic efficiency island (74%).',
+            };
+          },
+        },
+      ],
+    },
+    {
+      id: 'param-compression-ratio',
+      label: 'Static Compression Ratio (r_c)',
+      component: 'Piston & Combustion Chamber',
+      min: 8.5,
+      max: 12.5,
+      defaultValue: 10.5,
+      unit: ':1',
+      impactMetrics: [
+        {
+          name: 'Brake Thermal Efficiency',
+          calculate: (val) => {
+            const eff = (1 - 1 / Math.pow(val, 0.4)) * 63.5;
+            return {
+              changePercent: Math.round(((eff - 38.6) / 38.6) * 100),
+              valueStr: `${eff.toFixed(1)} %`,
+              status: val > 11.5 ? 'warning' : 'optimal',
+              explanation:
+                val > 11.5
+                  ? 'High thermal efficiency but severely constrained by knock limit; ignition timing must be retarded.'
+                  : 'Excellent thermal efficiency balance for forced-induction direct injection.',
             };
           },
         },
       ],
     },
   ],
+
+  // =========================================================================
+  // 9. DID YOU KNOW & ENGINEERING PEARLS
+  // =========================================================================
   didYouKnow: [
-    'At 7,000 RPM, each piston changes direction 233 times per second, experiencing peak accelerations of 2,500 Gs—meaning a 320-gram piston momentarily pulls the equivalent of 800 kilograms of inertia force!',
-    'The turbine wheel inside the turbocharger spins at over 220,000 RPM, with the blade tips traveling faster than the speed of sound while glowing cherry-red at 950°C.',
-    'Engine oil is forced through journal bearings under 4 bar of pressure, creating a hydrodynamic liquid wedge just 0.003 mm thick that prevents metal-to-metal contact even under 7 metric tons of piston thrust.',
+    'The turbine wheel inside this turbocharger spins at over 220,000 RPM—meaning blade tips travel at Mach 1.45 (faster than the speed of sound) while bathed in incandescent 1,020°C exhaust gas!',
+    'At 7,000 RPM, each piston changes direction 233 times per second and accelerates at 2,500 Gs—meaning a lightweight 320-gram piston pulls the instantaneous equivalent of 800 kilograms of inertia force!',
+    'Engine oil is forced through journal bearings under 4.5 bar of pressure, generating a hydrodynamic liquid wedge just 0.003 mm thick that prevents metal-to-metal contact even under 7.6 metric tons of combustion thrust!',
+    'The 350-bar gasoline direct injector fires fuel in multiple micro-pulses lasting only 1.8 milliseconds, atomizing gasoline into droplets smaller than a human red blood cell (under 10 microns)!',
   ],
+
   engineersChoice: [
     {
-      title: 'Why Cross-Hatch Plateau Honing on Cylinder Walls?',
-      rationale: 'Mirror-smooth cylinders would cause piston rings to wipe away all oil, leading to catastrophic metal-on-metal seizure in minutes. Plateau honing cuts microscopic valleys that store a reservoir of oil while leaving flat "plateaus" to support ring pressure.',
+      title: 'Why Twin-Scroll Divided Volutes Instead of a Single Large Scroll?',
+      rationale:
+        'In a 4-cylinder engine with firing order 1-3-4-2, exhaust valve events overlap by 30° to 50°. A single open manifold causes the exhaust blowdown pulse of Cylinder 4 to blow back into Cylinder 1 during its exhaust stroke, diluting the cylinder and stalling the turbo. Splitting the exhaust into two scrolls (1&4 vs 2&3) completely isolates the pulses, boosting turbine spool transient response by over 35% and virtually eliminating turbo lag.',
+    },
+    {
+      title: 'Why Laser-Fractured Cracked Connecting Rod Caps?',
+      rationale:
+        'Conventional rod caps are saw-cut and dowel-pinned, leaving flat mating surfaces that can shift under high RPM shear forces, distorting the bearing bore out-of-round. Laser-cracking snaps the forged rod cap along natural crystal grain planes, creating hundreds of microscopic interlocking mountain peaks that lock together with zero clearance, ensuring perfect bearing roundness under 7.6 tons of load.',
     },
   ],
+
   redesignInsights: {
     simplify: {
-      title: 'Electric Turbo-Supercharger (e-Turbo)',
-      partReduction: 'Replaces complex twin-scroll mechanical wastegates with a 48V 100,000 RPM electric motor on the turbo shaft.',
-      description: 'Eliminates turbo lag entirely by instantly spooling the compressor in 0.2 seconds before exhaust gases build pressure.',
-      tradeoffs: 'Requires 48V mild-hybrid lithium battery pack and high-current power inverter.',
+      title: '48V Mild-Hybrid Electric Assisted Turbocharger (e-Turbo)',
+      partReduction: 'Replaces complex pneumatic wastegates and twin-scroll manifolds with an ultra-thin 48V 100,000 RPM electric motor mounted directly on the turbo shaft.',
+      description:
+        'Spools the compressor wheel to full 1.85 bar boost in 0.2 seconds from a dead stop before exhaust gas even begins flowing, completely eliminating turbo lag while recovering electrical energy during vehicle deceleration.',
+      tradeoffs: 'Requires high-power 48V mild-hybrid lithium battery pack, high-frequency motor inverter, and water-cooled motor stator.',
     },
     makeItBetter: {
-      title: 'Dry-Sump Lubrication + Single-Crystal Titanium Rods',
-      upgrade: 'Replaces wet oil pan with external multi-stage scavenge pump and Ti-6Al-4V connecting rods.',
-      performanceGain: 'Allows lowering engine center-of-gravity by 85 mm and raises safe engine redline to 9,000 RPM.',
-      description: 'Eliminates oil starvation during high-G lateral cornering on race tracks.',
+      title: 'Variable Turbine Geometry (VTG) with Inconel Vanes + DLC Internal Components',
+      upgrade:
+        'Replaces static divided scrolls with 11 pivoting aerodynamic Inconel guide vanes that change throat area continuously based on engine RPM and load.',
+      performanceGain:
+        'Produces peak 1.85 bar boost from 1,200 RPM all the way to 7,500 RPM, widening the engine torque plateau by 40% while slashing pumping backpressure.',
+      description:
+        'Delivers instant diesel-like low-end torque with high-RPM breathing capacity, eliminating all compromise in turbine sizing.',
     },
     cheaperVersion: {
-      title: 'Cast-Iron Block Naturally Aspirated (Port Injected)',
-      costReduction: 'Estimated -45% total engine cost',
-      changes: 'Eliminate turbocharger, intercooler, high-pressure 350-bar fuel pumps, and forged internals.',
-      tradeoffs: 'Produces 40% less torque and 30% worse fuel efficiency.',
+      title: 'Naturally Aspirated Cast-Iron Block with Multi-Point Port Injection',
+      costReduction: 'Estimated -48% total engine manufacturing cost',
+      changes:
+        'Eliminate turbocharger, intercooler, 350-bar high-pressure direct fuel pumps, forged pistons, and forged steel crankshaft.',
+      tradeoffs:
+        'Produces 42% less horsepower (145 HP vs 380 HP) and 35% worse fuel economy under highway cruising conditions.',
     },
   },
+
   aiSuggestedQuestions: [
-    'How does a turbocharger generate horsepower from waste exhaust gas?',
-    'What keeps the engine bearings from grinding to dust under 7 tons of piston force?',
-    'Why do piston rings need cross-hatch hone marks on the cylinder wall?',
-    'What is engine knock (detonation) and how do modern ECUs prevent it?',
-    'How does Variable Valve Timing (VVT) alter cam profiles on the fly?',
+    'How does a twin-scroll turbocharger eliminate exhaust pulse interference between cylinders?',
+    'What keeps hydrodynamic journal bearings from seizing when spinning at 220,000 RPM?',
+    'Why do high-performance turbocharged engines need sodium-filled hollow exhaust valves?',
+    'How does 350-bar gasoline direct injection prevent pre-ignition engine knock under high boost?',
+    'What is the physical cause of turbo lag and how do modern ECUs mitigate it?',
   ],
 };
