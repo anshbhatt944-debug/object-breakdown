@@ -560,7 +560,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = isStartLight ? 0.98 : 1.05;
+    renderer.toneMappingExposure = isStartLight ? 1.08 : 1.25;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     rendererRef.current = renderer;
     scene.background = null;
@@ -594,6 +594,16 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
     cyanRimLight.position.set(6, -2, -5);
     cyanRimLightRef.current = cyanRimLight;
     scene.add(cyanRimLight);
+
+    // Balanced front fill light for metallic reflection clarity
+    const frontFillLight = new THREE.DirectionalLight(isStartLight ? 0xF0E8DC : 0xF1F5F9, isStartLight ? 1.0 : 1.35);
+    frontFillLight.position.set(4, 5, 7);
+    scene.add(frontFillLight);
+
+    // Dedicated snout cavity point light (illuminates internal compressor impeller blades and turbine vanes)
+    const cavityPointLight = new THREE.PointLight(0xFFFFFF, isStartLight ? 1.8 : 2.5, 9, 1.2);
+    cavityPointLight.position.set(1.35, -0.4, 2.2);
+    scene.add(cavityPointLight);
 
     // ------------------------------------------------------------------------
     // Load Models (Watch, Drone, Engine, Motor, Pen) with Dynamic Framing
@@ -768,10 +778,10 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       const seams = [
         { id: 'watch', start: 0.04, end: 0.10, ground: watchGroundRef.current, seam: watchSeamRef.current },
         { id: 'drone', start: 0.36, end: 0.43, ground: droneGroundRef.current, seam: droneSeamRef.current },
-        { id: 'turbo', start: 0.62, end: 0.67, ground: turboGroundRef.current, seam: turboSeamRef.current },
-        { id: 'motor', start: 0.74, end: 0.77, ground: motorGroundRef.current, seam: motorSeamRef.current },
-        { id: 'pen', start: 0.80, end: 0.825, ground: penGroundRef.current, seam: penSeamRef.current },
-        { id: 'upload', start: 0.885, end: 0.93, ground: uploadGroundRef.current, seam: uploadSeamRef.current },
+        { id: 'turbo', start: 0.62, end: 0.66, ground: turboGroundRef.current, seam: turboSeamRef.current },
+        { id: 'motor', start: 0.750, end: 0.775, ground: motorGroundRef.current, seam: motorSeamRef.current },
+        { id: 'pen', start: 0.835, end: 0.855, ground: penGroundRef.current, seam: penSeamRef.current },
+        { id: 'upload', start: 0.940, end: 0.970, ground: uploadGroundRef.current, seam: uploadSeamRef.current },
       ];
 
       for (const s of seams) {
@@ -815,17 +825,17 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         activeGroundToken = 'var(--carbon)';
         activeRimHex = isCurrentLight ? 0xF5EADB : 0xFFE7C7;
         chapterNum = 2;
-      } else if (p < 0.755) {
+      } else if (p < 0.760) {
         activePlate = 'turbo';
         activeGroundToken = 'var(--plum)';
         activeRimHex = isCurrentLight ? 0xF4E8F8 : 0xEEDDF4;
         chapterNum = 3;
-      } else if (p < 0.805) {
+      } else if (p < 0.835) {
         activePlate = 'motor';
         activeGroundToken = 'var(--copper)';
         activeRimHex = isCurrentLight ? 0xFAECE2 : 0xFFE8D6;
         chapterNum = 3;
-      } else if (p < 0.885) {
+      } else if (p < 0.915) {
         activePlate = 'pen';
         activeGroundToken = 'var(--ruby)';
         activeRimHex = isCurrentLight ? 0xFCE8E8 : 0xFFE0E0;
@@ -983,32 +993,48 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       }
 
       // Turbocharger Kinematic High-Speed Rotordynamics (True rotating spools only)
-      if (engineModel && (engineModel.rootGroup.visible || (p >= 0.61 && p < 0.75))) {
+      if (engineModel && (engineModel.rootGroup.visible || (p >= 0.61 && p < 0.785))) {
+        const turboSpoolAngle = elapsed * 4.5;
         engineModel.componentMap.forEach((info, id) => {
+          const isGroup = Boolean((info.mesh as THREE.Group).isGroup);
           const meshes = (info.sourceMeshes && info.sourceMeshes.length > 0) ? info.sourceMeshes : [info.mesh];
           if (
-            id === 'turbo-chra-core' ||
+            id === 'turbo-impeller-wheel' ||
+            id === 'turbo-turbine-wheel' ||
             id === 'turbo-compressor-inlet' ||
             id === 'turbo-exhaust-outlet' ||
-            id.includes('chra') ||
+            id.includes('impeller') ||
+            id.includes('turbine-wheel') ||
             id.includes('compressor-inlet') ||
             id.includes('exhaust-outlet')
           ) {
-            meshes.forEach((m) => {
-              const baseRotZ = (m.userData?.baseRotation as THREE.Euler)?.z ?? info.baseRotation.z;
-              m.rotation.z = baseRotZ + elapsed * 10;
+            const isColdSide = id === 'turbo-compressor-inlet' || id.includes('inlet') || id.includes('snout');
+            const sign = isColdSide && !isGroup ? -1 : 1;
+            if (isGroup) {
+              info.mesh.rotation.z = info.baseRotation.z + turboSpoolAngle;
+            } else {
+              meshes.forEach((m) => {
+                const baseRotZ = (m.userData?.baseRotation as THREE.Euler)?.z ?? info.baseRotation.z;
+                m.rotation.z = baseRotZ + sign * turboSpoolAngle;
+              });
+            }
+          } else if (id === 'turbo-chra-core' || id.includes('chra')) {
+            info.mesh.traverse((child) => {
+              if (child.name === 'chra-rotor-shaft') {
+                child.rotation.z = turboSpoolAngle;
+              }
             });
           } else if (id === 'turbo-wastegate-linkage' || id.includes('linkage')) {
             meshes.forEach((m) => {
               const baseRotZ = (m.userData?.baseRotation as THREE.Euler)?.z ?? info.baseRotation.z;
-              m.rotation.z = baseRotZ + Math.sin(elapsed * 3.5) * 0.04;
+              m.rotation.z = baseRotZ + Math.sin(elapsed * 2.4) * 0.055;
             });
           }
         });
       }
 
       // Motor Rotor High-Speed Electromagnetic Commutation (Bell, Magnets, Shaft, and Retention Clip)
-      if (motorModel && (motorModel.rootGroup.visible || (p >= 0.72 && p < 0.81))) {
+      if (motorModel && (motorModel.rootGroup.visible || (p >= 0.750 && p < 0.855))) {
         motorModel.componentMap.forEach((info, id) => {
           if (
             id === 'rotor-assembly' ||
@@ -1031,7 +1057,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       }
 
       // Ballpoint Pen Supplemental Micro-Motion (Return Spring Compression and Cam Indexing)
-      if (penModel && (penModel.rootGroup.visible || (p >= 0.79 && p < 0.885))) {
+      if (penModel && (penModel.rootGroup.visible || (p >= 0.835 && p < 0.920))) {
         penModel.componentMap.forEach((info, id) => {
           if (id.includes('spring') || id === 'supplemental-return-spring') {
             const springCompression = 1.0 + Math.sin(elapsed * 4.0) * 0.05;
@@ -1501,10 +1527,10 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       }
 
       // ----------------------------------------------------------------------
-      // CHAPTER 09: Drone → Engine Transition (p: 0.62 - 0.67)
+      // CHAPTER 09: Drone → Engine Transition (p: 0.62 - 0.66)
       // ----------------------------------------------------------------------
-      else if (p >= 0.62 && p < 0.67) {
-        const transP = (p - 0.62) / 0.05;
+      else if (p >= 0.62 && p < 0.66) {
+        const transP = (p - 0.62) / 0.04;
         const easedTrans = smoothstep(0, 1, transP);
 
         if (transP < 0.45) {
@@ -1539,60 +1565,184 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       }
 
       // ----------------------------------------------------------------------
-      // CHAPTER 10: Turbocharged Engine (p: 0.67 - 0.72)
+      // CHAPTER 10: Turbocharged Engine (p: 0.66 - 0.750)
+      // Expanded duration with 2 sequential kinematics stages:
+      // Stage 1 (p: 0.66 - 0.705): Precision Axial Disassembly (Coaxial Exploded Teardown)
+      // Stage 2 (p: 0.705 - 0.750): Kinematic Intersection & Cutaway Transition View
       // ----------------------------------------------------------------------
-      else if (p >= 0.67 && p < 0.72) {
+      else if (p >= 0.66 && p < 0.750) {
         currentEditorialSide = 'left';
         setActiveModelAndObject(engineModel || null, engineObj, 'car-engine');
 
-        const engineExplodeP = (p - 0.67) / 0.05;
-        const easedEngine = smoothstep(0, 1, engineExplodeP);
+        if (p < 0.705) {
+          // --- STAGE 1: Axial Exploded Teardown ---
+          const stage1P = (p - 0.66) / 0.045;
+          const easedEngine = smoothstep(0, 1, stage1P);
 
-        const camTarget = new THREE.Vector3().lerpVectors(engineAssembledCenter, engineExplodedCenter, easedEngine);
-        // Backed up ~38% as requested for clear headroom and full geometric visibility
-        const camDist = THREE.MathUtils.lerp(engineDist, engineExplodedDist, easedEngine) * 1.38;
-        camera.position.set(camTarget.x, camTarget.y, camTarget.z + camDist);
-        camera.lookAt(camTarget);
-        camera.updateMatrixWorld(true);
+          const camTarget = new THREE.Vector3().lerpVectors(engineAssembledCenter, engineExplodedCenter, easedEngine);
+          const camDist = THREE.MathUtils.lerp(engineDist, engineExplodedDist, easedEngine) * 1.38;
+          camera.position.set(camTarget.x, camTarget.y, camTarget.z + camDist);
+          camera.lookAt(camTarget);
+          camera.updateMatrixWorld(true);
 
-        if (engineModel) {
-          engineModel.rootGroup.visible = true;
-          engineModel.rootGroup.scale.copy(engineBase);
-          engineModel.rootGroup.position.set(1.35, -0.55, 0);
-          engineModel.rootGroup.rotation.y = 0.3 + engineExplodeP * 0.4;
-          engineModel.rootGroup.rotation.x = 0.1;
-          applyModelExplode(engineModel, easedEngine * 0.85);
-          engineModel.rootGroup.updateMatrixWorld(true);
+          if (engineModel) {
+            engineModel.rootGroup.visible = true;
+            engineModel.rootGroup.scale.copy(engineBase);
+            engineModel.rootGroup.position.set(1.35, -0.55, 0);
+            engineModel.rootGroup.rotation.y = 0.3 + easedEngine * 0.35;
+            engineModel.rootGroup.rotation.x = 0.10;
+            engineModel.rootGroup.rotation.z = 0.00;
+            applyModelExplode(engineModel, easedEngine * 0.85);
+            engineModel.rootGroup.updateMatrixWorld(true);
 
-          const targets = engineExplodeP < 0.18
-            ? [
-                { id: 'turbo-compressor-housing', label: 'COMPRESSOR VOLUTE HOUSING', category: 'AIR INDUCTION', description: 'Cast A356-T6 aluminum scroll converting Mach 0.8 airflow into 2.4 bar static boost via divergent volute geometry.' },
-                { id: 'turbo-turbine-housing', label: 'TWIN-SCROLL TURBINE HOUSING', category: 'EXHAUST GAS', description: 'Ni-Resist D-5S ductile iron housing channeling 950°C pulse energy into dual divided scrolls without backflow.' },
-              ]
-            : engineExplodeP < 0.35
-            ? [
-                { id: 'turbo-compressor-housing', label: 'COMPRESSOR VOLUTE HOUSING', category: 'AIR INDUCTION', description: 'Cast A356-T6 aluminum scroll converting Mach 0.8 airflow into 2.4 bar static boost via divergent volute geometry.' },
-                { id: 'turbo-turbine-housing', label: 'TWIN-SCROLL TURBINE HOUSING', category: 'EXHAUST GAS', description: 'Ni-Resist D-5S ductile iron housing channeling 950°C pulse energy into dual divided scrolls without backflow.' },
-                { id: 'turbo-chra-core', label: 'CHRA ROTATING ASSEMBLY', category: 'CORE KINEMATICS', description: 'Inconel 713C turbine & billet compressor wheel spinning at 220,000 RPM on a 0.025mm hydrodynamic oil wedge.' },
-                { id: 'turbo-wastegate-actuator', label: 'PNEUMATIC WASTEGATE ACTUATOR', category: 'BOOST CONTROL', description: 'Pre-calibrated spring diaphragm regulating maximum manifold boost pressure by bypassing excess exhaust.' },
-              ]
-            : [
-                { id: 'turbo-compressor-housing', label: 'COMPRESSOR VOLUTE HOUSING', category: 'AIR INDUCTION', description: 'Cast A356-T6 aluminum scroll converting Mach 0.8 airflow into 2.4 bar static boost via divergent volute geometry.' },
-                { id: 'turbo-turbine-housing', label: 'TWIN-SCROLL TURBINE HOUSING', category: 'EXHAUST GAS', description: 'Ni-Resist D-5S ductile iron housing channeling 950°C pulse energy into dual divided scrolls without backflow.' },
-                { id: 'turbo-chra-core', label: 'CHRA ROTATING ASSEMBLY', category: 'CORE KINEMATICS', description: 'Inconel 713C turbine & billet compressor wheel spinning at 220,000 RPM on a 0.025mm hydrodynamic oil wedge.' },
-                { id: 'turbo-wastegate-actuator', label: 'PNEUMATIC WASTEGATE ACTUATOR', category: 'BOOST CONTROL', description: 'Pre-calibrated spring diaphragm regulating maximum manifold boost pressure by bypassing excess exhaust.' },
-                { id: 'turbo-heat-shield', label: 'INCONEL THERMAL HEAT SHIELD', category: 'THERMAL BARRIER', description: 'Formed Inconel radiant barrier isolating CHRA bearing housing from 950°C radiant exhaust heat.' },
-              ];
+            // Restore solid opaque materials if user scrolled back up from Stage 2
+            const voluteInfo = engineModel.componentMap.get('turbo-compressor-housing');
+            const turbineInfo = engineModel.componentMap.get('turbo-turbine-housing');
+            [voluteInfo, turbineInfo].forEach((info) => {
+              if (!info) return;
+              const meshes = (info.sourceMeshes && info.sourceMeshes.length > 0) ? info.sourceMeshes : [info.mesh];
+              meshes.forEach((m) => {
+                if (m instanceof THREE.Mesh && m.material) {
+                  const mat = m.material as THREE.MeshStandardMaterial;
+                  if (mat.transparent) {
+                    mat.transparent = false;
+                    mat.opacity = 1.0;
+                    mat.roughness = info.componentId === 'turbo-compressor-housing' ? 0.32 : 0.42;
+                    mat.metalness = info.componentId === 'turbo-compressor-housing' ? 0.88 : 0.65;
+                    mat.depthWrite = true;
+                    m.renderOrder = 0;
+                  }
+                }
+              });
+            });
 
-          projectTargets(engineModel, targets);
+            const targets = stage1P < 0.18
+              ? [
+                  { id: 'turbo-compressor-housing', label: 'COMPRESSOR VOLUTE HOUSING', category: 'AIR INDUCTION', description: 'Cast A356-T6 aluminum scroll converting Mach 0.8 airflow into 2.4 bar static boost via divergent volute geometry.' },
+                  { id: 'turbo-turbine-housing', label: 'TWIN-SCROLL TURBINE HOUSING', category: 'EXHAUST GAS', description: 'Ni-Resist D-5S ductile iron housing channeling 950°C pulse energy into dual divided scrolls without backflow.' },
+                ]
+              : stage1P < 0.45
+              ? [
+                  { id: 'turbo-compressor-housing', label: 'COMPRESSOR VOLUTE HOUSING', category: 'AIR INDUCTION', description: 'Cast A356-T6 aluminum scroll converting Mach 0.8 airflow into 2.4 bar static boost via divergent volute geometry.' },
+                  { id: 'turbo-turbine-housing', label: 'TWIN-SCROLL TURBINE HOUSING', category: 'EXHAUST GAS', description: 'Ni-Resist D-5S ductile iron housing channeling 950°C pulse energy into dual divided scrolls without backflow.' },
+                  { id: 'turbo-chra-core', label: 'CHRA ROTATING ASSEMBLY', category: 'CORE KINEMATICS', description: 'Inconel 713C turbine & billet compressor wheel spinning at 220,000 RPM on a 0.025mm hydrodynamic oil wedge.' },
+                  { id: 'turbo-wastegate-actuator', label: 'PNEUMATIC WASTEGATE ACTUATOR', category: 'BOOST CONTROL', description: 'Pre-calibrated spring diaphragm regulating maximum manifold boost pressure by bypassing excess exhaust.' },
+                ]
+              : [
+                  { id: 'turbo-impeller-wheel', label: 'BILLET COMPRESSOR IMPELLER', category: 'ROTORDYNAMICS', description: '5-axis CNC point-milled 2618-T6 forged billet 12-blade aerodynamic wheel with 35° backsweep spinning at 220,000 RPM.' },
+                  { id: 'turbo-compressor-housing', label: 'COMPRESSOR VOLUTE HOUSING', category: 'AIR INDUCTION', description: 'Cast A356-T6 aluminum scroll converting Mach 0.8 airflow into 2.4 bar static boost via divergent volute geometry.' },
+                  { id: 'turbo-chra-core', label: 'CHRA BEARING CARTRIDGE', category: 'HYDRODYNAMICS', description: 'Ductile iron center bearing housing with 360° hydrodynamic bronze journal and 0.025mm oil wedge.' },
+                  { id: 'turbo-heat-shield', label: 'INCONEL THERMAL HEAT SHIELD', category: 'THERMAL BARRIER', description: 'Formed Inconel radiant barrier isolating CHRA bearing housing from 950°C radiant exhaust heat.' },
+                  { id: 'turbo-turbine-housing', label: 'TWIN-SCROLL TURBINE HOUSING', category: 'EXHAUST GAS', description: 'Ni-Resist D-5S ductile iron housing channeling 950°C pulse energy into dual divided scrolls without backflow.' },
+                  { id: 'turbo-turbine-wheel', label: 'INCONEL TURBINE WHEEL', category: 'ENTHALPY EXTRACTION', description: 'Inconel 713C investment-cast 9-blade radial-inflow wheel harvesting kinetic energy from 950°C exhaust gas.' },
+                ];
+
+            projectTargets(engineModel, targets);
+          }
+        } else {
+          // --- STAGE 2: Kinematic Intersection & Cutaway Transition View ---
+          const stage2P = (p - 0.705) / 0.045;
+          const easedInter = smoothstep(0, 1, stage2P);
+
+          // Camera zooms in closer to frame the central intersection interface with precision
+          const camTarget = new THREE.Vector3().lerpVectors(
+            engineExplodedCenter,
+            new THREE.Vector3(engineExplodedCenter.x, engineExplodedCenter.y + 0.12, engineExplodedCenter.z),
+            easedInter
+          );
+          const camDist = THREE.MathUtils.lerp(
+            engineExplodedDist * 1.38,
+            engineDist * 1.05,
+            easedInter
+          );
+          camera.position.set(camTarget.x, camTarget.y, camTarget.z + camDist);
+          camera.lookAt(camTarget);
+          camera.updateMatrixWorld(true);
+
+          if (engineModel) {
+            engineModel.rootGroup.visible = true;
+            engineModel.rootGroup.scale.copy(engineBase);
+            // Smoothly center the model closer for optimal inspection of the intersection
+            engineModel.rootGroup.position.set(
+              THREE.MathUtils.lerp(1.35, 1.05, easedInter),
+              -0.55,
+              0
+            );
+
+            // Pivot model rotation towards the user:
+            // Dynamic 3/4 isometric perspective turned toward the user so all internal intersections
+            // (compressor diffuser, CHRA shaft & bearings, heat shield seal, and turbine nozzle) are directly visible!
+            engineModel.rootGroup.rotation.y = THREE.MathUtils.lerp(0.65, 0.96, easedInter);
+            engineModel.rootGroup.rotation.x = THREE.MathUtils.lerp(0.10, 0.24, easedInter);
+            engineModel.rootGroup.rotation.z = THREE.MathUtils.lerp(0.00, -0.04, easedInter);
+
+            // Partial exploded mating clearance so the internal intersections are visibly nested
+            const interExplode = THREE.MathUtils.lerp(0.85, 0.38, easedInter);
+            applyModelExplode(engineModel, interExplode);
+            engineModel.rootGroup.updateMatrixWorld(true);
+
+            // Ensure internal rotating kinematics are rendered first with solid depth
+            ['turbo-chra-core', 'turbo-heat-shield', 'turbo-impeller-wheel', 'turbo-turbine-wheel'].forEach((id) => {
+              const cInfo = engineModel.componentMap.get(id);
+              if (!cInfo) return;
+              const meshes = (cInfo.sourceMeshes && cInfo.sourceMeshes.length > 0) ? cInfo.sourceMeshes : [cInfo.mesh];
+              meshes.forEach((m) => {
+                m.renderOrder = 1;
+                if (m instanceof THREE.Mesh && m.material) {
+                  const mat = m.material as THREE.MeshStandardMaterial;
+                  mat.depthWrite = true;
+                  mat.transparent = false;
+                  mat.opacity = 1.0;
+                }
+              });
+            });
+
+            // Smooth cutaway transition on outer compressor volute and turbine housings:
+            // Reveal internal wheel and shaft intersections inside their mating passages
+            const voluteInfo = engineModel.componentMap.get('turbo-compressor-housing');
+            const turbineInfo = engineModel.componentMap.get('turbo-turbine-housing');
+            [voluteInfo, turbineInfo].forEach((info) => {
+              if (!info) return;
+              const meshes = (info.sourceMeshes && info.sourceMeshes.length > 0) ? info.sourceMeshes : [info.mesh];
+              meshes.forEach((m) => {
+                if (m instanceof THREE.Mesh && m.material) {
+                  const mat = m.material as THREE.MeshStandardMaterial;
+                  mat.transparent = true;
+                  mat.depthWrite = false; // Do not occlude solid internal blades and shaft
+                  mat.opacity = THREE.MathUtils.lerp(1.0, 0.26, easedInter);
+                  mat.roughness = THREE.MathUtils.lerp(0.35, 0.12, easedInter);
+                  mat.metalness = THREE.MathUtils.lerp(0.85, 0.18, easedInter);
+                  m.renderOrder = 20; // Draw housing shell after internal components
+                }
+              });
+            });
+
+            // Dynamic telemetry callouts pinpointing the exact internal intersections
+            const targets = stage2P < 0.25
+              ? [
+                  { id: 'turbo-impeller-wheel', label: 'BILLET COMPRESSOR IMPELLER', category: 'ROTORDYNAMICS', description: '5-axis CNC point-milled 2618-T6 forged billet 12-blade aerodynamic wheel with 35° backsweep spinning at 220,000 RPM.' },
+                  { id: 'turbo-compressor-housing', label: 'VOLUTE DIFFUSER INTERSECTION', category: 'AIR INDUCTION', description: 'Diffuser passage transitioning Mach 0.8 kinetic air charge into 2.4 bar static manifold boost.' },
+                  { id: 'turbo-chra-core', label: 'CHRA BEARING CARTRIDGE', category: 'HYDRODYNAMICS', description: 'Ductile iron center bearing housing with 360° hydrodynamic bronze journal and 0.025mm oil wedge.' },
+                  { id: 'turbo-turbine-housing', label: 'TWIN-SCROLL TURBINE HOUSING', category: 'EXHAUST GAS', description: 'Ni-Resist D-5S ductile iron housing channeling 950°C pulse energy into dual divided scrolls without backflow.' },
+                  { id: 'turbo-turbine-wheel', label: 'INCONEL TURBINE WHEEL', category: 'ENTHALPY EXTRACTION', description: 'Inconel 713C investment-cast 9-blade radial-inflow wheel harvesting kinetic energy from 950°C exhaust gas.' },
+                ]
+              : [
+                  { id: 'turbo-impeller-wheel', label: 'IMPELLER DIFFUSER INTERSECTION', category: 'AERODYNAMIC INTERFACE', description: '12-blade billet wheel rotating inside the divergent diffuser throat with 0.40 mm dynamic tip clearance at 220,000 RPM.' },
+                  { id: 'turbo-chra-core', label: '360° JOURNAL BEARING INTERSECTION', category: 'HYDRODYNAMIC OIL WEDGE', description: 'Ground 42CrMo4 rotor shaft spinning on dual phosphor bronze journal bearings separated by a 0.025 mm pressurized oil film.' },
+                  { id: 'turbo-heat-shield', label: 'THERMAL BARRIER & SEAL RUNNER', category: 'LABYRINTH SEAL INTERSECTION', description: 'Stepped dynamic piston-ring seal runner isolating CHRA hydrodynamic core from 950°C incandescent exhaust gas.' },
+                  { id: 'turbo-turbine-wheel', label: 'TWIN-SCROLL NOZZLE INTERSECTION', category: 'ENTHALPY EXTRACTION', description: 'Inconel 713C radial turbine wheel intersecting dual divided scrolls for zero-backpressure exhaust pulse expansion.' },
+                ];
+
+            projectTargets(engineModel, targets);
+          }
         }
       }
 
       // ----------------------------------------------------------------------
-      // CHAPTER 10 → 11: Engine → Motor Transition (p: 0.72 - 0.75)
+      // CHAPTER 10 → 11: Engine → Motor Transition (p: 0.750 - 0.775)
       // ----------------------------------------------------------------------
-      else if (p >= 0.72 && p < 0.75) {
-        const transP = (p - 0.72) / 0.03;
+      else if (p >= 0.750 && p < 0.775) {
+        const transP = (p - 0.750) / 0.025;
         const easedTrans = smoothstep(0, 1, transP);
 
         if (transP < 0.45) {
@@ -1610,6 +1760,25 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           );
           engineModel.rootGroup.scale.copy(engineBase).multiplyScalar(THREE.MathUtils.lerp(1.0, 0.25, easedTrans));
           applyModelExplode(engineModel, 1.0);
+
+          // Restore solid opaque materials on exit
+          const voluteInfo = engineModel.componentMap.get('turbo-compressor-housing');
+          const turbineInfo = engineModel.componentMap.get('turbo-turbine-housing');
+          [voluteInfo, turbineInfo].forEach((info) => {
+            if (!info) return;
+            const meshes = (info.sourceMeshes && info.sourceMeshes.length > 0) ? info.sourceMeshes : [info.mesh];
+            meshes.forEach((m) => {
+              if (m instanceof THREE.Mesh && m.material) {
+                const mat = m.material as THREE.MeshStandardMaterial;
+                mat.transparent = false;
+                mat.opacity = 1.0;
+                mat.depthWrite = true;
+                mat.roughness = info.componentId === 'turbo-compressor-housing' ? 0.32 : 0.42;
+                mat.metalness = info.componentId === 'turbo-compressor-housing' ? 0.88 : 0.65;
+                m.renderOrder = 0;
+              }
+            });
+          });
         }
 
         if (motorModel) {
@@ -1631,13 +1800,13 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       }
 
       // ----------------------------------------------------------------------
-      // CHAPTER 11: Electric Motor (p: 0.75 - 0.79)
+      // CHAPTER 11: Electric Motor (p: 0.775 - 0.835)
       // ----------------------------------------------------------------------
-      else if (p >= 0.75 && p < 0.79) {
+      else if (p >= 0.775 && p < 0.835) {
         currentEditorialSide = 'right';
         setActiveModelAndObject(motorModel || null, motorObj, 'electric-motor');
 
-        const motorExplodeP = (p - 0.75) / 0.04;
+        const motorExplodeP = (p - 0.775) / 0.060;
         const easedMotor = smoothstep(0, 1, motorExplodeP);
 
         const camTarget = new THREE.Vector3().lerpVectors(motorAssembledCenter, motorExplodedCenter, easedMotor);
@@ -1649,14 +1818,12 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         if (motorModel) {
           motorModel.rootGroup.visible = true;
           motorModel.rootGroup.scale.copy(motorBase);
-          // Positioned in center-to-left zone (clear of right text panel "BRUSHLESS DC MOTOR")
           motorModel.rootGroup.position.set(-0.90, -0.05, 0);
           motorModel.rootGroup.rotation.y = 0.4 + motorExplodeP * 0.6;
           motorModel.rootGroup.rotation.x = 0.15;
           applyModelExplode(motorModel, easedMotor * 0.85);
           motorModel.rootGroup.updateMatrixWorld(true);
 
-          // Dynamic progressive disclosure: curated up to 6 components on left flank away from right text
           const motorComponents = (activeObjectRef.current?.rootComponents && activeObjectRef.current.id === 'electric-motor' && activeObjectRef.current.rootComponents.length >= 6)
             ? activeObjectRef.current.rootComponents
             : electricMotorData.rootComponents;
@@ -1671,7 +1838,6 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               description: c.function,
             }));
 
-          // Ensure bottom two components (base flange and rear bearing) are always present
           if (!targets.some((t) => t.id === 'base-flange')) {
             targets.push({
               id: 'base-flange',
@@ -1694,10 +1860,10 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       }
 
       // ----------------------------------------------------------------------
-      // CHAPTER 11 → 12: Motor → Pen Transition (p: 0.79 - 0.81)
+      // CHAPTER 11 → 12: Motor → Pen Transition (p: 0.835 - 0.855)
       // ----------------------------------------------------------------------
-      else if (p >= 0.79 && p < 0.81) {
-        const transP = (p - 0.79) / 0.02;
+      else if (p >= 0.835 && p < 0.855) {
+        const transP = (p - 0.835) / 0.020;
         const easedTrans = smoothstep(0, 1, transP);
 
         if (transP < 0.45) {
@@ -1717,9 +1883,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           penModel.rootGroup.visible = true;
           penModel.rootGroup.position.set(0.42, THREE.MathUtils.lerp(-2.0, 0, easedTrans), THREE.MathUtils.lerp(-16, 0, easedTrans));
           penModel.rootGroup.scale.copy(penBase).multiplyScalar(THREE.MathUtils.lerp(0.25, 0.68, easedTrans));
-          // Strictly upright standing orientation (pitch=0, roll=0, zero slant!)
           penModel.rootGroup.rotation.set(0, THREE.MathUtils.lerp(-0.4, 0.35, easedTrans), 0);
-          // Arrives 100% un-exploded (assembled)
           applyPenExplode(penModel, 0.0);
         }
 
@@ -1730,16 +1894,13 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       }
 
       // ----------------------------------------------------------------------
-      // CHAPTER 12: Ballpoint Pen (p: 0.805 - 0.85)
+      // CHAPTER 12: Ballpoint Pen (p: 0.855 - 0.905)
       // ----------------------------------------------------------------------
-      else if (p >= 0.805 && p < 0.85) {
+      else if (p >= 0.855 && p < 0.905) {
         currentEditorialSide = 'left';
         setActiveModelAndObject(penModel || null, penObj, 'ballpoint-pen');
 
-        // Progressive Explosion on Scroll:
-        // p in [0.805, 0.820]: Arrives completely UN-EXPLODED (assembled)
-        // p in [0.820, 0.846]: Progressively deconstructs into full exploded CAD assembly
-        const explodeNorm = Math.max(0, Math.min(1, (p - 0.820) / 0.026));
+        const explodeNorm = Math.max(0, Math.min(1, (p - 0.865) / 0.032));
         const penExplodeFactor = smoothstep(0, 1, explodeNorm);
 
         // Camera smoothly adjusts framing from assembled (center Y=0, dist=12.8) to exploded (center Y=-0.65, dist=14.8)
@@ -1780,35 +1941,37 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       }
 
       // ----------------------------------------------------------------------
-      // CHAPTER 12 → 13: Pen Recedes // The Bridge: "Those Were Our Objects" (p: 0.85 - 0.885)
+      // CHAPTER 12 → 13: Pen Recedes // The Bridge: "Those Were Our Objects" (p: 0.905 - 0.942)
       // ----------------------------------------------------------------------
-      else if (p >= 0.85 && p < 0.885) {
-        setActiveModelAndObject(penModel || null, penObj, 'ballpoint-pen');
+      else if (p >= 0.905 && p < 0.942) {
+        setActiveModelAndObject(null, null, null);
 
-        const transP = (p - 0.85) / 0.035;
+        const transP = Math.min((p - 0.905) / 0.018, 1);
         const easedTrans = smoothstep(0, 1, transP);
         if (penModel && transP < 0.95) {
           penModel.rootGroup.visible = true;
-          penModel.rootGroup.position.set(0.42, THREE.MathUtils.lerp(0, 2.0, easedTrans), THREE.MathUtils.lerp(0, -22, easedTrans));
-          penModel.rootGroup.scale.copy(penBase).multiplyScalar(THREE.MathUtils.lerp(0.68, 0.15, easedTrans));
+          penModel.rootGroup.position.set(0.42, THREE.MathUtils.lerp(0, 3.5, easedTrans), THREE.MathUtils.lerp(0, -25, easedTrans));
+          penModel.rootGroup.scale.copy(penBase).multiplyScalar(THREE.MathUtils.lerp(0.68, 0.10, easedTrans));
           penModel.rootGroup.rotation.set(0, 0.60, 0);
           applyPenExplode(penModel, 1.0);
+        } else if (penModel) {
+          penModel.rootGroup.visible = false;
         }
-        camera.position.set(0, 0.1, THREE.MathUtils.lerp(14.8, penDist * 1.5, easedTrans));
+        camera.position.set(0, 0.1, THREE.MathUtils.lerp(14.8, 16.5, easedTrans));
         camera.lookAt(0, 0, 0);
       }
 
       // ----------------------------------------------------------------------
-      // CHAPTER 13: HOW THE ENGINE TAKES IT APART — 3D Visual Demonstration (p: 0.885 - 0.945)
+      // CHAPTER 13: HOW THE ENGINE TAKES IT APART — 3D Visual Demonstration (p: 0.942 - 0.972)
       // ----------------------------------------------------------------------
-      else if (p >= 0.885 && p < 0.945) {
+      else if (p >= 0.942 && p < 0.972) {
         setActiveModelAndObject(droneModel || null, droneObj, 'drone');
 
         if (droneModel) {
           droneModel.rootGroup.visible = true;
           droneModel.rootGroup.position.set(0, 0, 0);
 
-          if (p < 0.905) {
+          if (p < 0.952) {
             // Step 01: UPLOAD (Assembled model rotates slowly)
             droneModel.rootGroup.scale.copy(droneBase);
             droneModel.rootGroup.rotation.y = time * 0.0006;
@@ -1816,9 +1979,9 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             applyModelExplode(droneModel, 0);
             camera.position.set(droneAssembledCenter.x, droneAssembledCenter.y + 0.1, droneAssembledCenter.z + droneDist);
             camera.lookAt(droneAssembledCenter);
-          } else if (p < 0.925) {
+          } else if (p < 0.964) {
             // Step 02 & 03: ANALYZE & DECONSTRUCT (Blossoming exploded view)
-            const demoExplodeP = (p - 0.905) / 0.020;
+            const demoExplodeP = (p - 0.952) / 0.012;
             const easedDemo = smoothstep(0, 1, demoExplodeP);
             droneModel.rootGroup.scale.copy(droneBase);
             droneModel.rootGroup.rotation.y = time * 0.0006 + easedDemo * 0.4;
@@ -1843,12 +2006,12 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       }
 
       // ----------------------------------------------------------------------
-      // CHAPTER 14: THE UPLOAD CLIMAX — "YOUR OBJECT" (p: 0.945 - 1.00)
+      // CHAPTER 14: THE UPLOAD CLIMAX — "YOUR OBJECT" (p: 0.972 - 1.00)
       // ----------------------------------------------------------------------
-      else if (p >= 0.945) {
+      else if (p >= 0.972) {
         setActiveModelAndObject(null, null, null);
 
-        const uploadRecedeP = Math.min((p - 0.945) / 0.035, 1);
+        const uploadRecedeP = Math.min((p - 0.972) / 0.020, 1);
         const easedRecede = smoothstep(0, 1, uploadRecedeP);
         if (droneModel && easedRecede < 0.98) {
           droneModel.rootGroup.visible = true;
@@ -2340,12 +2503,23 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       else if (factor >= info.explodeEnd) localT = 1;
       else localT = smoothstep(info.explodeStart, info.explodeEnd, factor);
 
+      const isGroup = Boolean((info.mesh as THREE.Group).isGroup);
       const meshes = (info.sourceMeshes && info.sourceMeshes.length > 0) ? info.sourceMeshes : [info.mesh];
-      meshes.forEach((m) => {
-        const basePos = (m.userData?.basePosition as THREE.Vector3) || info.basePosition;
-        m.position.copy(basePos);
-        m.position.addScaledVector(info.explodeVector, localT);
-      });
+
+      if (isGroup) {
+        info.mesh.position.copy(info.basePosition).addScaledVector(info.explodeVector, localT);
+        info.mesh.rotation.copy(info.baseRotation);
+        info.mesh.scale.copy(info.baseScale);
+      } else {
+        meshes.forEach((m) => {
+          const basePos = (m.userData?.basePosition as THREE.Vector3) || info.basePosition;
+          const baseRot = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
+          const baseScale = (m.userData?.baseScale as THREE.Vector3) || info.baseScale;
+          m.position.copy(basePos).addScaledVector(info.explodeVector, localT);
+          m.rotation.copy(baseRot);
+          m.scale.copy(baseScale);
+        });
+      }
 
       // Layer mechanical micro-motion directly on top of exploded pose so explosion never wipes out translation
       if (id.includes('cam') || id === 'supplemental-click-cam') {
@@ -2357,21 +2531,38 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           m.position.y += Math.sin(elapsed * 2.0) * 0.012;
         });
       } else if (
-        id === 'turbo-chra-core' ||
+        id === 'turbo-impeller-wheel' ||
+        id === 'turbo-turbine-wheel' ||
         id === 'turbo-compressor-inlet' ||
         id === 'turbo-exhaust-outlet' ||
-        id.includes('chra') ||
+        id.includes('impeller') ||
+        id.includes('turbine-wheel') ||
         id.includes('compressor-inlet') ||
         id.includes('exhaust-outlet')
       ) {
-        meshes.forEach((m) => {
-          const baseRotZ = (m.userData?.baseRotation as THREE.Euler)?.z ?? info.baseRotation.z;
-          m.rotation.z = baseRotZ + elapsed * 10;
+        const turboSpoolAngle = elapsed * 4.5;
+        const isColdSide = id === 'turbo-compressor-inlet' || id.includes('inlet') || id.includes('snout');
+        const sign = isColdSide && !isGroup ? -1 : 1;
+
+        if (isGroup) {
+          info.mesh.rotation.z = info.baseRotation.z + turboSpoolAngle;
+        } else {
+          meshes.forEach((m) => {
+            const baseRotZ = (m.userData?.baseRotation as THREE.Euler)?.z ?? info.baseRotation.z;
+            m.rotation.z = baseRotZ + sign * turboSpoolAngle;
+          });
+        }
+      } else if (id === 'turbo-chra-core' || id.includes('chra')) {
+        const turboSpoolAngle = elapsed * 4.5;
+        info.mesh.traverse((child) => {
+          if (child.name === 'chra-rotor-shaft') {
+            child.rotation.z = turboSpoolAngle;
+          }
         });
       } else if (id === 'turbo-wastegate-linkage' || id.includes('linkage')) {
         meshes.forEach((m) => {
           const baseRotZ = (m.userData?.baseRotation as THREE.Euler)?.z ?? info.baseRotation.z;
-          m.rotation.z = baseRotZ + Math.sin(elapsed * 3.5) * 0.04;
+          m.rotation.z = baseRotZ + Math.sin(elapsed * 2.4) * 0.055;
         });
       }
     });
@@ -2463,53 +2654,57 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
   const droneDeconstructDisplay = useTransform(droneDeconstructOpacity, (v) => (v > 0.01 ? 'flex' : 'none'));
 
   // 09. Drone -> Engine Transition
-  const transitionDroneEngineOpacity = useTransform(smoothScrollProgress, [0.605, 0.625, 0.655, 0.675], [0, 1, 1, 0]);
-  const transitionDroneEngineY = useTransform(smoothScrollProgress, [0.605, 0.625, 0.655, 0.675], [24, 0, 0, -24]);
+  const transitionDroneEngineOpacity = useTransform(smoothScrollProgress, [0.605, 0.625, 0.645, 0.665], [0, 1, 1, 0]);
+  const transitionDroneEngineY = useTransform(smoothScrollProgress, [0.605, 0.625, 0.645, 0.665], [24, 0, 0, -24]);
   const transitionDroneEngineBlur = useTransform(transitionDroneEngineOpacity, (o) => (o >= 0.98 ? 'none' : `blur(${((1 - Math.max(0, Math.min(1, o))) * 5).toFixed(1)}px)`));
   const transitionDroneEngineDisplay = useTransform(transitionDroneEngineOpacity, (v) => (v > 0.01 ? 'flex' : 'none'));
 
-  // 10. Turbocharged Engine
-  const engineOpacity = useTransform(smoothScrollProgress, [0.655, 0.675, 0.725, 0.745], [0, 1, 1, 0]);
-  const engineY = useTransform(smoothScrollProgress, [0.655, 0.675, 0.725, 0.745], [32, 0, 0, -28]);
+  // 10. Turbocharged Engine (Extended duration with Phase 2 Intersection view)
+  const engineOpacity = useTransform(smoothScrollProgress, [0.650, 0.665, 0.742, 0.750], [0, 1, 1, 0]);
+  const engineY = useTransform(smoothScrollProgress, [0.650, 0.665, 0.742, 0.750], [32, 0, 0, -28]);
   const engineBlur = useTransform(engineOpacity, (o) => (o >= 0.98 ? 'none' : `blur(${((1 - Math.max(0, Math.min(1, o))) * 5).toFixed(1)}px)`));
-  const engineScale = useTransform(smoothScrollProgress, [0.655, 0.675, 0.725, 0.745], [0.97, 1.0, 1.0, 0.98]);
+  const engineScale = useTransform(smoothScrollProgress, [0.650, 0.665, 0.742, 0.750], [0.97, 1.0, 1.0, 0.98]);
   const engineDisplay = useTransform(engineOpacity, (v) => (v > 0.01 ? 'flex' : 'none'));
 
+  // Turbocharger Stage 2: Kinematic Intersection Telemetry Badge
+  const turboIntersectionBadgeOpacity = useTransform(smoothScrollProgress, [0.702, 0.712, 0.742, 0.750], [0, 1, 1, 0]);
+  const turboIntersectionBadgeY = useTransform(smoothScrollProgress, [0.702, 0.712, 0.742, 0.750], [8, 0, 0, -8]);
+
   // 11. Electric Motor Assembled
-  const motorTitleOpacity = useTransform(smoothScrollProgress, [0.725, 0.745, 0.768, 0.776], [0, 1, 1, 0]);
-  const motorTitleY = useTransform(smoothScrollProgress, [0.725, 0.745, 0.768, 0.776], [28, 0, 0, -24]);
+  const motorTitleOpacity = useTransform(smoothScrollProgress, [0.770, 0.785, 0.805, 0.815], [0, 1, 1, 0]);
+  const motorTitleY = useTransform(smoothScrollProgress, [0.770, 0.785, 0.805, 0.815], [28, 0, 0, -24]);
   const motorTitleBlur = useTransform(motorTitleOpacity, (o) => (o >= 0.98 ? 'none' : `blur(${((1 - Math.max(0, Math.min(1, o))) * 5).toFixed(1)}px)`));
   const motorTitleDisplay = useTransform(motorTitleOpacity, (v) => (v > 0.01 ? 'flex' : 'none'));
 
   // 11b. Electric Motor Deconstructed
-  const motorDeconstructOpacity = useTransform(smoothScrollProgress, [0.776, 0.782, 0.795, 0.805], [0, 1, 1, 0]);
-  const motorDeconstructY = useTransform(smoothScrollProgress, [0.776, 0.782, 0.795, 0.805], [20, 0, 0, -20]);
+  const motorDeconstructOpacity = useTransform(smoothScrollProgress, [0.808, 0.818, 0.828, 0.835], [0, 1, 1, 0]);
+  const motorDeconstructY = useTransform(smoothScrollProgress, [0.808, 0.818, 0.828, 0.835], [20, 0, 0, -20]);
   const motorDeconstructBlur = useTransform(motorDeconstructOpacity, (o) => (o >= 0.98 ? 'none' : `blur(${((1 - Math.max(0, Math.min(1, o))) * 5).toFixed(1)}px)`));
   const motorDeconstructDisplay = useTransform(motorDeconstructOpacity, (v) => (v > 0.01 ? 'flex' : 'none'));
 
   // 12. Ballpoint Pen
-  const penOpacity = useTransform(smoothScrollProgress, [0.798, 0.812, 0.842, 0.855], [0, 1, 1, 0]);
-  const penY = useTransform(smoothScrollProgress, [0.798, 0.812, 0.842, 0.855], [32, 0, 0, -28]);
+  const penOpacity = useTransform(smoothScrollProgress, [0.852, 0.864, 0.898, 0.906], [0, 1, 1, 0]);
+  const penY = useTransform(smoothScrollProgress, [0.852, 0.864, 0.898, 0.906], [32, 0, 0, -28]);
   const penBlur = useTransform(penOpacity, (o) => (o >= 0.98 ? 'none' : `blur(${((1 - Math.max(0, Math.min(1, o))) * 5).toFixed(1)}px)`));
-  const penScale = useTransform(smoothScrollProgress, [0.798, 0.812, 0.842, 0.855], [0.97, 1.0, 1.0, 0.98]);
+  const penScale = useTransform(smoothScrollProgress, [0.852, 0.864, 0.898, 0.906], [0.97, 1.0, 1.0, 0.98]);
   const penDisplay = useTransform(penOpacity, (v) => (v > 0.01 ? 'flex' : 'none'));
 
   // 13. The Bridge: "Those Were Our Objects. Now try yours."
-  const bridgeOpacity = useTransform(smoothScrollProgress, [0.85, 0.86, 0.88, 0.89], [0, 1, 1, 0]);
-  const bridgeY = useTransform(smoothScrollProgress, [0.85, 0.89], [30, -30]);
+  const bridgeOpacity = useTransform(smoothScrollProgress, [0.915, 0.925, 0.936, 0.942], [0, 1, 1, 0]);
+  const bridgeY = useTransform(smoothScrollProgress, [0.915, 0.942], [24, -24]);
   const bridgeBlur = useTransform(bridgeOpacity, (o) => (o >= 0.98 ? 'none' : `blur(${((1 - Math.max(0, Math.min(1, o))) * 5).toFixed(1)}px)`));
   const bridgeDisplay = useTransform(bridgeOpacity, (v) => (v > 0.01 ? 'flex' : 'none'));
 
   // 14. The Sequential Story: "How The Engine Takes It Apart"
-  const howItWorksOpacity = useTransform(smoothScrollProgress, [0.885, 0.895, 0.94, 0.948], [0, 1, 1, 0]);
-  const howItWorksY = useTransform(smoothScrollProgress, [0.885, 0.948], [30, -30]);
+  const howItWorksOpacity = useTransform(smoothScrollProgress, [0.944, 0.952, 0.966, 0.972], [0, 1, 1, 0]);
+  const howItWorksY = useTransform(smoothScrollProgress, [0.944, 0.972], [24, -24]);
   const howItWorksBlur = useTransform(howItWorksOpacity, (o) => (o >= 0.98 ? 'none' : `blur(${((1 - Math.max(0, Math.min(1, o))) * 5).toFixed(1)}px)`));
   const howItWorksDisplay = useTransform(howItWorksOpacity, (v) => (v > 0.01 ? 'flex' : 'none'));
   const howItWorksPointerEvents = useTransform(howItWorksOpacity, (v) => (v > 0.5 ? 'auto' : 'none'));
 
   // 15. The Climax: "Your Object."
-  const uploadOpacity = useTransform(smoothScrollProgress, [0.945, 0.958, 1.00, 1.00], [0, 1, 1, 1]);
-  const uploadY = useTransform(smoothScrollProgress, [0.945, 1.00], [35, 0]);
+  const uploadOpacity = useTransform(smoothScrollProgress, [0.972, 0.980, 1.00, 1.00], [0, 1, 1, 1]);
+  const uploadY = useTransform(smoothScrollProgress, [0.972, 1.00], [28, 0]);
   const uploadBlur = useTransform(uploadOpacity, (o) => (o >= 0.98 ? 'none' : `blur(${((1 - Math.max(0, Math.min(1, o))) * 5).toFixed(1)}px)`));
   const uploadDisplay = useTransform(uploadOpacity, (v) => (v > 0.01 ? 'flex' : 'none'));
   const uploadPointerEvents = useTransform(uploadOpacity, (v) => (v > 0.5 ? 'auto' : 'none'));
@@ -2650,7 +2845,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
   return (
     <div
       ref={containerRef}
-      style={{ height: '1800vh' }}
+      style={{ height: '2200vh' }}
       className="relative overflow-x-clip select-none text-[var(--text)] bg-transparent"
     >
       {/* -------------------------------------------------------------------- */}
@@ -3031,6 +3226,25 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             <p className="font-serif text-[1rem] leading-[1.5] text-[var(--muted)] text-pretty mb-3">
               High-enthalpy exhaust gas expands across an Inconel 713C turbine wheel, transferring 25 kW of kinetic shaft power to a forged A356-T6 aluminum compressor wheel. The divergent volute scroll converts Mach 0.8 airflow into 2.4 bar static boost.
             </p>
+
+            {/* Stage 2 Kinematic Intersection Telemetry Capsule (CAD Engineered Editorial Aesthetic) */}
+            <motion.div
+              style={{
+                opacity: turboIntersectionBadgeOpacity,
+                y: turboIntersectionBadgeY,
+              }}
+              className="mt-2.5 flex items-center gap-2.5 px-3 py-1.5 rounded-full border border-[var(--line)] bg-[var(--text)]/[0.04] backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] w-fit pointer-events-none transition-colors"
+            >
+              <div className="relative flex items-center justify-center w-2 h-2 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400/60" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-400" />
+              </div>
+              <div className="flex items-center gap-2 text-[10px] sm:text-[10.5px] font-mono tracking-[0.06em] uppercase">
+                <span className="text-[var(--text)] font-semibold tracking-[0.10em]">Phase 02</span>
+                <span className="text-[var(--line)]">/</span>
+                <span className="text-[var(--muted)] tracking-[0.06em]">Internal Kinematic Cross-Section · Shaft & Bearing Intersections</span>
+              </div>
+            </motion.div>
           </motion.div>
 
           {/* 11. ELECTRIC MOTOR ASSEMBLED */}
