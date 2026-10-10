@@ -111,6 +111,25 @@ function technicalProfile(name: string, category: string, objectId: string) {
     notes = ['Pen geometry combines ergonomics, structural enclosure and controlled alignment of the writing cartridge.', 'The writing tip must remain coaxial with the cartridge for reliable ink delivery.'];
     inspection = ['Check tip alignment and barrel concentricity.', 'Inspect grip surfaces for wear and loss of texture.', 'Check clip attachment and actuation interfaces.'];
     interfaces = ['Ink cartridge', 'Grip/tip assembly', 'Clip/plunger and barrel interfaces'];
+  } else if (/turbo|compressor|turbine|chra|wastegate|volute|impeller/.test(text)) {
+    fn = 'Operates as a high-speed forced induction fluid dynamic component, converting waste exhaust gas enthalpy into pressurized intake charge air at rotational velocities exceeding 200,000 RPM.';
+    motion = /impeller|wheel|shaft|core|rotordynamic/.test(text) ? 'Ultra-high-speed rotation (up to 220,000 RPM) supported by hydrodynamic liquid bearings.' : 'Static high-pressure or high-temperature containment housing.';
+    notes = [
+      'Rotordynamic components require residual dynamic unbalance below 0.003 mg·mm to prevent acoustic resonance and bearing fatigue.',
+      'Thermal operating gradients exceed 800°C between the incandescent turbine housing (1,020°C) and the cold compressor inlet (25°C).',
+      'Clearances between spinning wheel blade tips and volute contours are held to 0.18-0.28 mm for optimal isentropic efficiency.',
+    ];
+    inspection = [
+      'Verify aerodynamic blade profiles on 3D optical white-light coordinate scanner.',
+      'Check journal bearing bores for hydrodynamic cross-hatch hone pattern and roundness within 0.002 mm.',
+      'Inspect high-temperature castings for thermal micro-cracking and slag inclusions using X-ray computed tomography.',
+    ];
+    interfaces = ['CHRA center bearing housing', 'Compressor volute diffuser / Turbine expansion scroll', 'Engine intake/exhaust manifolds'];
+    principles = [
+      'Minimize rotating polar moment of inertia to reduce transient turbo lag while preserving containment burst safety.',
+      'Maintain continuous 4.5 bar hydrodynamic lubricating oil film to prevent metal-to-metal boundary friction.',
+    ];
+    failure = { mode: 'Rotordynamic bearing seizure / Impeller high-cycle fatigue', cause: 'Oil starvation, thermal soak-back coking, or severe compressor surge flutter resonance.', mitigation: 'Water-cooled center bearing jacket, auxiliary run-on pump, and ported shroud anti-surge bleed slots.', severity: 'Critical' };
   }
 
   return { fn, motion, notes, inspection, interfaces, principles, failure };
