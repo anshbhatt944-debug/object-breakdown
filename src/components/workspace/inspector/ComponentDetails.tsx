@@ -146,12 +146,13 @@ function getApplicableStandards(component: ComponentNode, objectData?: ObjectBre
       { code: 'ASTM F38', title: 'Standard Specification for Small Unmanned Aircraft System Airworthiness', organization: 'ASTM International' },
       { code: 'ISO 21384-3', title: 'Unmanned aircraft systems — Operational procedures and reliability', organization: 'ISO' }
     );
-  } else if (objId === 'car-engine' || category.includes('engine') || category.includes('powertrain')) {
+  } else if (objId === 'car-engine' || category.includes('engine') || category.includes('powertrain') || compId.includes('turbo')) {
     standards.push(
+      { code: 'SAE J1826', title: 'Turbocharger Gas Stand Test Code — Compressor & Turbine Maps', organization: 'SAE International' },
       { code: 'SAE J1349', title: 'Engine Power Test Code — Spark Ignition and Compression Ignition', organization: 'SAE International' },
+      { code: 'ISO 1940-1 (G 0.4)', title: 'Mechanical Vibration — Balance quality for high-speed turbocharger rotors', organization: 'ISO' },
       { code: 'ISO 7967-1', title: 'Reciprocating internal combustion engines — Vocabulary and components', organization: 'ISO' },
-      { code: 'AGMA 2001-D04', title: 'Fundamental Rating Factors and Calculation Methods for Involute Gearing', organization: 'AGMA' },
-      { code: 'ASTM A319', title: 'Standard Specification for Gray Iron Castings for Elevated Temperatures', organization: 'ASTM' }
+      { code: 'ASTM A319 / A439', title: 'Gray & Austenitic Ductile Iron Castings for Elevated Temperatures (Ni-Resist)', organization: 'ASTM' }
     );
   } else if (objId === 'electric-motor' || category.includes('motor') || category.includes('magnetic')) {
     standards.push(
