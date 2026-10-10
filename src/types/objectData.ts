@@ -29,9 +29,12 @@ export interface ComponentMaterial {
     | 'Glass';
   density: string;
   tensileStrength?: string;
+  yieldStrength?: string;
   elasticModulus?: string;
   hardness?: string;
   thermalConductivity?: string;
+  operatingTemp?: string;
+  burstPressure?: string;
   electricalConductivity?: string;
   wearResistance?: string;
 }
