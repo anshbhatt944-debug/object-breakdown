@@ -842,3 +842,535 @@ function buildAuthenticGeometryForMeshKey(key: string, material: THREE.Material,
   mesh.receiveShadow = true;
   return mesh;
 }
+
+/**
+ * Creates an ultra-realistic 5-axis CNC point-milled forged billet compressor impeller wheel.
+ * Features 6 primary full-height aerodynamic blades + 6 secondary splitter blades with 35° backsweep,
+ * bullet nose cone spinner, and M7 hex locknut.
+ * Pre-aligned coaxially along the Z-axis (nose facing -Z into the cold air inlet).
+ */
+export function createAerodynamicBilletImpeller(
+  radius = 1.55,
+  height = 1.20,
+  material?: THREE.Material
+): THREE.Group {
+  const group = new THREE.Group();
+  group.name = 'precision-aerodynamic-billet-impeller';
+
+  const defaultMat = material || new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color('#f8fafc'),
+    roughness: 0.08,
+    metalness: 0.98,
+    clearcoat: 0.96,
+    clearcoatRoughness: 0.04,
+    reflectivity: 1.0,
+  });
+
+  // 1. Aerodynamic Bullet Nose Hub & Exducer Backplate
+  // Lathe around Y, rotated to align coaxial with Z-axis
+  const hubPoints: THREE.Vector2[] = [];
+  hubPoints.push(new THREE.Vector2(0, height * 1.05));
+  hubPoints.push(new THREE.Vector2(radius * 0.12, height * 1.02));
+  hubPoints.push(new THREE.Vector2(radius * 0.22, height * 0.86));
+  hubPoints.push(new THREE.Vector2(radius * 0.35, height * 0.64));
+  hubPoints.push(new THREE.Vector2(radius * 0.52, height * 0.38));
+  hubPoints.push(new THREE.Vector2(radius * 0.78, height * 0.12));
+  hubPoints.push(new THREE.Vector2(radius * 0.98, height * 0.02));
+  hubPoints.push(new THREE.Vector2(radius, -0.06)); // Extended tip floor
+  hubPoints.push(new THREE.Vector2(0, -0.06));
+
+  const hubGeo = new THREE.LatheGeometry(hubPoints, 36);
+  hubGeo.rotateX(-Math.PI / 2);
+  const hubMesh = new THREE.Mesh(hubGeo, defaultMat);
+  hubMesh.castShadow = true;
+  hubMesh.receiveShadow = true;
+  group.add(hubMesh);
+
+  // 2. M7 Precision Spinner Hex Locknut on the nose
+  const nutGeo = new THREE.CylinderGeometry(radius * 0.14, radius * 0.15, height * 0.16, 6);
+  nutGeo.rotateX(-Math.PI / 2);
+  nutGeo.translate(0, 0, -height * 1.02);
+  const nutMesh = new THREE.Mesh(nutGeo, defaultMat);
+  nutMesh.castShadow = true;
+  nutMesh.receiveShadow = true;
+  group.add(nutMesh);
+
+  // 3. 6 Primary Full-Length Aerodynamic Swept Blades
+  const primaryCount = 6;
+  for (let i = 0; i < primaryCount; i++) {
+    const angle = (i * Math.PI * 2) / primaryCount;
+    const bladeShape = new THREE.Shape();
+    bladeShape.moveTo(0, 0);
+    bladeShape.bezierCurveTo(radius * 0.18, height * 0.32, radius * 0.45, height * 0.75, radius * 0.58, height * 0.95);
+    bladeShape.lineTo(radius * 0.54, height * 0.95);
+    bladeShape.bezierCurveTo(radius * 0.38, height * 0.72, radius * 0.12, height * 0.30, -radius * 0.08, 0);
+    bladeShape.closePath();
+
+    const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, {
+      depth: 0.045,
+      bevelEnabled: true,
+      bevelSegments: 2,
+      steps: 1,
+      bevelSize: 0.008,
+      bevelThickness: 0.008,
+    });
+    bladeGeo.rotateZ(0.22);
+    bladeGeo.rotateY(angle);
+    bladeGeo.rotateX(-Math.PI / 2);
+
+    const bladeMesh = new THREE.Mesh(bladeGeo, defaultMat);
+    bladeMesh.castShadow = true;
+    bladeMesh.receiveShadow = true;
+    group.add(bladeMesh);
+  }
+
+  // 4. 6 Secondary Aerodynamic Splitter Blades (Recessed Inducer Leading Edge)
+  const splitterOffset = Math.PI / primaryCount;
+  for (let i = 0; i < primaryCount; i++) {
+    const angle = (i * Math.PI * 2) / primaryCount + splitterOffset;
+    const bladeShape = new THREE.Shape();
+    bladeShape.moveTo(0, 0);
+    bladeShape.bezierCurveTo(radius * 0.16, height * 0.22, radius * 0.36, height * 0.45, radius * 0.48, height * 0.62);
+    bladeShape.lineTo(radius * 0.44, height * 0.62);
+    bladeShape.bezierCurveTo(radius * 0.30, height * 0.42, radius * 0.10, height * 0.20, -radius * 0.06, 0);
+    bladeShape.closePath();
+
+    const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, {
+      depth: 0.038,
+      bevelEnabled: true,
+      bevelSegments: 2,
+      steps: 1,
+      bevelSize: 0.006,
+      bevelThickness: 0.006,
+    });
+    bladeGeo.rotateZ(0.25);
+    bladeGeo.rotateY(angle);
+    bladeGeo.rotateX(-Math.PI / 2);
+
+    const bladeMesh = new THREE.Mesh(bladeGeo, defaultMat);
+    bladeMesh.castShadow = true;
+    bladeMesh.receiveShadow = true;
+    group.add(bladeMesh);
+  }
+
+  return group;
+}
+
+/**
+ * Creates an ultra-realistic 9-blade radial inflow Inconel 713C turbine wheel.
+ * Pre-aligned coaxially along the Z-axis (exducer discharging toward +Z).
+ */
+export function createAerodynamicInconelTurbineWheel(
+  radius = 1.50,
+  height = 1.15,
+  material?: THREE.Material
+): THREE.Group {
+  const group = new THREE.Group();
+  group.name = 'precision-inconel-turbine-wheel';
+
+  const defaultMat = material || new THREE.MeshStandardMaterial({
+    color: new THREE.Color('#585e68'),
+    roughness: 0.30,
+    metalness: 0.88,
+  });
+
+  // Scalloped center hub
+  const hubPoints: THREE.Vector2[] = [];
+  hubPoints.push(new THREE.Vector2(0, height * 0.95));
+  hubPoints.push(new THREE.Vector2(radius * 0.22, height * 0.90));
+  hubPoints.push(new THREE.Vector2(radius * 0.38, height * 0.65));
+  hubPoints.push(new THREE.Vector2(radius * 0.62, height * 0.28));
+  hubPoints.push(new THREE.Vector2(radius * 0.92, 0));
+  hubPoints.push(new THREE.Vector2(0, 0));
+
+  const hubGeo = new THREE.LatheGeometry(hubPoints, 32);
+  hubGeo.rotateX(Math.PI / 2);
+  const hubMesh = new THREE.Mesh(hubGeo, defaultMat);
+  hubMesh.castShadow = true;
+  hubMesh.receiveShadow = true;
+  group.add(hubMesh);
+
+  // 9 Thick Inconel Curved Radial Inflow Vanes
+  const vaneCount = 9;
+  for (let i = 0; i < vaneCount; i++) {
+    const angle = (i * Math.PI * 2) / vaneCount;
+    const vaneShape = new THREE.Shape();
+    vaneShape.moveTo(0, 0);
+    vaneShape.bezierCurveTo(radius * 0.25, height * 0.28, radius * 0.55, height * 0.62, radius * 0.72, height * 0.88);
+    vaneShape.lineTo(radius * 0.66, height * 0.88);
+    vaneShape.bezierCurveTo(radius * 0.48, height * 0.58, radius * 0.18, height * 0.24, -radius * 0.05, 0);
+    vaneShape.closePath();
+
+    const vaneGeo = new THREE.ExtrudeGeometry(vaneShape, {
+      depth: 0.065,
+      bevelEnabled: true,
+      bevelSegments: 2,
+      steps: 1,
+      bevelSize: 0.010,
+      bevelThickness: 0.010,
+    });
+    vaneGeo.rotateZ(-0.18);
+    vaneGeo.rotateY(angle);
+    vaneGeo.rotateX(Math.PI / 2);
+
+    const vaneMesh = new THREE.Mesh(vaneGeo, defaultMat);
+    vaneMesh.castShadow = true;
+    vaneMesh.receiveShadow = true;
+    group.add(vaneMesh);
+  }
+
+  return group;
+}
+
+/**
+ * Creates an ultra-detailed, CAD-accurate Center Housing Rotating Assembly (CHRA).
+ * Features:
+ * - Hourglass contoured GGG-40 ductile cast iron bearing housing with reinforcement ribs
+ * - Top raised oil inlet boss with -4AN aircraft blue anodized restrictor fitting
+ * - Bottom rectangular 2-bolt gravity oil drain flange with return pipe
+ * - Dual cross-flow M14 water cooling banjo ports
+ * - Central hardened alloy steel ground rotor shaft (42CrMo4)
+ * - M7 nose spinner locknut
+ * - Dual phosphor bronze hydrodynamic journal bearings with circumferential oil feed grooves
+ * - 360-degree bronze thrust bearing collar and steel thrust washer
+ * - Dynamic stepped piston ring oil seals
+ */
+/**
+ * Creates an authentic stamped/dished Inconel 625 thermal radiation barrier.
+ * Features:
+ * - Outer clamping flange (Ø 4.20) that seats perfectly inside the turbine housing pilot bore
+ * - Concave dished heat-reflection bowl facing the hot turbine wheel
+ * - Stepped central labyrinth seal collar with precision bore for shaft and dynamic piston ring
+ * - Rich iridescent golden straw-amber temper oxidation patina
+ * - Circumferential expansion relief corrugations
+ */
+export function createPrecisionInconelHeatShield(
+  material?: THREE.Material
+): THREE.Group {
+  const group = new THREE.Group();
+  group.name = 'precision-inconel-heat-shield';
+
+  const defaultMat = material || new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color('#f59e0b'),
+    roughness: 0.18,
+    metalness: 0.92,
+    clearcoat: 0.85,
+    clearcoatRoughness: 0.12,
+  });
+
+  // Stamped Inconel 625 thermal barrier with outer diameter 4.20 (R = 2.10)
+  // Perfectly seating into the turbine housing front pilot bore
+  const points: THREE.Vector2[] = [
+    new THREE.Vector2(0.45, 0.00),  // inner shaft seal bore
+    new THREE.Vector2(0.48, 0.18),  // labyrinth collar step
+    new THREE.Vector2(0.72, 0.18),  // collar flat
+    new THREE.Vector2(1.10, 0.32),  // concave dish curve
+    new THREE.Vector2(1.65, 0.36),  // outer bowl floor
+    new THREE.Vector2(1.95, 0.22),  // transition to clamping rim
+    new THREE.Vector2(2.10, 0.08),  // outer rim flange
+    new THREE.Vector2(2.10, 0.00),  // back outer corner
+    new THREE.Vector2(1.95, 0.00),  // back mating face
+    new THREE.Vector2(1.50, 0.10),  // back contour
+    new THREE.Vector2(1.00, 0.08),  // back dish contour
+    new THREE.Vector2(0.45, 0.00),  // close loop
+  ];
+
+  const shieldGeo = new THREE.LatheGeometry(points, 48);
+  shieldGeo.rotateX(Math.PI / 2);
+  const shieldMesh = new THREE.Mesh(shieldGeo, defaultMat);
+  shieldMesh.castShadow = true;
+  shieldMesh.receiveShadow = true;
+  group.add(shieldMesh);
+
+  // Circumferential expansion relief corrugation ring
+  const corrugationGeo = new THREE.TorusGeometry(1.45, 0.04, 8, 36);
+  corrugationGeo.translate(0, 0, 0.22);
+  const corrugationMesh = new THREE.Mesh(corrugationGeo, defaultMat);
+  group.add(corrugationMesh);
+
+  return group;
+}
+
+/**
+ * Creates an ultra-detailed, CAD-accurate Center Housing Rotating Assembly (CHRA).
+ * Features:
+ * - Integrated CNC machined 6061-T6 aluminum compressor backplate (Ø 4.50) spanning the entire
+ *   gap to the compressor housing with 8 perimeter M8 stainless steel hex clamping bolts
+ * - Hourglass contoured GGG-40 ductile cast iron bearing housing with 6 reinforcement ribs
+ * - Polished stainless steel V-band clamp ring securing the CHRA to the turbine housing
+ * - Top raised oil inlet boss with -4AN aircraft blue anodized restrictor fitting & crimp collar
+ * - Bottom rectangular 2-bolt gravity oil drain flange with M8 bolts and mandrel-bent drain pipe
+ * - Dual cross-flow M14 water cooling banjo ports with bronze fittings and brass banjo bolts
+ * - Central hardened alloy steel ground rotor shaft (42CrMo4)
+ * - Dual phosphor bronze hydrodynamic journal bearings with circumferential oil feed grooves
+ * - 360-degree bronze thrust bearing collar and steel thrust washer
+ * - Dynamic stepped piston ring oil seals
+ */
+export function createPrecisionTurbochargerCHRA(
+  bodyMaterial?: THREE.Material,
+  oilMaterial?: THREE.Material,
+  bronzeMaterial?: THREE.Material,
+  shaftMaterial?: THREE.Material
+): THREE.Group {
+  const group = new THREE.Group();
+  group.name = 'precision-turbocharger-chra';
+
+  const ironMat = bodyMaterial || new THREE.MeshStandardMaterial({
+    color: new THREE.Color('#2b303a'),
+    roughness: 0.42,
+    metalness: 0.76,
+  });
+
+  const backplateMat = new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color('#e2e8f0'),
+    roughness: 0.14,
+    metalness: 0.94,
+    clearcoat: 0.80,
+    clearcoatRoughness: 0.08,
+  });
+
+  const anodizedMat = oilMaterial || new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color('#0284c7'),
+    roughness: 0.18,
+    metalness: 0.92,
+    clearcoat: 0.85,
+    clearcoatRoughness: 0.10,
+  });
+
+  const bronzeMat = bronzeMaterial || new THREE.MeshStandardMaterial({
+    color: new THREE.Color('#d97706'),
+    roughness: 0.24,
+    metalness: 0.85,
+  });
+
+  const steelMat = shaftMaterial || new THREE.MeshStandardMaterial({
+    color: new THREE.Color('#cbd5e1'),
+    roughness: 0.12,
+    metalness: 0.96,
+  });
+
+  const boltMat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color('#f8fafc'),
+    roughness: 0.18,
+    metalness: 0.92,
+  });
+
+  // 1. Machined 6061-T6 Aluminum Compressor Backplate (Seal Plate)
+  // Outer diameter 4.50 (R = 2.25) spanning Z in [-0.88, -0.62]
+  // Mates flush with compressor housing rear face (Z = -0.855)
+  const backplatePoints: THREE.Vector2[] = [
+    new THREE.Vector2(0.40, -0.88),  // inner shaft seal bore
+    new THREE.Vector2(0.70, -0.88),  // inner diffuser recess step
+    new THREE.Vector2(1.65, -0.85),  // diffuser radial face
+    new THREE.Vector2(2.15, -0.85),  // outer compressor gasket shelf
+    new THREE.Vector2(2.25, -0.83),  // outer perimeter rim
+    new THREE.Vector2(2.25, -0.64),  // outer rim thickness
+    new THREE.Vector2(1.95, -0.62),  // chamfer to rear mounting step
+    new THREE.Vector2(1.40, -0.62),  // rear clamping face to CHRA
+    new THREE.Vector2(1.10, -0.62),  // transition to center pilot collar
+    new THREE.Vector2(0.95, -0.72),  // pilot collar sleeve
+    new THREE.Vector2(0.40, -0.72),  // inner seal cavity
+  ];
+  const backplateGeo = new THREE.LatheGeometry(backplatePoints, 48);
+  backplateGeo.rotateX(Math.PI / 2);
+  const backplateMesh = new THREE.Mesh(backplateGeo, backplateMat);
+  backplateMesh.castShadow = true;
+  backplateMesh.receiveShadow = true;
+  group.add(backplateMesh);
+
+  // 8 Perimeter Clamping Hex Bolts on the Backplate (Bolt circle R = 2.08)
+  for (let i = 0; i < 8; i++) {
+    const angle = (i * Math.PI * 2) / 8;
+    const bx = Math.cos(angle) * 2.08;
+    const by = Math.sin(angle) * 2.08;
+
+    // Hex bolt head
+    const boltHeadGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.10, 6);
+    boltHeadGeo.rotateX(Math.PI / 2);
+    boltHeadGeo.translate(bx, by, -0.58);
+    const boltHeadMesh = new THREE.Mesh(boltHeadGeo, boltMat);
+    boltHeadMesh.castShadow = true;
+    group.add(boltHeadMesh);
+
+    // Washer
+    const washerGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.025, 16);
+    washerGeo.rotateX(Math.PI / 2);
+    washerGeo.translate(bx, by, -0.62);
+    const washerMesh = new THREE.Mesh(washerGeo, boltMat);
+    group.add(washerMesh);
+  }
+
+  // 2. Cast Ductile Iron Housing Body (EN-GJS-400-15)
+  // Spanning Z in [-0.62, +0.44], hourglass waist contour
+  const chraPoints: THREE.Vector2[] = [
+    new THREE.Vector2(0.42, -0.62),  // front shaft seal bore
+    new THREE.Vector2(1.40, -0.62),  // front collar mating face to backplate
+    new THREE.Vector2(2.15, -0.62),  // front compressor mounting flange
+    new THREE.Vector2(2.15, -0.42),  // front flange thickness
+    new THREE.Vector2(1.75, -0.32),  // transition to forward collar
+    new THREE.Vector2(1.50, -0.18),  // contour to waist
+    new THREE.Vector2(1.35,  0.00),  // center hourglass waist minimum (D = 2.70)
+    new THREE.Vector2(1.55,  0.18),  // contour to rear collar
+    new THREE.Vector2(1.80,  0.28),  // transition to rear flange
+    new THREE.Vector2(2.10,  0.28),  // rear turbine mounting flange (D = 4.20)
+    new THREE.Vector2(2.10,  0.38),  // rear flange thickness
+    new THREE.Vector2(1.85,  0.38),  // stepped pilot face for heat shield
+    new THREE.Vector2(1.85,  0.44),  // rear pilot lip into turbine housing
+    new THREE.Vector2(0.45,  0.44),  // rear turbine shaft seal bore
+  ];
+  const bodyGeo = new THREE.LatheGeometry(chraPoints, 48);
+  bodyGeo.rotateX(Math.PI / 2);
+  const bodyMesh = new THREE.Mesh(bodyGeo, ironMat);
+  bodyMesh.castShadow = true;
+  bodyMesh.receiveShadow = true;
+  group.add(bodyMesh);
+
+  // 3. 6 Cast Stiffening Reinforcement Gussets / Cooling Fins on the waist
+  for (let i = 0; i < 6; i++) {
+    const angle = (i * Math.PI) / 3 + Math.PI / 6;
+    const ribGeo = new THREE.BoxGeometry(0.12, 0.55, 0.65);
+    ribGeo.translate(0, 1.48, -0.05);
+    ribGeo.rotateZ(angle);
+    const ribMesh = new THREE.Mesh(ribGeo, ironMat);
+    ribMesh.castShadow = true;
+    ribMesh.receiveShadow = true;
+    group.add(ribMesh);
+  }
+
+  // 4. Polished Stainless Steel V-Band Clamp Ring (Rear Flange to Turbine Housing)
+  const vbandGeo = new THREE.CylinderGeometry(2.16, 2.16, 0.16, 48, 1, true);
+  vbandGeo.rotateX(Math.PI / 2);
+  vbandGeo.translate(0, 0, 0.33);
+  const vbandMesh = new THREE.Mesh(vbandGeo, new THREE.MeshStandardMaterial({
+    color: new THREE.Color('#cbd5e1'),
+    roughness: 0.20,
+    metalness: 0.95,
+  }));
+  group.add(vbandMesh);
+
+  // V-band tightening bolt on the side
+  const vbandBoltGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.45, 12);
+  vbandBoltGeo.translate(2.18, 0.35, 0.33);
+  const vbandBoltMesh = new THREE.Mesh(vbandBoltGeo, steelMat);
+  group.add(vbandBoltMesh);
+
+  // 5. Top High-Pressure Oil Feed Boss & -4AN Aircraft Fitting
+  const feedBossGeo = new THREE.CylinderGeometry(0.40, 0.45, 0.55, 20);
+  feedBossGeo.translate(0, 1.62, -0.05);
+  const feedBossMesh = new THREE.Mesh(feedBossGeo, ironMat);
+  feedBossMesh.castShadow = true;
+  group.add(feedBossMesh);
+
+  const hexNutGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.26, 6);
+  hexNutGeo.translate(0, 1.95, -0.05);
+  const hexNutMesh = new THREE.Mesh(hexNutGeo, anodizedMat);
+  hexNutMesh.castShadow = true;
+  group.add(hexNutMesh);
+
+  const nippleGeo = new THREE.CylinderGeometry(0.14, 0.18, 0.30, 16);
+  nippleGeo.translate(0, 2.15, -0.05);
+  const nippleMesh = new THREE.Mesh(nippleGeo, anodizedMat);
+  nippleMesh.castShadow = true;
+  group.add(nippleMesh);
+
+  const crimpCollarGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.24, 16);
+  crimpCollarGeo.translate(0, 2.34, -0.05);
+  const crimpCollarMesh = new THREE.Mesh(crimpCollarGeo, steelMat);
+  group.add(crimpCollarMesh);
+
+  // 6. Bottom Gravitational Oil Drain Flange & Return Pipe
+  const drainPadGeo = new THREE.BoxGeometry(0.95, 0.32, 1.60);
+  drainPadGeo.translate(0, -1.48, -0.05);
+  const drainPadMesh = new THREE.Mesh(drainPadGeo, ironMat);
+  drainPadMesh.castShadow = true;
+  group.add(drainPadMesh);
+
+  // 2 M8 Hex Drain Bolts
+  [-0.38, 0.38].forEach((xOff) => {
+    const drainBoltGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.12, 6);
+    drainBoltGeo.translate(xOff, -1.60, -0.05);
+    const drainBoltMesh = new THREE.Mesh(drainBoltGeo, boltMat);
+    group.add(drainBoltMesh);
+  });
+
+  const drainPipeGeo = new THREE.CylinderGeometry(0.32, 0.36, 0.65, 20);
+  drainPipeGeo.translate(0, -1.88, -0.05);
+  const drainPipeMesh = new THREE.Mesh(drainPipeGeo, new THREE.MeshStandardMaterial({
+    color: new THREE.Color('#64748b'),
+    roughness: 0.25,
+    metalness: 0.90,
+  }));
+  drainPipeMesh.castShadow = true;
+  group.add(drainPipeMesh);
+
+  // 7. Dual Cross-Flow Water Cooling Ports (M14 Banjo fittings on left and right)
+  [-1, 1].forEach((dir) => {
+    const portGeo = new THREE.CylinderGeometry(0.30, 0.34, 0.40, 20);
+    portGeo.rotateZ(Math.PI / 2);
+    portGeo.translate(dir * 1.45, 0.20, -0.05);
+    const portMesh = new THREE.Mesh(portGeo, ironMat);
+    portMesh.castShadow = true;
+    group.add(portMesh);
+
+    const banjoRingGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.22, 20);
+    banjoRingGeo.rotateZ(Math.PI / 2);
+    banjoRingGeo.translate(dir * 1.70, 0.20, -0.05);
+    const banjoRingMesh = new THREE.Mesh(banjoRingGeo, bronzeMat);
+    banjoRingMesh.castShadow = true;
+    group.add(banjoRingMesh);
+
+    const banjoBoltGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.25, 6);
+    banjoBoltGeo.rotateZ(Math.PI / 2);
+    banjoBoltGeo.translate(dir * 1.86, 0.20, -0.05);
+    const banjoBoltMesh = new THREE.Mesh(banjoBoltGeo, new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#d97706'),
+      roughness: 0.20,
+      metalness: 0.90,
+    }));
+    banjoBoltMesh.castShadow = true;
+    group.add(banjoBoltMesh);
+  });
+
+  // 8. Central Ground Rotor Shaft (42CrMo4 hardened micro-alloy steel)
+  const shaftGeo = new THREE.CylinderGeometry(0.18, 0.18, 3.4, 24);
+  shaftGeo.rotateX(Math.PI / 2);
+  const shaftMesh = new THREE.Mesh(shaftGeo, steelMat);
+  shaftMesh.name = 'chra-rotor-shaft';
+  shaftMesh.castShadow = true;
+  group.add(shaftMesh);
+
+  // 9. Dual Hydrodynamic Phosphor Bronze Journal Bearings
+  [-0.35, 0.25].forEach((zPos) => {
+    const brgGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.38, 24);
+    brgGeo.rotateX(Math.PI / 2);
+    brgGeo.translate(0, 0, zPos);
+    const brgMesh = new THREE.Mesh(brgGeo, bronzeMat);
+    brgMesh.castShadow = true;
+    group.add(brgMesh);
+
+    // Circumferential oil groove
+    const grooveGeo = new THREE.TorusGeometry(0.35, 0.035, 8, 24);
+    grooveGeo.translate(0, 0, zPos);
+    const grooveMesh = new THREE.Mesh(grooveGeo, new THREE.MeshStandardMaterial({ color: '#78350f' }));
+    group.add(grooveMesh);
+  });
+
+  // 10. 360-Degree Bronze Thrust Bearing Collar & Steel Thrust Washer
+  const thrustGeo = new THREE.CylinderGeometry(0.65, 0.65, 0.12, 24);
+  thrustGeo.rotateX(Math.PI / 2);
+  thrustGeo.translate(0, 0, -0.55);
+  const thrustMesh = new THREE.Mesh(thrustGeo, bronzeMat);
+  thrustMesh.castShadow = true;
+  group.add(thrustMesh);
+
+  // 11. Dynamic Piston Ring Oil Seals
+  [-0.60, 0.36, 0.40].forEach((zPos) => {
+    const ringGeo = new THREE.TorusGeometry(0.24, 0.03, 8, 24);
+    ringGeo.translate(0, 0, zPos);
+    const ringMesh = new THREE.Mesh(ringGeo, steelMat);
+    group.add(ringMesh);
+  });
+
+  return group;
+}
+
