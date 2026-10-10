@@ -196,7 +196,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     setHiddenComponentIds(new Set());
     setSelectedComponentId(null);
     setActiveInspectorTab('overview');
-    setIsPlayingMechanism(false);
+    setIsPlayingMechanism(true);
     setMobileSheetStage('peek');
     setIsMobileControlsOpen(false);
   };
