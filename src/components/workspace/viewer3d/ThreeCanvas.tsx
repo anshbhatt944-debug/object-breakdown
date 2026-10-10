@@ -563,6 +563,8 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   const rimLightRef = useRef<THREE.DirectionalLight | null>(null);
   const bounceLightRef = useRef<THREE.DirectionalLight | null>(null);
   const hemiLightRef = useRef<THREE.HemisphereLight | null>(null);
+  const frontRightLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const snoutCavityLightRef = useRef<THREE.PointLight | null>(null);
 
   const activeRootGroupRef = useRef<THREE.Group | null>(null);
   const componentMapRef = useRef<Map<string, LoadedComponentMeshInfo>>(new Map());
@@ -696,6 +698,18 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     hemiLightRef.current = hemiLight;
     scene.add(hemiLight);
 
+    // Balanced front-right fill light (eliminates dark shadows on front volute surfaces and cast iron curves)
+    const frontRightLight = new THREE.DirectionalLight(0xf1f5f9, isLight ? 1.1 : 1.4);
+    frontRightLight.position.set(5, 5, 7);
+    frontRightLightRef.current = frontRightLight;
+    scene.add(frontRightLight);
+
+    // Dedicated snout cavity point light (illuminates internal compressor impeller blades and turbine vanes)
+    const snoutCavityLight = new THREE.PointLight(0xffffff, isLight ? 2.0 : 2.8, 8, 1.2);
+    snoutCavityLight.position.set(0, 0, 1.8);
+    snoutCavityLightRef.current = snoutCavityLight;
+    scene.add(snoutCavityLight);
+
     // Floor Reference Grid
     const gridHelper = new THREE.GridHelper(18, 36, isLight ? 0x94a3b8 : 0x475569, isLight ? 0xcbd5e1 : 0x262b35);
     gridHelper.position.y = -2.8;
@@ -744,8 +758,14 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     if (hemiLightRef.current) {
       hemiLightRef.current.intensity = isLight ? 0.45 : 0.3;
     }
+    if (frontRightLightRef.current) {
+      frontRightLightRef.current.intensity = isLight ? 1.1 : 1.4;
+    }
+    if (snoutCavityLightRef.current) {
+      snoutCavityLightRef.current.intensity = isLight ? 2.0 : 2.8;
+    }
     if (rendererRef.current) {
-      rendererRef.current.toneMappingExposure = isLight ? 1.15 : 1.25;
+      rendererRef.current.toneMappingExposure = isLight ? 1.20 : 1.35;
     }
   }, [theme]);
 
@@ -1183,21 +1203,55 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
 
           if (currentModelId === 'car-engine') {
             if (
-              id === 'turbo-chra-core' ||
+              id === 'turbo-impeller-wheel' ||
+              id === 'turbo-turbine-wheel' ||
               id === 'turbo-compressor-inlet' ||
               id === 'turbo-exhaust-outlet' ||
-              id.includes('chra') ||
+              id.includes('impeller') ||
+              id.includes('turbine-wheel') ||
               id.includes('compressor-inlet') ||
               id.includes('exhaust-outlet')
             ) {
-              // High-speed rotordynamic rotation of turbine shaft, Inconel turbine wheel, and billet compressor impeller around Z axis
-              meshesToAnimate.forEach((m) => {
-                m.rotation.z += kTime * 14.0;
+              // Smooth, continuous rotordynamics tuned to avoid 60Hz stroboscopic aliasing:
+              // 4.5 rad/s (~43 RPM) ensures all 12 billet compressor blades and 9 Inconel turbine blades
+              // on BOTH sides visibly and unmistakably glide across the screen with fluid mechanical momentum.
+              const turboSpoolAngle = kTime * 4.5;
+              const isColdSide = id === 'turbo-compressor-inlet' || id.includes('inlet') || id.includes('snout');
+              const sign = isColdSide && !isGroup ? -1 : 1;
+
+              if (isGroup) {
+                const baseRotZ = _scratchRot.z || info.baseRotation.z || 0;
+                info.mesh.rotation.z = baseRotZ + turboSpoolAngle;
+              } else {
+                meshesToAnimate.forEach((m) => {
+                  const mBaseZ = (m.userData?.baseRotation as THREE.Euler)?.z ?? _scratchRot.z ?? 0;
+                  m.rotation.z = mBaseZ + sign * turboSpoolAngle;
+                });
+              }
+            } else if (id === 'turbo-chra-core' || id.includes('chra')) {
+              // Internal rotordynamics: Central alloy steel rotor shaft spins coaxially inside the ductile iron housing
+              const turboSpoolAngle = kTime * 4.5;
+              info.mesh.traverse((child) => {
+                if (child.name === 'chra-rotor-shaft') {
+                  child.rotation.z = turboSpoolAngle;
+                }
               });
             } else if (id === 'turbo-wastegate-linkage' || id.includes('linkage')) {
-              // Subtle pneumatic wastegate flapper bellcrank oscillation
+              // Kinematic wastegate boost regulation cycle: diaphragm pressure cracks flapper open and returns
+              const linkageAngle = Math.sin(kTime * 2.4) * 0.055;
+              const linkageOffset = Math.sin(kTime * 2.4) * 0.012;
               meshesToAnimate.forEach((m) => {
-                m.rotation.z += Math.sin(kTime * 3.5) * 0.04;
+                const baseRotZ = (m.userData?.baseRotation as THREE.Euler)?.z ?? info.baseRotation.z;
+                const basePosX = (m.userData?.basePosition as THREE.Vector3)?.x ?? info.basePosition.x;
+                m.rotation.z = baseRotZ + linkageAngle;
+                m.position.x = basePosX + linkageOffset;
+              });
+            } else if (id === 'turbo-wastegate-actuator' || id.includes('actuator')) {
+              // Subtle pneumatic canister vibration from internal 1.85 bar boost pressure modulation
+              const actuatorOffset = Math.sin(kTime * 12.0) * 0.001;
+              meshesToAnimate.forEach((m) => {
+                const basePosY = (m.userData?.basePosition as THREE.Vector3)?.y ?? info.basePosition.y;
+                m.position.y = basePosY + actuatorOffset;
               });
             }
           } else if (currentModelId === 'electric-motor') {
@@ -1256,7 +1310,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
                   const baseRot = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
                   m.rotation.x = baseRot.x;
                   m.rotation.z = baseRot.z;
-                  m.rotation.y = baseRot.y + kTime * 4.5;
+                  m.rotation.y = baseRot.y + kTime * 3.5;
                 });
               } else if (id === 'coaxial-drive-shaft' || id === 'tube_0') {
                 // Dual-spool concentric LP/HP drive shaft spins around its local Z centerline axis
@@ -1264,7 +1318,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
                   const baseRot = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
                   m.rotation.x = baseRot.x;
                   m.rotation.y = baseRot.y;
-                  m.rotation.z = baseRot.z + kTime * 6.0;
+                  m.rotation.z = baseRot.z + kTime * 4.2;
                 });
               } else if (id === 'turbine-nozzle-guide-vanes' || id === 'fins_0') {
                 // High pressure turbine rotor spins around its local Z centerline axis
@@ -1272,7 +1326,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
                   const baseRot = (m.userData?.baseRotation as THREE.Euler) || info.baseRotation;
                   m.rotation.x = baseRot.x;
                   m.rotation.y = baseRot.y;
-                  m.rotation.z = baseRot.z + kTime * 6.8;
+                  m.rotation.z = baseRot.z + kTime * 4.8;
                 });
               } else if (
                 id === 'vsv-actuation-ring' ||
