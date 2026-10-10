@@ -676,7 +676,27 @@ export const DroneCanvas: React.FC<DroneCanvasProps> = ({
         info.mesh.scale.copy(info.baseScale);
 
         if (isPlayingMechanismRef.current) {
-          if (id.includes('ball') || id.includes('wheel') || id.includes('gear') || id.includes('rotor')) {
+          if (objectDataRef.current?.id === 'car-engine') {
+            if (
+              id.includes('impeller') ||
+              id.includes('turbine-wheel') ||
+              id === 'turbo-impeller-wheel' ||
+              id === 'turbo-turbine-wheel' ||
+              id === 'turbo-compressor-inlet' ||
+              id === 'turbo-exhaust-outlet' ||
+              id.includes('compressor-inlet') ||
+              id.includes('exhaust-outlet')
+            ) {
+              const sign = (id === 'turbo-compressor-inlet' || id.includes('inlet') || id.includes('snout')) ? -1 : 1;
+              info.mesh.rotation.z = targetRot.z + sign * kTime * 4.5;
+            } else if (id.includes('chra')) {
+              info.mesh.traverse((child) => {
+                if (child.name === 'chra-rotor-shaft') {
+                  child.rotation.z = kTime * 4.5;
+                }
+              });
+            }
+          } else if (id.includes('ball') || id.includes('wheel') || id.includes('gear') || id.includes('rotor')) {
             info.mesh.rotation.y += kTime * 2.2;
           }
 
