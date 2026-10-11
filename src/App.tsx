@@ -77,8 +77,14 @@ export const App: React.FC = () => {
     window.localStorage.setItem('object-breakdown-theme', theme);
   }, [theme]);
 
+  const currentViewRef = React.useRef<'landing' | 'workspace'>(currentView);
+  React.useEffect(() => {
+    currentViewRef.current = currentView;
+  }, [currentView]);
+
   // Open workspace with a selected object
   const handleLaunchObject = (obj: ObjectBreakdownData) => {
+    currentViewRef.current = 'workspace';
     setCurrentObject(obj);
     setCurrentView('workspace');
 
@@ -137,6 +143,7 @@ export const App: React.FC = () => {
         }
       }
 
+      currentViewRef.current = 'workspace';
       setCurrentObject(analyzed);
       setUploadedObjectData(analyzed);
       setUploadedModel({
@@ -241,22 +248,30 @@ export const App: React.FC = () => {
 
   // Workspace view
   if (currentView === 'workspace') {
+    const effectiveObject =
+      uploadedModel && uploadedObjectData && (!currentObject || (currentObject.id !== uploadedObjectData.id && currentObject.id === 'jet-turbine'))
+        ? uploadedObjectData
+        : currentObject;
+
     const isCurrentUploaded = Boolean(
       uploadedModel &&
-      (currentObject.id.startsWith('uploaded-') ||
-        (currentObject as unknown as { isUploaded?: boolean }).isUploaded ||
-        (uploadedObjectData && currentObject.id === uploadedObjectData.id))
+      (effectiveObject.id.startsWith('uploaded-') ||
+        (effectiveObject as unknown as { isUploaded?: boolean }).isUploaded ||
+        (uploadedObjectData && effectiveObject.id === uploadedObjectData.id))
     );
 
     return (
       <>
         <CustomCursor theme={theme} />
         <WorkspaceLayout
-          currentObject={currentObject}
+          currentObject={effectiveObject}
           onSelectObject={setCurrentObject}
           depthLevel={depthLevel}
           onDepthChange={setDepthLevel}
-          onReturnHome={() => setCurrentView('landing')}
+          onReturnHome={() => {
+            currentViewRef.current = 'landing';
+            setCurrentView('landing');
+          }}
           theme={theme}
           onToggleTheme={() =>
             setTheme((value) =>
@@ -330,7 +345,11 @@ export const App: React.FC = () => {
           onUploadModel={handleUploadModel}
           onSearchCustom={handleSearchQuery}
           theme={theme}
-          onActiveObjectChange={(obj) => setCurrentObject(obj)}
+          onActiveObjectChange={(obj) => {
+            if (currentViewRef.current === 'landing' && !isUploadingRef.current && !uploadedModel) {
+              setCurrentObject(obj);
+            }
+          }}
         />
       </main>
 
