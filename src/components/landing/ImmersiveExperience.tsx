@@ -351,12 +351,21 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
   const activeModelRef = useRef<LoadedObjectResult | null>(null);
   const activeModelIdRef = useRef<string | null>('jet-turbine');
   const lastReportedObjIdRef = useRef<string | null>(null);
+  const isMountedRef = useRef<boolean>(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const setActiveModelAndObject = (
     model: LoadedObjectResult | null,
     obj: ObjectBreakdownData | null,
     modelId: string | null
   ) => {
+    if (!isMountedRef.current) return;
     activeModelRef.current = model;
     activeObjectRef.current = obj;
     activeModelIdRef.current = modelId;
@@ -2286,6 +2295,16 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             ? bestComponent.componentId
             : (modelMeshHit ? 'model-body' : null);
 
+          if (canvasRef.current) {
+            const isModelHovered = Boolean(modelMeshHit);
+            canvasRef.current.style.cursor = isModelHovered ? 'pointer' : 'default';
+            if (isModelHovered) {
+              canvasRef.current.classList.add('cursor-pointer');
+            } else {
+              canvasRef.current.classList.remove('cursor-pointer');
+            }
+          }
+
           if (nextHoverKey !== currentHoverKeyRef.current) {
             currentHoverKeyRef.current = nextHoverKey;
 
@@ -2773,13 +2792,19 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
         }
 
         if (hits.length > 0) {
-          if (!bestHit || hits[0].distance < bestHit.distance) {
-            const hitMesh = hits[0].object;
-            const hitObjectId =
-              (hitMesh.userData?.objectId as string) ||
-              (model.rootGroup.userData?.objectId as string) ||
-              modelId;
-            bestHit = { objectId: hitObjectId, distance: hits[0].distance };
+          for (const hit of hits) {
+            const mesh = hit.object as THREE.Mesh;
+            if (mesh && (mesh as THREE.Mesh).isMesh && mesh.visible !== false) {
+              if (mesh.userData?.supplemental && !mesh.visible) continue;
+              if (!bestHit || hit.distance < bestHit.distance) {
+                const hitObjectId =
+                  (mesh.userData?.objectId as string) ||
+                  (model.rootGroup.userData?.objectId as string) ||
+                  modelId;
+                bestHit = { objectId: hitObjectId, distance: hit.distance };
+              }
+              break;
+            }
           }
         }
       }
@@ -2799,34 +2824,8 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       }
     }
 
-    // 2. Broad-phase / proximity fallback for the active model:
-    // If ray hits active model bounding box or click was within active model region
-    if (activeModel && activeObj && activeModel.rootGroup.visible) {
-      const box = new THREE.Box3().setFromObject(activeModel.rootGroup);
-      box.expandByScalar(0.75);
-      const hitPoint = new THREE.Vector3();
-      const intersectsBoundingBox = raycaster.ray.intersectBox(box, hitPoint);
-
-      const screenCenter = new THREE.Vector3();
-      activeModel.rootGroup.getWorldPosition(screenCenter);
-      screenCenter.project(camera);
-      const screenX = ((screenCenter.x + 1) * window.innerWidth) / 2;
-      const screenY = ((-screenCenter.y + 1) * window.innerHeight) / 2;
-      const distPx = Math.hypot(cx - screenX, cy - screenY);
-      const maxProximityPx = Math.min(window.innerWidth, window.innerHeight) * 0.45;
-
-      if (intersectsBoundingBox || distPx < maxProximityPx) {
-        console.log('[handleCanvasClick ACTIVE MODEL BOUNDS/PROXIMITY]', {
-          activeObjName: activeObj.name,
-          distPx,
-          intersectsBoundingBox: !!intersectsBoundingBox,
-          cx,
-          cy,
-        });
-        onSelectObject(activeObj);
-        return;
-      }
-    }
+    // STRICT: Only clicking directly on the 3D model geometry opens the 3D studio.
+    // Clicks elsewhere (background, empty space, margins) are strictly ignored.
   };
 
   // Expose global click helper for automated QA verification
@@ -2865,15 +2864,13 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       {/* Fixed Fullscreen Three.js Canvas with State-Based Click Routing */}
       {/* -------------------------------------------------------------------- */}
       <motion.div
-        className="fixed inset-0 z-10 pointer-events-auto cursor-pointer"
+        className="fixed inset-0 z-10 pointer-events-auto"
         onPointerDown={handleCanvasPointerDown}
         onPointerUp={handleCanvasPointerUp}
-        onClick={(e) => handleCanvasClick(e.clientX, e.clientY)}
       >
         <canvas
           ref={canvasRef}
-          onClick={(e) => handleCanvasClick(e.clientX, e.clientY)}
-          className="w-full h-full block cursor-pointer"
+          className="w-full h-full block"
         />
       </motion.div>
 
@@ -2943,12 +2940,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           <div
             key={i}
             id={`ann-dom-slot-${i}`}
-            onClick={() => {
-              if (activeObjectRef.current) {
-                onSelectObject(activeObjectRef.current);
-              }
-            }}
-            className="absolute top-0 left-0 pointer-events-auto cursor-pointer opacity-0 will-change-transform select-none"
+            className="absolute top-0 left-0 pointer-events-none opacity-0 will-change-transform select-none"
             style={{
               transform: 'translate3d(-999px, -999px, 0)',
               transition: 'opacity 220ms ease-out',
