@@ -54,6 +54,13 @@ export interface ProjectedAnnotation {
   orderIndex?: number;
 }
 
+function getEstimatedCardHeight(item: { label: string; description: string }): number {
+  const titleLines = item.label.length > 22 ? 2 : 1;
+  const descLines = item.description.length > 36 ? 2 : 1;
+  // py-2 (16px) + borders (2px) + category & margin (12px) + title (14px * lines) + desc (14px * lines) + safety buffer (4px)
+  return 36 + titleLines * 14 + descLines * 14;
+}
+
 function computeAdaptiveAnnotationLayout(
   items: Array<{
     id: string;
@@ -86,7 +93,7 @@ function computeAdaptiveAnnotationLayout(
     // 2. North of Model (Top Area): Concentric Shaft (03), Bleed Manifolds (04), Compressor Casing (05), Kevlar Containment (06)
     // 3. South of Model (User's Marked Spot): Fan Module (07), Intake Cowling (08), Bypass Stator Grid (09), Thrust Reverser (10), FADEC (11)
     // Note: ZERO cards on the right flank to completely free the 3D model from any obstruction.
-    const textBlockWidth = 240;
+    const textBlockWidth = 252;
     const result: ProjectedAnnotation[] = [];
 
     // Group items deterministically by component ID
@@ -100,7 +107,7 @@ function computeAdaptiveAnnotationLayout(
     const leftColX = Math.max(36, Math.min(midX - 380 - textBlockWidth, 64));
     const leftStartY = Math.max(125, Math.round(viewportH * 0.16));
     backItems.slice(0, 2).forEach((it, i) => {
-      const labelY = leftStartY + i * 88;
+      const labelY = leftStartY + i * 86;
       const labelEdgeX = leftColX + textBlockWidth;
       result.push({
         ...it,
@@ -115,7 +122,7 @@ function computeAdaptiveAnnotationLayout(
       });
     });
 
-    // 2. North of Model (Top area: single or staggered row across wide open top)
+    // 2. North of Model (Top area: dedicated columns across wide open top, alternating subtle stagger if compact)
     const availableNorthLeft = leftColX + textBlockWidth + 28;
     const availableNorthRight = viewportW - 48;
     const availableNorthWidth = availableNorthRight - availableNorthLeft;
@@ -123,47 +130,23 @@ function computeAdaptiveAnnotationLayout(
 
     const northCardsToPlace = northItems.slice(0, 4);
     if (northCardsToPlace.length > 0) {
-      if (availableNorthWidth >= 1140 || northCardsToPlace.length <= 2) {
-        // Wide screen: single horizontal row across the top
-        const slotWidth = availableNorthWidth / northCardsToPlace.length;
-        northCardsToPlace.forEach((it, i) => {
-          const labelX = Math.round(availableNorthLeft + i * slotWidth + (slotWidth - textBlockWidth) * 0.5);
-          const labelEdgeX = labelX + Math.round(textBlockWidth * 0.5);
-          result.push({
-            ...it,
-            isLeft: false,
-            isSouth: false,
-            isNorth: true,
-            labelX,
-            labelY: topY,
-            labelEdgeX,
-            elbowX: labelEdgeX,
-            orderIndex: idx++,
-          });
+      const slotWidth = availableNorthWidth / northCardsToPlace.length;
+      northCardsToPlace.forEach((it, i) => {
+        const labelX = Math.round(availableNorthLeft + i * slotWidth + (slotWidth - textBlockWidth) * 0.5);
+        const labelEdgeX = labelX + Math.round(textBlockWidth * 0.5);
+        const tierY = (availableNorthWidth >= 1140 || i % 2 === 0) ? topY : topY + 28;
+        result.push({
+          ...it,
+          isLeft: false,
+          isSouth: false,
+          isNorth: true,
+          labelX,
+          labelY: tierY,
+          labelEdgeX,
+          elbowX: labelEdgeX,
+          orderIndex: idx++,
         });
-      } else {
-        // Moderate screen: staggered 2-tier layout so bounding boxes never collide
-        const halfCount = Math.ceil(northCardsToPlace.length / 2);
-        const slotWidth = availableNorthWidth / halfCount;
-        northCardsToPlace.forEach((it, i) => {
-          const col = Math.floor(i / 2);
-          const tier = i % 2;
-          const tierY = tier === 0 ? topY : topY + 70;
-          const labelX = Math.round(availableNorthLeft + col * slotWidth + (slotWidth - textBlockWidth) * 0.5);
-          const labelEdgeX = labelX + Math.round(textBlockWidth * 0.5);
-          result.push({
-            ...it,
-            isLeft: false,
-            isSouth: false,
-            isNorth: true,
-            labelX,
-            labelY: tierY,
-            labelEdgeX,
-            elbowX: labelEdgeX,
-            orderIndex: idx++,
-          });
-        });
-      }
+      });
     }
 
     // 3. South of Model (User's Marked Spot: below engine, right of "Deconstruct the invisible", above bottom bar)
@@ -245,21 +228,72 @@ function computeAdaptiveAnnotationLayout(
   }
 
   const processSide = (list: typeof leftItems, isLeft: boolean, indexStart: number = 1): ProjectedAnnotation[] => {
-    const textBlockWidth = 260;
-    const minGap = list.length > 5 ? Math.max(60, Math.min(76, (viewportH * 0.74) / list.length)) : 76;
+    if (!list.length) return [];
 
-    const topLimit = Math.max(80, viewportH * 0.12);
-    // Keep cards well above the bottom buttons (Pause motion / Launch studio)
-    const bottomLimit = editorialSide === 'left'
-      ? Math.min(viewportH - 220, viewportH * 0.68)
-      : Math.min(viewportH - 120, viewportH * 0.85);
+    const textBlockWidth = 252;
+    const topLimit = Math.max(76, Math.min(Math.round(viewportH * 0.10), 96));
+    const bottomLimit = Math.max(topLimit + 180, viewportH - 85);
+    const availableHeight = bottomLimit - topLimit;
+
+    const count = list.length;
+    const cardHeights = list.map((item) => getEstimatedCardHeight(item));
+    const totalCardsHeight = cardHeights.reduce((sum, h) => sum + h, 0);
+
+    // Dynamic minGap: starts at 12px, gracefully scaling down if vertical space is constrained
+    let minGap = 12;
+    if (count > 1) {
+      const neededWithDefaultGap = totalCardsHeight + (count - 1) * 12;
+      if (neededWithDefaultGap > availableHeight) {
+        minGap = Math.max(4, Math.floor((availableHeight - totalCardsHeight) / (count - 1)));
+      }
+    }
 
     // Fixed column X for architectural HUD alignment (never sits on top of 3D models)
     const colX = isLeft
       ? Math.max(36, Math.min(midX - 340 - textBlockWidth, 64))
       : Math.min(viewportW - textBlockWidth - 36, Math.max(midX + 360, viewportW - textBlockWidth - 64));
 
-    const result: ProjectedAnnotation[] = list.map((item, idx) => {
+    // Desired ideal Y positions based on 3D anchor points
+    const idealTops = list.map((item) => item.y - 24);
+    const placedY: number[] = new Array(count);
+
+    // Pass 1: Initialize with ideal tops
+    for (let i = 0; i < count; i++) {
+      placedY[i] = idealTops[i];
+    }
+
+    // Pass 2: Forward pass (strictly enforce topLimit and non-overlapping distance from previous card)
+    placedY[0] = Math.max(placedY[0], topLimit);
+    for (let i = 1; i < count; i++) {
+      const prevBottom = placedY[i - 1] + cardHeights[i - 1];
+      if (placedY[i] < prevBottom + minGap) {
+        placedY[i] = prevBottom + minGap;
+      }
+    }
+
+    // Pass 3: Backward pass if bottom overflows
+    const lastIdx = count - 1;
+    if (placedY[lastIdx] + cardHeights[lastIdx] > bottomLimit) {
+      placedY[lastIdx] = bottomLimit - cardHeights[lastIdx];
+      for (let i = lastIdx - 1; i >= 0; i--) {
+        const nextTop = placedY[i + 1];
+        if (placedY[i] + cardHeights[i] + minGap > nextTop) {
+          placedY[i] = nextTop - minGap - cardHeights[i];
+        }
+      }
+    }
+
+    // Pass 4: Safety redistribution if vertical space is smaller than natural sum
+    if (placedY[0] < topLimit) {
+      let currentY = topLimit;
+      const stepGap = count > 1 ? Math.max(2, (availableHeight - totalCardsHeight) / (count - 1)) : 0;
+      for (let i = 0; i < count; i++) {
+        placedY[i] = currentY;
+        currentY += cardHeights[i] + stepGap;
+      }
+    }
+
+    return list.map((item, idx) => {
       const labelX = colX;
       const labelEdgeX = isLeft ? labelX + textBlockWidth : labelX;
       const elbowX = isLeft ? labelEdgeX + 24 : labelEdgeX - 24;
@@ -267,35 +301,15 @@ function computeAdaptiveAnnotationLayout(
       return {
         ...item,
         isLeft,
+        isSouth: false,
+        isNorth: false,
         labelX,
-        labelY: item.y - 28,
+        labelY: Math.round(placedY[idx]),
         labelEdgeX,
         elbowX,
         orderIndex: indexStart + idx,
       };
     });
-
-    for (let i = 1; i < result.length; i++) {
-      if (result[i].labelY < result[i - 1].labelY + minGap) {
-        result[i].labelY = result[i - 1].labelY + minGap;
-      }
-    }
-    if (result.length && result[result.length - 1].labelY > bottomLimit) {
-      result[result.length - 1].labelY = bottomLimit;
-      for (let i = result.length - 2; i >= 0; i--) {
-        if (result[i].labelY > result[i + 1].labelY - minGap) {
-          result[i].labelY = result[i + 1].labelY - minGap;
-        }
-      }
-    }
-    if (result.length && result[0].labelY < topLimit) {
-      const shift = topLimit - result[0].labelY;
-      for (const r of result) {
-        r.labelY += shift;
-      }
-    }
-
-    return result;
   };
 
   const leftAnnotations = processSide(leftItems, true, 1);
@@ -1010,21 +1024,15 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           if (
             id === 'turbo-impeller-wheel' ||
             id === 'turbo-turbine-wheel' ||
-            id === 'turbo-compressor-inlet' ||
-            id === 'turbo-exhaust-outlet' ||
             id.includes('impeller') ||
-            id.includes('turbine-wheel') ||
-            id.includes('compressor-inlet') ||
-            id.includes('exhaust-outlet')
+            id.includes('turbine-wheel')
           ) {
-            const isColdSide = id === 'turbo-compressor-inlet' || id.includes('inlet') || id.includes('snout');
-            const sign = isColdSide && !isGroup ? -1 : 1;
             if (isGroup) {
               info.mesh.rotation.z = info.baseRotation.z + turboSpoolAngle;
             } else {
               meshes.forEach((m) => {
                 const baseRotZ = (m.userData?.baseRotation as THREE.Euler)?.z ?? info.baseRotation.z;
-                m.rotation.z = baseRotZ + sign * turboSpoolAngle;
+                m.rotation.z = baseRotZ + turboSpoolAngle;
               });
             }
           } else if (id === 'turbo-chra-core' || id.includes('chra')) {
@@ -1605,6 +1613,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
             engineModel.rootGroup.updateMatrixWorld(true);
 
             // Restore solid opaque materials if user scrolled back up from Stage 2
+            // Restore solid opaque materials if user scrolled back up from Stage 2
             const voluteInfo = engineModel.componentMap.get('turbo-compressor-housing');
             const turbineInfo = engineModel.componentMap.get('turbo-turbine-housing');
             [voluteInfo, turbineInfo].forEach((info) => {
@@ -1613,14 +1622,15 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               meshes.forEach((m) => {
                 if (m instanceof THREE.Mesh && m.material) {
                   const mat = m.material as THREE.MeshStandardMaterial;
-                  if (mat.transparent) {
-                    mat.transparent = false;
-                    mat.opacity = 1.0;
-                    mat.roughness = info.componentId === 'turbo-compressor-housing' ? 0.32 : 0.42;
-                    mat.metalness = info.componentId === 'turbo-compressor-housing' ? 0.88 : 0.65;
-                    mat.depthWrite = true;
-                    m.renderOrder = 0;
+                  mat.transparent = false;
+                  mat.opacity = 1.0;
+                  mat.depthWrite = true;
+                  mat.roughness = info.componentId === 'turbo-compressor-housing' ? 0.32 : 0.42;
+                  mat.metalness = info.componentId === 'turbo-compressor-housing' ? 0.88 : 0.65;
+                  if (mat.color && info.componentId === 'turbo-compressor-housing') {
+                    mat.color.set('#d8dee9');
                   }
+                  m.renderOrder = 0;
                 }
               });
             });
@@ -1706,8 +1716,8 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               });
             });
 
-            // Smooth cutaway transition on outer compressor volute and turbine housings:
-            // Reveal internal wheel and shaft intersections inside their mating passages
+            // Maintain solid opaque housing shells with true metallurgical CAD silver (#d8dee9) & cast iron
+            // Eliminates inner-wall dual-tube ghosting, moire/glitching artifacts, and chalky white color washout
             const voluteInfo = engineModel.componentMap.get('turbo-compressor-housing');
             const turbineInfo = engineModel.componentMap.get('turbo-turbine-housing');
             [voluteInfo, turbineInfo].forEach((info) => {
@@ -1716,12 +1726,15 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               meshes.forEach((m) => {
                 if (m instanceof THREE.Mesh && m.material) {
                   const mat = m.material as THREE.MeshStandardMaterial;
-                  mat.transparent = true;
-                  mat.depthWrite = false; // Do not occlude solid internal blades and shaft
-                  mat.opacity = THREE.MathUtils.lerp(1.0, 0.26, easedInter);
-                  mat.roughness = THREE.MathUtils.lerp(0.35, 0.12, easedInter);
-                  mat.metalness = THREE.MathUtils.lerp(0.85, 0.18, easedInter);
-                  m.renderOrder = 20; // Draw housing shell after internal components
+                  mat.transparent = false;
+                  mat.opacity = 1.0;
+                  mat.depthWrite = true;
+                  mat.roughness = info.componentId === 'turbo-compressor-housing' ? 0.32 : 0.42;
+                  mat.metalness = info.componentId === 'turbo-compressor-housing' ? 0.88 : 0.65;
+                  if (mat.color && info.componentId === 'turbo-compressor-housing') {
+                    mat.color.set('#d8dee9');
+                  }
+                  m.renderOrder = 0;
                 }
               });
             });
@@ -1784,6 +1797,9 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
                 mat.depthWrite = true;
                 mat.roughness = info.componentId === 'turbo-compressor-housing' ? 0.32 : 0.42;
                 mat.metalness = info.componentId === 'turbo-compressor-housing' ? 0.88 : 0.65;
+                if (mat.color && info.componentId === 'turbo-compressor-housing') {
+                  mat.color.set('#d8dee9');
+                }
                 m.renderOrder = 0;
               }
             });
@@ -1833,36 +1849,27 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           applyModelExplode(motorModel, easedMotor * 0.85);
           motorModel.rootGroup.updateMatrixWorld(true);
 
+          const MOTOR_HUD_DESCRIPTIONS: Record<string, string> = {
+            'motor-shaft': 'Ground SUS420J2 shaft transferring 850W peak power with zero runout.',
+            'rotor-assembly': 'CNC 6061-T6 flywheel carrying 14 sintered NdFeB N52H magnets across 0.25mm air gap.',
+            'ball-bearings': 'Dual ABEC-7 deep groove ball bearings supporting high-RPM axial loads.',
+            'stator-core': '12-slot silicon steel core with 200°C Class H oxygen-free copper windings.',
+            'base-flange': '5-axis CNC 6061-T6 aluminum mounting plate securing stator core to airframe.',
+            'rear-bearing': 'Secondary ABEC-7 bearing with carbon spring steel circlip locking axial preload.',
+          };
+
           const motorComponents = (activeObjectRef.current?.rootComponents && activeObjectRef.current.id === 'electric-motor' && activeObjectRef.current.rootComponents.length >= 6)
             ? activeObjectRef.current.rootComponents
             : electricMotorData.rootComponents;
 
-          let targets = motorComponents
-            .filter((c) => (c.revealThreshold ?? 0) <= motorExplodeP)
+          const targets = motorComponents
             .slice(0, 6)
             .map((c) => ({
               id: c.id,
               label: c.name.toUpperCase(),
               category: c.category.toUpperCase(),
-              description: c.function,
+              description: MOTOR_HUD_DESCRIPTIONS[c.id] || c.function,
             }));
-
-          if (!targets.some((t) => t.id === 'base-flange')) {
-            targets.push({
-              id: 'base-flange',
-              label: 'CNC BASE MOUNTING FLANGE',
-              category: 'STRUCTURAL CHASSIS',
-              description: 'Rigid CNC 6061-T6 aluminum base flange securing stator core and mounting motor to airframe.',
-            });
-          }
-          if (!targets.some((t) => t.id === 'rear-bearing')) {
-            targets.push({
-              id: 'rear-bearing',
-              label: 'REAR BALL BEARING & CIRCLIP',
-              category: 'TRIBOLOGY & RETENTION',
-              description: 'Secondary ABEC-7 deep groove ball bearing and shaft retaining circlip locking axial preload.',
-            });
-          }
 
           projectTargets(motorModel, targets);
         }
@@ -2216,7 +2223,7 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
           } else {
             slot.polyline.setAttribute(
               'points',
-              `${smoothed.x.toFixed(1)},${smoothed.y.toFixed(1)} ${smoothed.elbowX.toFixed(1)},${smoothed.y.toFixed(1)} ${smoothed.labelEdgeX.toFixed(1)},${(smoothed.labelY + 28).toFixed(1)}`
+              `${smoothed.x.toFixed(1)},${smoothed.y.toFixed(1)} ${smoothed.elbowX.toFixed(1)},${smoothed.y.toFixed(1)} ${smoothed.labelEdgeX.toFixed(1)},${(smoothed.labelY + 24).toFixed(1)}`
             );
           }
           slot.container.style.opacity = opStr;
@@ -2552,23 +2559,16 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
       } else if (
         id === 'turbo-impeller-wheel' ||
         id === 'turbo-turbine-wheel' ||
-        id === 'turbo-compressor-inlet' ||
-        id === 'turbo-exhaust-outlet' ||
         id.includes('impeller') ||
-        id.includes('turbine-wheel') ||
-        id.includes('compressor-inlet') ||
-        id.includes('exhaust-outlet')
+        id.includes('turbine-wheel')
       ) {
         const turboSpoolAngle = elapsed * 4.5;
-        const isColdSide = id === 'turbo-compressor-inlet' || id.includes('inlet') || id.includes('snout');
-        const sign = isColdSide && !isGroup ? -1 : 1;
-
         if (isGroup) {
           info.mesh.rotation.z = info.baseRotation.z + turboSpoolAngle;
         } else {
           meshes.forEach((m) => {
             const baseRotZ = (m.userData?.baseRotation as THREE.Euler)?.z ?? info.baseRotation.z;
-            m.rotation.z = baseRotZ + sign * turboSpoolAngle;
+            m.rotation.z = baseRotZ + turboSpoolAngle;
           });
         }
       } else if (id === 'turbo-chra-core' || id.includes('chra')) {
@@ -2946,28 +2946,28 @@ export const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({
               transition: 'opacity 220ms ease-out',
             }}
           >
-            <div className="flex items-stretch rounded-[3px] bg-[var(--carbon)]/92 border border-[var(--text)]/18 shadow-[0_6px_28px_rgba(0,0,0,0.45)] backdrop-blur-xl w-[240px] hover:border-[var(--text)]/40 hover:shadow-[0_8px_36px_rgba(0,0,0,0.55)] transition-all duration-200 group overflow-hidden">
+            <div className="flex items-stretch rounded-[3px] bg-[var(--carbon)]/92 border border-[var(--text)]/18 shadow-[0_6px_28px_rgba(0,0,0,0.45)] backdrop-blur-xl w-[252px] hover:border-[var(--text)]/40 hover:shadow-[0_8px_36px_rgba(0,0,0,0.55)] transition-all duration-200 group overflow-hidden">
               {/* Left accent bar */}
               <div className="w-[3px] shrink-0 bg-[var(--text)]/25 group-hover:bg-[var(--text)]/50 transition-colors duration-200" />
-              <div className="flex items-start gap-2 px-3 py-2.5 min-w-0 flex-1">
+              <div className="flex items-start gap-2.5 px-3 py-2 min-w-0 flex-1">
                 <span
                   id={`ann-slot-idx-${i}`}
-                  className="w-[18px] h-[18px] mt-px shrink-0 rounded-[2px] border border-[var(--text)]/40 bg-[var(--text)]/8 flex items-center justify-center text-[9px] font-mono font-bold tabular-nums text-[var(--text)]/80 group-hover:border-[var(--text)]/65 transition-colors"
+                  className="w-[18px] h-[18px] mt-0.5 shrink-0 rounded-[2px] border border-[var(--text)]/40 bg-[var(--text)]/8 flex items-center justify-center text-[9px] font-mono font-bold tabular-nums text-[var(--text)]/80 group-hover:border-[var(--text)]/65 transition-colors"
                 >
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <div className="min-w-0 flex-1">
                   <span
                     id={`ann-slot-cat-${i}`}
-                    className="block text-[8px] font-sans uppercase tracking-[0.16em] text-[var(--muted)] leading-none mb-1.5 truncate font-medium"
+                    className="block text-[7.5px] font-sans uppercase tracking-[0.16em] text-[var(--muted)] leading-none mb-1 truncate font-medium"
                   />
                   <span
                     id={`ann-slot-title-${i}`}
-                    className="block text-[11.5px] font-sans font-semibold tracking-[0.04em] text-[var(--text)] leading-[1.3] break-words"
+                    className="block text-[11px] font-sans font-semibold tracking-[0.03em] text-[var(--text)] leading-[1.25] break-words line-clamp-2"
                   />
                   <div
                     id={`ann-slot-desc-${i}`}
-                    className="text-[10.5px] font-serif italic text-[var(--muted)] leading-[1.45] mt-1 break-words opacity-80"
+                    className="text-[10px] font-serif italic text-[var(--muted)] leading-[1.35] mt-1 break-words opacity-85 line-clamp-2"
                   />
                 </div>
               </div>
