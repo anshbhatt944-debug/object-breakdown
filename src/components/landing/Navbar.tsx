@@ -18,11 +18,11 @@ interface PlateItem {
 }
 
 const PLATES: PlateItem[] = [
-  { index: 1, name: 'Watch', fraction: 0.16, rangeStart: 0.035, rangeEnd: 0.395 },
-  { index: 2, name: 'Drone', fraction: 0.45, rangeStart: 0.395, rangeEnd: 0.645 },
-  { index: 3, name: 'Turbo', fraction: 0.69, rangeStart: 0.645, rangeEnd: 0.755 },
-  { index: 4, name: 'Motor', fraction: 0.76, rangeStart: 0.755, rangeEnd: 0.805 },
-  { index: 5, name: 'Pen',   fraction: 0.83, rangeStart: 0.805, rangeEnd: 0.885 },
+  { index: 1, name: 'Watch', fraction: 0.18, rangeStart: 0.045, rangeEnd: 0.380 },
+  { index: 2, name: 'Drone', fraction: 0.52, rangeStart: 0.380, rangeEnd: 0.630 },
+  { index: 3, name: 'Turbo', fraction: 0.69, rangeStart: 0.630, rangeEnd: 0.760 },
+  { index: 4, name: 'Motor', fraction: 0.805, rangeStart: 0.760, rangeEnd: 0.845 },
+  { index: 5, name: 'Pen',   fraction: 0.880, rangeStart: 0.845, rangeEnd: 0.920 },
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({
