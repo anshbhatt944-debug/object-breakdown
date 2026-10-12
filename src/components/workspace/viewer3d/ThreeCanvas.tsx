@@ -796,8 +796,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     const isUploadedModel = Boolean(
       uploadedModel &&
       (objectData.id.startsWith('uploaded-') ||
-        (objectData as unknown as { isUploaded?: boolean }).isUploaded ||
-        Boolean(uploadedModel.url))
+        (objectData as unknown as { isUploaded?: boolean }).isUploaded)
     );
 
     const loadPromise = isUploadedModel && uploadedModel
