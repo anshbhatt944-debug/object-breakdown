@@ -249,9 +249,7 @@ export const App: React.FC = () => {
   // Workspace view
   if (currentView === 'workspace') {
     const effectiveObject =
-      uploadedModel && uploadedObjectData && (!currentObject || (currentObject.id !== uploadedObjectData.id && currentObject.id === 'jet-turbine'))
-        ? uploadedObjectData
-        : currentObject;
+      currentObject || uploadedObjectData || ALL_OBJECTS[0];
 
     const isCurrentUploaded = Boolean(
       uploadedModel &&
