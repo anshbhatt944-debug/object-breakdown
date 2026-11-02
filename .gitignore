@@ -28,7 +28,10 @@ dist-ssr
 # Temporary test screenshots & verification captures
 /*.png
 *.dump.json
+scratch/
 scratch_*
+FIXES_APPLIED.md
+PRESENTATION_DECK.md
 
 # Python caches & slide export artifacts
 __pycache__/
