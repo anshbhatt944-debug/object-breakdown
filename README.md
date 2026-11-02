@@ -12,8 +12,17 @@
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![Three.js](https://img.shields.io/badge/Three.js-r185-black?style=for-the-badge&logo=threedotjs&logoColor=white)](https://threejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-8.2-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vite.dev/)
+
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4.0-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Groq AI](https://img.shields.io/badge/Inference-Groq%20LPU-F55036?style=for-the-badge)](https://groq.com/)
+[![Lenis](https://img.shields.io/badge/Lenis-Smooth%20Scroll-black?style=for-the-badge)](https://lenis.darkroom.engineering/)
+[![Framer Motion](https://img.shields.io/badge/Framer%20Motion-13.2-black?style=for-the-badge&logo=framer&logoColor=blue)](https://motion.dev/)
+[![Lucide Icons](https://img.shields.io/badge/Icons-Lucide-F56565?style=for-the-badge)](https://lucide.dev/)
+
+[![Groq LPU](https://img.shields.io/badge/Inference-Groq%20LPU-F55036?style=for-the-badge)](https://groq.com/)
+[![Qwen Model](https://img.shields.io/badge/Model-Qwen%203.8-615ced?style=for-the-badge)](https://huggingface.co/Qwen)
+[![Vercel](https://img.shields.io/badge/Deployment-Vercel-black?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
+[![Oxlint](https://img.shields.io/badge/Linter-Oxlint-orange?style=for-the-badge)](https://oxc.rs/)
 
 <br />
 
@@ -121,7 +130,7 @@ The platform ships with a preloaded library of hand-engineered specimens deconst
 
 Raw 3D files (`.glb` / `.gltf`) uploaded by users are typically disorganized hierarchies of arbitrary meshes (`Object_34`, `Mesh_002`, `Part_A`). 
 
-OBJECT // BREAKDOWN implements a server-side AI pipeline powered by **Groq LPU Inference** (`qwen/qwen3.8-27b` / `llama-3.3-70b-versatile`) that transforms raw geometry into grounded mechanical components with zero manual tagging:
+OBJECT // BREAKDOWN implements a server-side AI pipeline powered by **Groq LPU Inference** (`qwen/qwen3.8-27b`) that transforms raw geometry into grounded mechanical components with zero manual tagging:
 
 ```mermaid
 flowchart TD
@@ -236,7 +245,7 @@ Backend & AI Inference
   ├── Serverless API:       Node.js ES Modules (/api/analyze-model.mjs)
   ├── Local Dev Server:     Node.js Native HTTP Proxy (server.mjs)
   ├── AI Acceleration:      Groq LPU (Language Processing Unit)
-  └── Foundational Models:  qwen/qwen3.8-27b (default) / llama-3.3-70b-versatile
+  └── Inferred Model:       qwen/qwen3.8-27b (via Groq Cloud API)
 
 Deployment & Infrastructure
   ├── Production Host:      Vercel (Edge Network + Serverless Functions)
@@ -321,7 +330,7 @@ The project is pre-configured for one-click deployment on [Vercel](https://verce
 2. Import the project into your Vercel Dashboard.
 3. Under **Project Settings → Environment Variables**, add:
    - `GROQ_API_KEY`: Your Groq API Key
-   - `GROQ_MODEL`: `qwen/qwen3.8-27b` (or `llama-3.3-70b-versatile`)
+   - `GROQ_MODEL`: `qwen/qwen3.8-27b` (Optional override)
 4. Click **Deploy**. Vercel will automatically configure `/api/analyze-model` via `api/analyze-model.mjs`.
 
 ---
