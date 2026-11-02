@@ -14,7 +14,6 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4.0-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Groq AI](https://img.shields.io/badge/Inference-Groq%20LPU-F55036?style=for-the-badge)](https://groq.com/)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
 <br />
 
@@ -421,12 +420,6 @@ Contributions from mechanical engineers, materials scientists, 3D artists, and s
 5. **Open a Pull Request**
 
 Please ensure your code passes linting (`npm run lint`) and TypeScript compilation (`npm run build`) before submitting.
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for full details.
 
 ---
 
